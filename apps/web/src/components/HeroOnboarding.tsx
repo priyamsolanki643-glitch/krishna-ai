@@ -1,58 +1,177 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
-const ROTATING_WORDS = ["build.", "solve.", "create.", "prove."];
+// ─── Quantum Scramble Hook ────────────────────────────────────────────────────
+const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%";
 
-export const HeroOnboarding: React.FC = () => {
-  const [index, setIndex] = useState(0);
-  const [fade, setFade] = useState(false);
+function useQuantumScramble(target: string, trigger: boolean) {
+  const [display, setDisplay] = useState(target);
+  const raf = useRef<number>(0);
+  const iter = useRef(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setFade(true);
-      setTimeout(() => {
-        setIndex((prev) => (prev + 1) % ROTATING_WORDS.length);
-        setFade(false);
-      }, 300);
-    }, 2600);
+    if (!trigger) return;
+    iter.current = 0;
+    cancelAnimationFrame(raf.current);
 
-    return () => clearInterval(interval);
+    const animate = () => {
+      iter.current += 0.6;
+      setDisplay(
+        target
+          .split("")
+          .map((char, i) => {
+            if (char === ".") return char;
+            if (i < iter.current) return char;
+            return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+          })
+          .join("")
+      );
+      if (iter.current < target.length) {
+        raf.current = requestAnimationFrame(animate);
+      } else {
+        setDisplay(target);
+      }
+    };
+
+    raf.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf.current);
+  }, [target, trigger]);
+
+  return display;
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const WORDS = ["build.", "solve.", "create.", "prove."];
+
+// ─── Component ────────────────────────────────────────────────────────────────
+export const HeroOnboarding: React.FC = () => {
+  const [wordIdx, setWordIdx] = useState(0);
+  const [scrambling, setScrambling] = useState(false);
+
+  // Cinematic phased reveal states
+  const [phase, setPhase] = useState(0);
+
+  const word = WORDS[wordIdx];
+  const scrambled = useQuantumScramble(word, scrambling || phase < 2);
+
+  // Sequential cinematic line reveal
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase(1), 100);
+    const t2 = setTimeout(() => setPhase(2), 700);
+    const t3 = setTimeout(() => setPhase(3), 1300);
+    return () => [t1, t2, t3].forEach(clearTimeout);
+  }, []);
+
+  // Word cycle with scramble
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setScrambling(true);
+      setTimeout(() => {
+        setWordIdx((p) => (p + 1) % WORDS.length);
+        setScrambling(false);
+      }, 380);
+    }, 3200);
+    return () => clearInterval(iv);
   }, []);
 
   return (
-    <section className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center px-4 py-16 sm:py-24 select-none">
-      {/* 1. Main Headline (Large Bold Pure White) */}
-      <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-[-0.035em] text-white leading-[1.12] mb-6 sm:mb-8">
-        Built for thinkers, <br />
-        <span className="text-[#f1f5f9]">not just prompts.</span>
-      </h1>
+    <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden select-none px-5">
 
-      {/* 2. Middle Line (A better mind for everything you [morphing word]) */}
-      <div className="text-xl sm:text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-[#cbd5e1] leading-relaxed mb-5 sm:mb-6">
-        <span className="inline-flex items-center justify-center gap-x-2 sm:gap-x-2.5 flex-wrap">
-          <span>A better mind for everything you</span>
-          <span className="relative inline-block pb-1.5 font-bold text-white">
+      {/* ── Ambient cognitive bloom ── */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 45% at 50% 52%, rgba(255,255,255,0.030) 0%, rgba(255,255,255,0.008) 55%, transparent 100%)",
+        }}
+      />
+
+      {/* ── Text block ── */}
+      <div className="relative z-10 w-full max-w-3xl mx-auto text-center flex flex-col items-center gap-0">
+
+        {/* LINE 1 — Main Headline */}
+        <h1
+          className="transition-all duration-700 ease-out"
+          style={{
+            fontFamily: "'SF Pro Display', 'Inter', system-ui, -apple-system, sans-serif",
+            fontWeight: 700,
+            fontSize: "clamp(2.5rem, 9vw, 5rem)",
+            lineHeight: 1.07,
+            letterSpacing: "-0.04em",
+            color: "#ffffff",
+            marginBottom: "clamp(18px, 3vw, 28px)",
+            opacity: phase >= 1 ? 1 : 0,
+            transform: phase >= 1 ? "translateY(0px)" : "translateY(28px)",
+          }}
+        >
+          Built for thinkers,<br />
+          <span style={{ color: "#e4e4e7" }}>not just prompts.</span>
+        </h1>
+
+        {/* LINE 2 — Morphing intelligence line */}
+        <p
+          className="transition-all duration-700 ease-out"
+          style={{
+            fontFamily: "'SF Pro Display', 'Inter', system-ui, -apple-system, sans-serif",
+            fontWeight: 500,
+            fontSize: "clamp(1.15rem, 4vw, 1.85rem)",
+            lineHeight: 1.3,
+            letterSpacing: "-0.02em",
+            color: "#9ca3af",
+            marginBottom: "clamp(16px, 2.5vw, 24px)",
+            opacity: phase >= 2 ? 1 : 0,
+            transform: phase >= 2 ? "translateY(0px)" : "translateY(22px)",
+          }}
+        >
+          A better mind for everything you{" "}
+          <span className="relative inline-block">
+            {/* Scramble word */}
             <span
-              className={`inline-block transition-all duration-300 ease-out ${
-                fade
-                  ? "opacity-0 translate-y-2 blur-[2px]"
-                  : "opacity-100 translate-y-0 blur-0"
-              }`}
+              style={{
+                fontWeight: 700,
+                color: "#ffffff",
+                fontFamily: "monospace",
+                letterSpacing: "0.01em",
+                transition: scrambling ? "none" : "opacity 0.2s",
+              }}
             >
-              {ROTATING_WORDS[index]}
+              {scrambled}
             </span>
 
-            {/* Signature x.ai style subtle chromatic spectrum underline bar */}
-            <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-gradient-to-r from-[#3b82f6] via-[#8b5cf6] via-[#ec4899] to-[#f59e0b] opacity-90" />
+            {/* x.ai-style spectrum underline */}
+            <span
+              className="absolute left-0 right-0 bottom-0 rounded-full transition-all duration-500"
+              style={{
+                height: "2px",
+                background:
+                  "linear-gradient(90deg, #6366f1 0%, #8b5cf6 35%, #d946ef 65%, #f43f5e 100%)",
+                opacity: phase >= 2 ? 0.85 : 0,
+                transform: phase >= 2 ? "scaleX(1)" : "scaleX(0)",
+                transformOrigin: "left",
+              }}
+            />
           </span>
-        </span>
-      </div>
+        </p>
 
-      {/* 3. Bottom Line (Punchy Sub-headline) */}
-      <p className="text-sm sm:text-base md:text-lg text-[#8a8d98] font-normal tracking-normal max-w-2xl leading-relaxed">
-        AI that doesn’t just answer. It actually thinks.
-      </p>
+        {/* LINE 3 — Final punch */}
+        <p
+          className="transition-all duration-700 ease-out"
+          style={{
+            fontFamily: "'SF Pro Text', 'Inter', system-ui, -apple-system, sans-serif",
+            fontWeight: 400,
+            fontSize: "clamp(0.85rem, 2.8vw, 1.05rem)",
+            lineHeight: 1.7,
+            letterSpacing: "0.005em",
+            color: "#52525b",
+            opacity: phase >= 3 ? 1 : 0,
+            transform: phase >= 3 ? "translateY(0px)" : "translateY(16px)",
+          }}
+        >
+          AI that doesn&apos;t just answer.&nbsp;
+          <span style={{ color: "#71717a" }}>It actually thinks.</span>
+        </p>
+      </div>
     </section>
   );
 };
