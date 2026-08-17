@@ -112,13 +112,15 @@ export const HeroOnboarding: React.FC = () => {
               {displayed}
             </span>
 
-            {/* Chromatic underline beam */}
+            {/* Chromatic shimmer underline beam */}
             <span
               className="absolute left-0 right-0 bottom-0 rounded-full"
               style={{
                 height: "2.5px",
-                background: "linear-gradient(90deg, #6366f1 0%, #8b5cf6 28%, #d946ef 62%, #f43f5e 100%)",
-                opacity: phase >= 2 ? 0.95 : 0,
+                background: "linear-gradient(90deg, #6366f1 0%, #8b5cf6 20%, #ffffff 38%, #d946ef 55%, #f43f5e 75%, #6366f1 100%)",
+                backgroundSize: "300% 100%",
+                animation: "shimmer-beam 2.2s linear infinite",
+                opacity: phase >= 2 ? 1 : 0,
                 transform: phase >= 2 ? "scaleX(1)" : "scaleX(0)",
                 transformOrigin: "left center",
                 transition: "opacity 0.5s ease 0.4s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s",

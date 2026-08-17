@@ -30,3 +30,8 @@ body {
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
 }
+
+@keyframes shimmer-beam {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
