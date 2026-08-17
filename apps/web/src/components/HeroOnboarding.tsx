@@ -76,21 +76,21 @@ export const HeroOnboarding: React.FC = () => {
   });
 
   return (
-    <section className="w-full min-h-screen flex items-center justify-center px-5">
+    <section className="w-full min-h-screen flex items-center justify-center px-6 sm:px-10">
       <div className="w-full max-w-2xl text-left">
 
         {/* ── Line 1: H1 Bold White ── */}
         <h1
-          className="text-[clamp(2.6rem,8.5vw,4.8rem)] font-bold text-white leading-[1.08] tracking-[-0.04em] mb-0"
-          style={lineStyle(phase >= 1)}
+          className="font-bold text-white leading-[1.1] tracking-[-0.04em] mb-0 whitespace-nowrap"
+          style={{ fontSize: "min(4.6vw, 3.8rem)", ...lineStyle(phase >= 1) }}
         >
           Never think alone.
         </h1>
 
         {/* ── Line 2: H1 Same Size + Morph Word ── */}
         <h1
-          className="text-[clamp(2.6rem,8.5vw,4.8rem)] font-bold text-white leading-[1.08] tracking-[-0.04em] mt-1"
-          style={lineStyle(phase >= 2)}
+          className="font-bold text-white leading-[1.1] tracking-[-0.04em] mt-2 whitespace-nowrap"
+          style={{ fontSize: "min(4.6vw, 3.8rem)", ...lineStyle(phase >= 2) }}
         >
           Intelligence that actually{" "}
           <span className="relative inline-block">
@@ -124,8 +124,9 @@ export const HeroOnboarding: React.FC = () => {
 
         {/* ── Line 3: Sub-text Muted Zinc ── */}
         <p
-          className="mt-5 text-[clamp(0.82rem,2.4vw,1rem)] font-normal leading-relaxed tracking-[0.008em]"
+          className="mt-6 font-normal leading-relaxed tracking-[0.008em] whitespace-nowrap"
           style={{
+            fontSize: "min(1.8vw, 1rem)",
             color: "#A1A1AA",
             ...lineStyle(phase >= 3),
             transitionDelay: "0.05s",
