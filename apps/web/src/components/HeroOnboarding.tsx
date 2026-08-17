@@ -17,11 +17,11 @@ export const HeroOnboarding: React.FC = () => {
     return () => [t1, t2, t3].forEach(clearTimeout);
   }, []);
 
-  // Word cycler
+  // Word cycler (Fast, snappy rotation)
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % WORDS.length);
-    }, 2800);
+    }, 1600);
     return () => clearInterval(interval);
   }, []);
 
@@ -58,10 +58,10 @@ export const HeroOnboarding: React.FC = () => {
             <AnimatePresence mode="wait">
               <motion.span
                 key={currentWord}
-                initial={{ y: 15, opacity: 0, filter: "blur(6px)" }}
+                initial={{ y: 12, opacity: 0, filter: "blur(5px)" }}
                 animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-                exit={{ y: -15, opacity: 0, filter: "blur(6px)" }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} // Apple Spring Curve
+                exit={{ y: -12, opacity: 0, filter: "blur(5px)" }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }} // Snappy Fast Apple Spring Curve
                 className="inline-block font-extrabold text-white"
               >
                 {currentWord}.
