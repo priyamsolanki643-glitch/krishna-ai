@@ -14,3 +14,18 @@ body {
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
 }
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.04);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 6s ease-in-out infinite alternate;
+}
