@@ -67,56 +67,33 @@ export const HeroOnboarding: React.FC = () => {
 
   const reveal = (show: boolean): React.CSSProperties => ({
     opacity: show ? 1 : 0,
-    transform: show ? "translateY(0)" : "translateY(28px)",
+    transform: show ? "translateY(0)" : "translateY(24px)",
     transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)",
   });
 
   return (
-    <section
-      className="w-full min-h-screen flex flex-col items-center justify-center text-center px-5 sm:px-8"
-    >
-      {/* ── Heading Block ── */}
-      <div className="w-full max-w-3xl mx-auto">
+    <section className="w-full min-h-screen flex items-center justify-center overflow-x-hidden px-5 sm:px-8">
+      <div className="w-full max-w-3xl mx-auto text-center">
 
-        {/* Line 1: "Never think alone." */}
+        {/* Line 1 */}
         <h1
-          style={{
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-            fontSize: "clamp(2rem, 5.5vw, 3.4rem)",
-            fontWeight: 700,
-            color: "#ffffff",
-            lineHeight: 1.1,
-            letterSpacing: "-0.04em",
-            margin: 0,
-            whiteSpace: "nowrap",
-            ...reveal(phase >= 1),
-          }}
+          className="font-bold text-white leading-[1.1] tracking-[-0.04em] m-0 whitespace-nowrap text-3xl sm:text-4xl md:text-6xl"
+          style={reveal(phase >= 1)}
         >
           Never think alone.
         </h1>
 
-        {/* Line 2: "AI that actually [morph]." */}
+        {/* Line 2 — with morph word */}
         <h1
-          style={{
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-            fontSize: "clamp(2rem, 5.5vw, 3.4rem)",
-            fontWeight: 700,
-            color: "#ffffff",
-            lineHeight: 1.1,
-            letterSpacing: "-0.04em",
-            marginTop: "0.08em",
-            marginBottom: 0,
-            whiteSpace: "nowrap",
-            ...reveal(phase >= 2),
-          }}
+          className="font-bold text-white leading-[1.1] tracking-[-0.04em] mt-[0.08em] mb-0 whitespace-nowrap text-3xl sm:text-4xl md:text-6xl"
+          style={reveal(phase >= 2)}
         >
           AI that actually{" "}
-          <span style={{ position: "relative", display: "inline-block", paddingBottom: "0.05em" }}>
-            {/* Morph word */}
+          <span className="relative inline-block pb-[0.05em]">
+            {/* Scramble word */}
             <span
+              className="font-mono font-bold"
               style={{
-                fontFamily: "monospace",
-                fontWeight: 700,
                 background: "linear-gradient(90deg, #fff 60%, #a1a1aa 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
@@ -128,15 +105,11 @@ export const HeroOnboarding: React.FC = () => {
               {displayed}
             </span>
 
-            {/* x.ai-style underline beam */}
+            {/* Chromatic underline beam */}
             <span
+              className="absolute left-0 right-0 bottom-0 rounded-full"
               style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
                 height: "2.5px",
-                borderRadius: "999px",
                 background: "linear-gradient(90deg, #6366f1 0%, #8b5cf6 28%, #d946ef 62%, #f43f5e 100%)",
                 opacity: phase >= 2 ? 0.95 : 0,
                 transform: phase >= 2 ? "scaleX(1)" : "scaleX(0)",
@@ -147,17 +120,13 @@ export const HeroOnboarding: React.FC = () => {
           </span>
         </h1>
 
-        {/* Line 3: Sub-text */}
+        {/* Line 3 — sub-text */}
         <p
+          className="mt-5 sm:mt-6 font-normal leading-relaxed tracking-[0.005em] text-sm sm:text-base"
           style={{
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-            fontSize: "clamp(0.88rem, 2vw, 1.05rem)",
-            fontWeight: 400,
             color: "#A1A1AA",
-            lineHeight: 1.6,
-            letterSpacing: "0.005em",
-            marginTop: "clamp(16px, 2.5vw, 24px)",
             ...reveal(phase >= 3),
+            transitionDelay: "0.05s",
           }}
         >
           Built for thinkers, not just prompts.
