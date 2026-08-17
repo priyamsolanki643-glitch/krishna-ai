@@ -93,16 +93,20 @@ export const HeroOnboarding: React.FC = () => {
         >
           AI that actually{" "}
           <span className="relative inline-block pb-[0.05em]">
-            {/* Scramble word */}
+            {/* Scramble word — Blur + Vertical Slide with cubic-bezier(0.16,1,0.3,1) */}
             <span
-              className="font-mono font-bold"
+              className="font-mono font-bold inline-block"
               style={{
                 background: "linear-gradient(90deg, #fff 60%, #a1a1aa 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
-                transition: scrambling ? "none" : "opacity 0.15s",
-                opacity: scrambling ? 0.45 : 1,
+                opacity: scrambling ? 0 : 1,
+                transform: scrambling ? "translateY(-10px)" : "translateY(0px)",
+                filter: scrambling ? "blur(6px)" : "blur(0px)",
+                transition: scrambling
+                  ? "opacity 0.22s cubic-bezier(0.16,1,0.3,1), transform 0.22s cubic-bezier(0.16,1,0.3,1), filter 0.22s cubic-bezier(0.16,1,0.3,1)"
+                  : "opacity 0.38s cubic-bezier(0.16,1,0.3,1), transform 0.38s cubic-bezier(0.16,1,0.3,1), filter 0.38s cubic-bezier(0.16,1,0.3,1)",
               }}
             >
               {displayed}
