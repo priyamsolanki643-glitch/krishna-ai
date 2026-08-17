@@ -64,11 +64,11 @@ export const HeroOnboarding: React.FC = () => {
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} // Apple Spring Curve
                 className="inline-block font-extrabold"
                 style={{
-                  background: "linear-gradient(90deg, #c084fc 0%, #38bdf8 35%, #ffffff 50%, #c084fc 70%, #38bdf8 100%)",
+                  background: "linear-gradient(90deg, #ffffff 0%, #ffffff 35%, #71717a 45%, #18181b 50%, #71717a 55%, #ffffff 65%, #ffffff 100%)",
                   backgroundSize: "250% 100%",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
-                  animation: "shimmer-beam 3s linear infinite",
+                  animation: "shimmer-beam 3.6s ease-in-out infinite",
                   display: "inline-block",
                 }}
               >
