@@ -1,51 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 
-// ─── Quantum Scramble Hook ─────────────────────────────────────────────────────
-const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$";
-
-function useScramble(target: string, active: boolean) {
-  const [text, setText] = useState(target);
-  const raf = useRef<number>(0);
-  const iter = useRef(0);
-
-  useEffect(() => {
-    if (!active) { setText(target); return; }
-    iter.current = 0;
-    cancelAnimationFrame(raf.current);
-    const run = () => {
-      iter.current += 0.55;
-      setText(
-        target.split("").map((ch, i) => {
-          if (ch === "." || ch === " ") return ch;
-          if (i < iter.current) return ch;
-          return CHARS[Math.floor(Math.random() * CHARS.length)];
-        }).join("")
-      );
-      if (iter.current < target.length) raf.current = requestAnimationFrame(run);
-      else setText(target);
-    };
-    raf.current = requestAnimationFrame(run);
-    return () => cancelAnimationFrame(raf.current);
-  }, [target, active]);
-
-  return text;
-}
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
 const WORDS = ["thinks.", "solves.", "builds.", "proves."];
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export const HeroOnboarding: React.FC = () => {
-  const [idx, setIdx] = useState(0);
-  const [scrambling, setScrambling] = useState(false);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [phase, setPhase] = useState(0);
 
-  const word = WORDS[idx];
-  const displayed = useScramble(word, scrambling);
-
-  // Cinematic sequential reveal
+  // Sequential cinematic entrance
   useEffect(() => {
     const t1 = setTimeout(() => setPhase(1), 100);
     const t2 = setTimeout(() => setPhase(2), 620);
@@ -53,16 +17,17 @@ export const HeroOnboarding: React.FC = () => {
     return () => [t1, t2, t3].forEach(clearTimeout);
   }, []);
 
-  // Word cycling
+  // Smooth kinetic word cycler
   useEffect(() => {
-    const iv = setInterval(() => {
-      setScrambling(true);
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
       setTimeout(() => {
-        setIdx(p => (p + 1) % WORDS.length);
-        setScrambling(false);
-      }, 380);
-    }, 3000);
-    return () => clearInterval(iv);
+        setCurrentIdx((prev) => (prev + 1) % WORDS.length);
+        setIsTransitioning(false);
+      }, 350); // half-cycle for exit transition
+    }, 2800);
+
+    return () => clearInterval(interval);
   }, []);
 
   const reveal = (show: boolean): React.CSSProperties => ({
@@ -70,6 +35,8 @@ export const HeroOnboarding: React.FC = () => {
     transform: show ? "translateY(0)" : "translateY(24px)",
     transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)",
   });
+
+  const activeWord = WORDS[currentIdx];
 
   return (
     <section
@@ -86,33 +53,38 @@ export const HeroOnboarding: React.FC = () => {
           Never think alone.
         </h1>
 
-        {/* Line 2 — with morph word */}
+        {/* Line 2 — with God-Level 3D Kinetic Stagger Flip Morph */}
         <h1
           className="font-bold text-white leading-[1.1] tracking-[-0.04em] mt-[0.08em] mb-0 whitespace-nowrap text-3xl sm:text-4xl md:text-6xl"
           style={reveal(phase >= 2)}
         >
           AI that actually{" "}
-          <span className="relative inline-block pb-[0.05em]">
-            {/* Scramble word — Blur + Vertical Slide with cubic-bezier(0.16,1,0.3,1) */}
-            <span
-              className="font-mono font-bold inline-block"
-              style={{
-                background: "linear-gradient(90deg, #fff 60%, #a1a1aa 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                opacity: scrambling ? 0 : 1,
-                transform: scrambling ? "translateY(-10px)" : "translateY(0px)",
-                filter: scrambling ? "blur(6px)" : "blur(0px)",
-                transition: scrambling
-                  ? "opacity 0.22s cubic-bezier(0.16,1,0.3,1), transform 0.22s cubic-bezier(0.16,1,0.3,1), filter 0.22s cubic-bezier(0.16,1,0.3,1)"
-                  : "opacity 0.38s cubic-bezier(0.16,1,0.3,1), transform 0.38s cubic-bezier(0.16,1,0.3,1), filter 0.38s cubic-bezier(0.16,1,0.3,1)",
-              }}
-            >
-              {displayed}
+          <span className="relative inline-block pb-[0.05em] select-none" style={{ perspective: "800px" }}>
+            {/* Split Character 3D Staggered Roll */}
+            <span className="inline-flex font-bold tracking-tight text-white">
+              {activeWord.split("").map((char, i) => (
+                <span
+                  key={`${currentIdx}-${i}`}
+                  className="inline-block transform-gpu transition-all duration-400 ease-out"
+                  style={{
+                    display: "inline-block",
+                    opacity: isTransitioning ? 0 : 1,
+                    transform: isTransitioning
+                      ? "translateY(-14px) rotateX(-75deg) scale(0.9)"
+                      : "translateY(0px) rotateX(0deg) scale(1)",
+                    filter: isTransitioning ? "blur(4px)" : "blur(0px)",
+                    transitionDelay: `${i * 35}ms`,
+                    transitionTimingFunction: isTransitioning
+                      ? "cubic-bezier(0.4, 0, 1, 1)"
+                      : "cubic-bezier(0.16, 1.4, 0.3, 1)",
+                  }}
+                >
+                  {char}
+                </span>
+              ))}
             </span>
 
-            {/* Chromatic shimmer underline beam */}
+            {/* Chromatic animated shimmer underline beam */}
             <span
               className="absolute left-0 right-0 bottom-0 rounded-full"
               style={{
