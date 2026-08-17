@@ -92,16 +92,14 @@ export const HeroOnboarding: React.FC = () => {
           className="text-[clamp(2.6rem,8.5vw,4.8rem)] font-bold text-white leading-[1.08] tracking-[-0.04em] mt-1"
           style={lineStyle(phase >= 2)}
         >
-          AI that doesn&apos;t just answer.{" "}
-          <br className="hidden sm:block" />
-          It actually{" "}
+          Intelligence that actually{" "}
           <span className="relative inline-block">
-            {/* Morph word — gradient white to zinc, monospace feel */}
+            {/* Morph word */}
             <span
               className="font-mono font-bold bg-gradient-to-r from-white via-white to-zinc-300 bg-clip-text text-transparent"
               style={{
                 transition: scrambling ? "none" : "opacity 0.2s",
-                opacity: scrambling ? 0.6 : 1,
+                opacity: scrambling ? 0.5 : 1,
               }}
             >
               {displayed}
@@ -126,7 +124,7 @@ export const HeroOnboarding: React.FC = () => {
 
         {/* ── Line 3: Sub-text Muted Zinc ── */}
         <p
-          className="mt-5 text-[clamp(0.82rem,2.4vw,1rem)] font-normal leading-relaxed tracking-[0.008em] whitespace-nowrap overflow-hidden text-ellipsis"
+          className="mt-5 text-[clamp(0.82rem,2.4vw,1rem)] font-normal leading-relaxed tracking-[0.008em]"
           style={{
             color: "#A1A1AA",
             ...lineStyle(phase >= 3),
