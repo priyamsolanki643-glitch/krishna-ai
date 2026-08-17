@@ -108,7 +108,7 @@ export const HeroOnboarding: React.FC = () => {
             ...reveal(phase >= 2),
           }}
         >
-          Intelligence that actually{" "}
+          AI that actually{" "}
           <span style={{ position: "relative", display: "inline-block", paddingBottom: "0.05em" }}>
             {/* Morph word */}
             <span
