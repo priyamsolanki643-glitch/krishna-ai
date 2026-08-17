@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 
-// ─── Quantum Scramble Hook ────────────────────────────────────────────────────
+// ─── Quantum Scramble Hook ─────────────────────────────────────────────────────
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$";
 
 function useScramble(target: string, active: boolean) {
@@ -14,7 +14,6 @@ function useScramble(target: string, active: boolean) {
     if (!active) { setText(target); return; }
     iter.current = 0;
     cancelAnimationFrame(raf.current);
-
     const run = () => {
       iter.current += 0.55;
       setText(
@@ -24,11 +23,8 @@ function useScramble(target: string, active: boolean) {
           return CHARS[Math.floor(Math.random() * CHARS.length)];
         }).join("")
       );
-      if (iter.current < target.length) {
-        raf.current = requestAnimationFrame(run);
-      } else {
-        setText(target);
-      }
+      if (iter.current < target.length) raf.current = requestAnimationFrame(run);
+      else setText(target);
     };
     raf.current = requestAnimationFrame(run);
     return () => cancelAnimationFrame(raf.current);
@@ -49,11 +45,11 @@ export const HeroOnboarding: React.FC = () => {
   const word = WORDS[idx];
   const displayed = useScramble(word, scrambling);
 
-  // Sequential cinematic reveal
+  // Cinematic sequential reveal
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 120);
-    const t2 = setTimeout(() => setPhase(2), 680);
-    const t3 = setTimeout(() => setPhase(3), 1180);
+    const t1 = setTimeout(() => setPhase(1), 100);
+    const t2 = setTimeout(() => setPhase(2), 620);
+    const t3 = setTimeout(() => setPhase(3), 1100);
     return () => [t1, t2, t3].forEach(clearTimeout);
   }, []);
 
@@ -69,67 +65,97 @@ export const HeroOnboarding: React.FC = () => {
     return () => clearInterval(iv);
   }, []);
 
-  const lineStyle = (show: boolean): React.CSSProperties => ({
+  const reveal = (show: boolean): React.CSSProperties => ({
     opacity: show ? 1 : 0,
-    transform: show ? "translateY(0)" : "translateY(24px)",
-    transition: "opacity 0.65s cubic-bezier(0.16,1,0.3,1), transform 0.65s cubic-bezier(0.16,1,0.3,1)",
+    transform: show ? "translateY(0)" : "translateY(28px)",
+    transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)",
   });
 
   return (
-    <section className="w-full min-h-screen flex items-center justify-center px-6 sm:px-10">
-      <div className="w-full max-w-2xl text-left">
+    <section
+      className="w-full min-h-screen flex flex-col items-center justify-center text-center px-5 sm:px-8"
+    >
+      {/* ── Heading Block ── */}
+      <div className="w-full max-w-3xl mx-auto">
 
-        {/* ── Line 1: H1 Bold White ── */}
+        {/* Line 1: "Never think alone." */}
         <h1
-          className="font-bold text-white leading-[1.1] tracking-[-0.04em] mb-0 whitespace-nowrap"
-          style={{ fontSize: "min(4.6vw, 3.8rem)", ...lineStyle(phase >= 1) }}
+          style={{
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+            fontSize: "clamp(2.8rem, 7.5vw, 5rem)",
+            fontWeight: 700,
+            color: "#ffffff",
+            lineHeight: 1.1,
+            letterSpacing: "-0.04em",
+            margin: 0,
+            ...reveal(phase >= 1),
+          }}
         >
           Never think alone.
         </h1>
 
-        {/* ── Line 2: H1 Same Size + Morph Word ── */}
+        {/* Line 2: "Intelligence that actually [morph]." */}
         <h1
-          className="font-bold text-white leading-[1.1] tracking-[-0.04em] mt-2 whitespace-nowrap"
-          style={{ fontSize: "min(4.6vw, 3.8rem)", ...lineStyle(phase >= 2) }}
+          style={{
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+            fontSize: "clamp(2.8rem, 7.5vw, 5rem)",
+            fontWeight: 700,
+            color: "#ffffff",
+            lineHeight: 1.1,
+            letterSpacing: "-0.04em",
+            marginTop: "0.08em",
+            marginBottom: 0,
+            ...reveal(phase >= 2),
+          }}
         >
           Intelligence that actually{" "}
-          <span className="relative inline-block">
+          <span style={{ position: "relative", display: "inline-block", paddingBottom: "0.05em" }}>
             {/* Morph word */}
             <span
-              className="font-mono font-bold bg-gradient-to-r from-white via-white to-zinc-300 bg-clip-text text-transparent"
               style={{
-                transition: scrambling ? "none" : "opacity 0.2s",
-                opacity: scrambling ? 0.5 : 1,
+                fontFamily: "monospace",
+                fontWeight: 700,
+                background: "linear-gradient(90deg, #fff 60%, #a1a1aa 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                transition: scrambling ? "none" : "opacity 0.15s",
+                opacity: scrambling ? 0.45 : 1,
               }}
             >
               {displayed}
             </span>
 
-            {/* Signature underline beam */}
+            {/* x.ai-style underline beam */}
             <span
-              className="absolute left-0 right-0 rounded-full"
               style={{
-                bottom: "-3px",
-                height: "2px",
-                background: "linear-gradient(90deg, #6366f1 0%, #8b5cf6 30%, #d946ef 65%, #f43f5e 100%)",
-                opacity: phase >= 2 ? 0.9 : 0,
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: "2.5px",
+                borderRadius: "999px",
+                background: "linear-gradient(90deg, #6366f1 0%, #8b5cf6 28%, #d946ef 62%, #f43f5e 100%)",
+                opacity: phase >= 2 ? 0.95 : 0,
                 transform: phase >= 2 ? "scaleX(1)" : "scaleX(0)",
-                transformOrigin: "left",
-                transition: "opacity 0.6s ease, transform 0.7s cubic-bezier(0.16,1,0.3,1)",
-                transitionDelay: "0.3s",
+                transformOrigin: "left center",
+                transition: "opacity 0.5s ease 0.4s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s",
               }}
             />
           </span>
         </h1>
 
-        {/* ── Line 3: Sub-text Muted Zinc ── */}
+        {/* Line 3: Sub-text */}
         <p
-          className="mt-6 font-normal leading-relaxed tracking-[0.008em] whitespace-nowrap"
           style={{
-            fontSize: "min(1.8vw, 1rem)",
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+            fontSize: "clamp(0.88rem, 2vw, 1.05rem)",
+            fontWeight: 400,
             color: "#A1A1AA",
-            ...lineStyle(phase >= 3),
-            transitionDelay: "0.05s",
+            lineHeight: 1.6,
+            letterSpacing: "0.005em",
+            marginTop: "clamp(16px, 2.5vw, 24px)",
+            ...reveal(phase >= 3),
           }}
         >
           Built for thinkers, not just prompts.
