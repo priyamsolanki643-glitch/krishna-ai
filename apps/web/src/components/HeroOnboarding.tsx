@@ -82,29 +82,31 @@ export const HeroOnboarding: React.FC = () => {
         <h1
           style={{
             fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-            fontSize: "clamp(2.8rem, 7.5vw, 5rem)",
+            fontSize: "clamp(2rem, 5.5vw, 3.4rem)",
             fontWeight: 700,
             color: "#ffffff",
             lineHeight: 1.1,
             letterSpacing: "-0.04em",
             margin: 0,
+            whiteSpace: "nowrap",
             ...reveal(phase >= 1),
           }}
         >
           Never think alone.
         </h1>
 
-        {/* Line 2: "Intelligence that actually [morph]." */}
+        {/* Line 2: "AI that actually [morph]." */}
         <h1
           style={{
             fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-            fontSize: "clamp(2.8rem, 7.5vw, 5rem)",
+            fontSize: "clamp(2rem, 5.5vw, 3.4rem)",
             fontWeight: 700,
             color: "#ffffff",
             lineHeight: 1.1,
             letterSpacing: "-0.04em",
             marginTop: "0.08em",
             marginBottom: 0,
+            whiteSpace: "nowrap",
             ...reveal(phase >= 2),
           }}
         >
