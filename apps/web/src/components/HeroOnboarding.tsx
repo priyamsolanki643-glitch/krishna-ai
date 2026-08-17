@@ -72,7 +72,10 @@ export const HeroOnboarding: React.FC = () => {
   });
 
   return (
-    <section className="w-full min-h-screen flex items-center justify-center overflow-x-hidden px-5 sm:px-8">
+    <section
+      className="w-full flex items-center justify-center overflow-x-hidden px-5 sm:px-8"
+      style={{ minHeight: "100svh" }}
+    >
       <div className="w-full max-w-3xl mx-auto text-center">
 
         {/* Line 1 */}
