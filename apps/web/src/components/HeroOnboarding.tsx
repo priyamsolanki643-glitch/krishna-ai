@@ -68,18 +68,19 @@ export const HeroOnboarding: React.FC = () => {
               </motion.span>
             </AnimatePresence>
 
-            {/* Chromatic animated shimmer underline beam */}
+            {/* Pure Monochrome Shimmer Underline Beam */}
             <span
               className="absolute left-0 right-0 bottom-0 rounded-full"
               style={{
-                height: "2.5px",
-                background: "linear-gradient(90deg, #6366f1 0%, #8b5cf6 20%, #ffffff 38%, #d946ef 55%, #f43f5e 75%, #6366f1 100%)",
-                backgroundSize: "300% 100%",
-                animation: "shimmer-beam 2.2s linear infinite",
-                opacity: phase >= 2 ? 1 : 0,
+                height: "2px",
+                background: "linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.4) 20%, #ffffff 50%, rgba(255,255,255,0.4) 80%, rgba(255,255,255,0.1) 100%)",
+                backgroundSize: "250% 100%",
+                animation: "shimmer-beam 2.4s ease-in-out infinite",
+                opacity: phase >= 2 ? 0.9 : 0,
                 transform: phase >= 2 ? "scaleX(1)" : "scaleX(0)",
                 transformOrigin: "left center",
                 transition: "opacity 0.5s ease 0.4s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s",
+                boxShadow: "0 0 8px rgba(255, 255, 255, 0.3)",
               }}
             />
           </span>
