@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const WORDS = ["thinks.", "solves.", "builds.", "proves."];
+const WORDS = ["thinks", "solves", "builds", "proves"];
 
 export const HeroOnboarding: React.FC = () => {
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [phase, setPhase] = useState(0);
 
   // Sequential cinematic entrance
@@ -17,26 +17,21 @@ export const HeroOnboarding: React.FC = () => {
     return () => [t1, t2, t3].forEach(clearTimeout);
   }, []);
 
-  // Smooth kinetic word cycler
+  // Word cycler
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setCurrentIdx((prev) => (prev + 1) % WORDS.length);
-        setIsTransitioning(false);
-      }, 350); // half-cycle for exit transition
+      setCurrentWordIndex((prev) => (prev + 1) % WORDS.length);
     }, 2800);
-
     return () => clearInterval(interval);
   }, []);
+
+  const currentWord = WORDS[currentWordIndex];
 
   const reveal = (show: boolean): React.CSSProperties => ({
     opacity: show ? 1 : 0,
     transform: show ? "translateY(0)" : "translateY(24px)",
     transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)",
   });
-
-  const activeWord = WORDS[currentIdx];
 
   return (
     <section
@@ -53,36 +48,25 @@ export const HeroOnboarding: React.FC = () => {
           Never think alone.
         </h1>
 
-        {/* Line 2 — with God-Level 3D Kinetic Stagger Flip Morph */}
+        {/* Line 2 — with Framer Motion AnimatePresence Morph Word */}
         <h1
           className="font-bold text-white leading-[1.1] tracking-[-0.04em] mt-[0.08em] mb-0 whitespace-nowrap text-3xl sm:text-4xl md:text-6xl"
           style={reveal(phase >= 2)}
         >
           AI that actually{" "}
-          <span className="relative inline-block pb-[0.05em] select-none" style={{ perspective: "800px" }}>
-            {/* Split Character 3D Staggered Roll */}
-            <span className="inline-flex font-bold tracking-tight text-white">
-              {activeWord.split("").map((char, i) => (
-                <span
-                  key={`${currentIdx}-${i}`}
-                  className="inline-block transform-gpu transition-all duration-400 ease-out"
-                  style={{
-                    display: "inline-block",
-                    opacity: isTransitioning ? 0 : 1,
-                    transform: isTransitioning
-                      ? "translateY(-14px) rotateX(-75deg) scale(0.9)"
-                      : "translateY(0px) rotateX(0deg) scale(1)",
-                    filter: isTransitioning ? "blur(4px)" : "blur(0px)",
-                    transitionDelay: `${i * 35}ms`,
-                    transitionTimingFunction: isTransitioning
-                      ? "cubic-bezier(0.4, 0, 1, 1)"
-                      : "cubic-bezier(0.16, 1.4, 0.3, 1)",
-                  }}
-                >
-                  {char}
-                </span>
-              ))}
-            </span>
+          <span className="relative inline-block pb-[0.05em]">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={currentWord}
+                initial={{ y: 15, opacity: 0, filter: "blur(6px)" }}
+                animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+                exit={{ y: -15, opacity: 0, filter: "blur(6px)" }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} // Apple Spring Curve
+                className="inline-block"
+              >
+                {currentWord}.
+              </motion.span>
+            </AnimatePresence>
 
             {/* Chromatic animated shimmer underline beam */}
             <span
