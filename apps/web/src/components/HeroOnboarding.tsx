@@ -48,7 +48,7 @@ export const HeroOnboarding: React.FC = () => {
           Never think alone.
         </h1>
 
-        {/* Line 2 — with Framer Motion AnimatePresence Morph Word */}
+        {/* Line 2 — with Framer Motion AnimatePresence Morph Word (Violet -> Cyan Shimmer) */}
         <h1
           className="font-bold text-white leading-[1.1] tracking-[-0.04em] mt-[0.08em] mb-0 whitespace-nowrap text-3xl sm:text-4xl md:text-6xl"
           style={reveal(phase >= 2)}
@@ -62,25 +62,33 @@ export const HeroOnboarding: React.FC = () => {
                 animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
                 exit={{ y: -15, opacity: 0, filter: "blur(6px)" }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} // Apple Spring Curve
-                className="inline-block"
+                className="inline-block font-extrabold"
+                style={{
+                  background: "linear-gradient(90deg, #c084fc 0%, #38bdf8 35%, #ffffff 50%, #c084fc 70%, #38bdf8 100%)",
+                  backgroundSize: "250% 100%",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  animation: "shimmer-beam 3s linear infinite",
+                  display: "inline-block",
+                }}
               >
                 {currentWord}.
               </motion.span>
             </AnimatePresence>
 
-            {/* Pure Monochrome Shimmer Underline Beam */}
+            {/* Sleek Violet -> Cyan Shimmer Underline Beam with Subtle Neon Ambient Glow */}
             <span
               className="absolute left-0 right-0 bottom-0 rounded-full"
               style={{
                 height: "2px",
-                background: "linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.4) 20%, #ffffff 50%, rgba(255,255,255,0.4) 80%, rgba(255,255,255,0.1) 100%)",
+                background: "linear-gradient(90deg, #a855f7 0%, #38bdf8 35%, #ffffff 52%, #a855f7 75%, #38bdf8 100%)",
                 backgroundSize: "250% 100%",
-                animation: "shimmer-beam 2.4s ease-in-out infinite",
-                opacity: phase >= 2 ? 0.9 : 0,
+                animation: "shimmer-beam 2.4s linear infinite",
+                opacity: phase >= 2 ? 1 : 0,
                 transform: phase >= 2 ? "scaleX(1)" : "scaleX(0)",
                 transformOrigin: "left center",
                 transition: "opacity 0.5s ease 0.4s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s",
-                boxShadow: "0 0 8px rgba(255, 255, 255, 0.3)",
+                boxShadow: "0 0 12px rgba(168, 85, 247, 0.5), 0 0 4px rgba(56, 189, 248, 0.3)",
               }}
             />
           </span>
