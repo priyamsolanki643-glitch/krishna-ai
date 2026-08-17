@@ -62,7 +62,7 @@ export const HeroOnboarding: React.FC = () => {
                 animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
                 exit={{ y: -15, opacity: 0, filter: "blur(6px)" }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} // Apple Spring Curve
-                className="inline-block font-extrabold bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent"
+                className="inline-block font-extrabold text-white"
               >
                 {currentWord}.
               </motion.span>
