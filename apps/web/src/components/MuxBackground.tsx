@@ -12,30 +12,42 @@ export const MuxBackground: React.FC = () => {
     const video = videoRef.current;
     if (!video) return;
 
-    let hlsInstance: import("hls.js").default | null = null;
+    let destroyed = false;
+    let hlsInstance: { destroy: () => void } | null = null;
 
-    const init = async () => {
-      // Safari native HLS
-      if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = HLS_SRC;
-        video.muted = true;
-        video.play().catch(() => {});
-        return;
-      }
-      // All other browsers via hls.js
-      const Hls = (await import("hls.js")).default;
-      if (!Hls.isSupported()) return;
-      hlsInstance = new Hls({ enableWorker: false });
-      hlsInstance.loadSource(HLS_SRC);
-      hlsInstance.attachMedia(video);
-      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.muted = true;
-        video.play().catch(() => {});
-      });
+    // Use .then() (not async/await) for max Next.js compat
+    import("hls.js")
+      .then(({ default: Hls }) => {
+        if (destroyed) return;
+
+        // Try hls.js first (works on Chrome/Firefox/Edge and modern Safari)
+        if (Hls.isSupported()) {
+          const hls = new Hls({ enableWorker: false });
+          hlsInstance = hls;
+          hls.loadSource(HLS_SRC);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (!destroyed) {
+              video.muted = true;
+              video.play().catch(() => {});
+            }
+          });
+          hls.on(Hls.Events.ERROR, (_, data) => {
+            if (data.fatal) console.warn("[MuxBg] HLS error", data.type, data.details);
+          });
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          // iOS Safari only fallback
+          video.src = HLS_SRC;
+          video.muted = true;
+          video.play().catch(() => {});
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      destroyed = true;
+      hlsInstance?.destroy();
     };
-
-    init();
-    return () => { hlsInstance?.destroy(); };
   }, []);
 
   return (
