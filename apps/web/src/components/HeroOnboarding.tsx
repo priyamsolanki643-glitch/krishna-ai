@@ -28,23 +28,43 @@ export const HeroOnboarding: React.FC = () => {
   const reveal = (show: boolean): React.CSSProperties => ({
     opacity: show ? 1 : 0,
     transform: show ? "translateY(0)" : "translateY(20px)",
-    transition: "opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+    transition: "opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1)",
   });
+
+  const headingStyle: React.CSSProperties = {
+    fontFamily: "'Instrument Serif', serif",
+    fontWeight: 400,
+    fontSize: "clamp(2.2rem, 7.5vw, 5.5rem)",
+    letterSpacing: "-0.02em",
+    lineHeight: 1.08,
+    color: "#ffffff",
+    margin: 0,
+    background: "linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.92) 60%, rgba(255,255,255,0.75) 100%)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
+  };
 
   return (
     <div className="flex flex-col items-center justify-center text-center w-full px-5 sm:px-8 select-none">
+
       {/* Line 1 */}
-      <h1
-        className="font-bold text-white leading-tight tracking-tight m-0 text-3xl sm:text-5xl md:text-7xl"
-        style={reveal(phase >= 1)}
-      >
+      <h1 style={{ ...headingStyle, ...reveal(phase >= 1) }}>
         Never think alone.
       </h1>
 
       {/* Line 2 */}
       <h1
-        className="font-bold text-white leading-tight tracking-tight mt-2 mb-0 text-3xl sm:text-5xl md:text-7xl flex items-center justify-center gap-2 sm:gap-3 flex-wrap"
-        style={reveal(phase >= 2)}
+        style={{
+          ...headingStyle,
+          marginTop: "0.1em",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "0.2em",
+          flexWrap: "wrap" as const,
+          ...reveal(phase >= 2),
+        }}
       >
         <span>AI that actually</span>{" "}
         <span className="relative inline-block">
@@ -55,7 +75,8 @@ export const HeroOnboarding: React.FC = () => {
               animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
               exit={{ y: -14, opacity: 0, filter: "blur(4px)" }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="inline-block font-semibold text-white"
+              className="inline-block"
+              style={{ fontStyle: "italic" }}
             >
               {currentWord}.
             </motion.span>
@@ -73,19 +94,24 @@ export const HeroOnboarding: React.FC = () => {
               opacity: phase >= 2 ? 1 : 0,
               transform: phase >= 2 ? "scaleX(1)" : "scaleX(0)",
               transformOrigin: "left center",
-              transition:
-                "opacity 0.5s ease 0.4s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s",
-              boxShadow:
-                "0 0 12px rgba(168,85,247,0.5), 0 0 4px rgba(56,189,248,0.3)",
+              transition: "opacity 0.5s ease 0.4s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s",
+              boxShadow: "0 0 12px rgba(168,85,247,0.5), 0 0 4px rgba(56,189,248,0.3)",
             }}
           />
         </span>
       </h1>
 
-      {/* Subtitle - Fixed blink with clean solid fade-in */}
+      {/* Subtitle */}
       <p
-        className="mt-4 sm:mt-6 font-normal leading-relaxed text-sm sm:text-lg max-w-xl mx-auto text-zinc-400"
-        style={reveal(phase >= 3)}
+        className="mt-4 sm:mt-6 leading-relaxed max-w-xl mx-auto"
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          fontWeight: 300,
+          fontSize: "clamp(0.8rem, 1.6vw, 1rem)",
+          letterSpacing: "0.06em",
+          color: "rgba(255,255,255,0.55)",
+          ...reveal(phase >= 3),
+        }}
       >
         Built for thinkers, not just prompts.
       </p>
