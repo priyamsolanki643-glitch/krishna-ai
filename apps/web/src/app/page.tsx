@@ -1,21 +1,25 @@
 "use client";
 
 import React from "react";
+import { PlanetaryPulseBackground } from "../components/PlanetaryPulseBackground";
 import { HeroOnboarding } from "../components/HeroOnboarding";
 
 export default function Home() {
   return (
-    <div
+    <main
+      className="relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-black"
       style={{
-        background: "#000",
+        backgroundColor: "#000000",
         minHeight: "100svh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden",
       }}
     >
-      <HeroOnboarding />
-    </div>
+      {/* Background layer: Iridescent Planetary Pulse Loop */}
+      <PlanetaryPulseBackground />
+
+      {/* Content layer: High contrast Bricolage Grotesque typography with morph word and shimmer */}
+      <div className="relative z-10 flex w-full items-center justify-center">
+        <HeroOnboarding />
+      </div>
+    </main>
   );
 }
