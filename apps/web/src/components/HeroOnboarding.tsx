@@ -5,11 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const WORDS = ["thinks", "solves", "builds", "proves"];
 
-interface HeroOnboardingProps {
-  isMobile?: boolean;
-}
-
-export const HeroOnboarding: React.FC<HeroOnboardingProps> = ({ isMobile = false }) => {
+export const HeroOnboarding: React.FC = () => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [phase, setPhase] = useState(0);
 
@@ -17,8 +13,7 @@ export const HeroOnboarding: React.FC<HeroOnboardingProps> = ({ isMobile = false
     const t1 = setTimeout(() => setPhase(1), 100);
     const t2 = setTimeout(() => setPhase(2), 620);
     const t3 = setTimeout(() => setPhase(3), 1100);
-    const t4 = setTimeout(() => setPhase(4), 1500);
-    return () => [t1, t2, t3, t4].forEach(clearTimeout);
+    return () => [t1, t2, t3].forEach(clearTimeout);
   }, []);
 
   useEffect(() => {
@@ -39,7 +34,6 @@ export const HeroOnboarding: React.FC<HeroOnboardingProps> = ({ isMobile = false
   return (
     <div className="flex flex-col items-center justify-center text-center w-full px-5 sm:px-8 select-none">
 
-      {/* Line 1 */}
       <h1
         className="font-bold text-white leading-tight tracking-tight m-0 whitespace-nowrap text-3xl sm:text-5xl md:text-7xl"
         style={reveal(phase >= 1)}
@@ -47,9 +41,8 @@ export const HeroOnboarding: React.FC<HeroOnboardingProps> = ({ isMobile = false
         Never think alone.
       </h1>
 
-      {/* Line 2 + Morph Word */}
       <h1
-        className="font-bold text-white leading-tight tracking-tight mt-2 mb-0 whitespace-nowrap text-3xl sm:text-5xl md:text-7xl flex items-center justify-center gap-2 sm:gap-3"
+        className="font-bold text-white leading-tight tracking-tight mt-2 mb-0 text-3xl sm:text-5xl md:text-7xl flex items-center justify-center gap-2 sm:gap-3"
         style={reveal(phase >= 2)}
       >
         AI that actually{" "}
@@ -67,7 +60,6 @@ export const HeroOnboarding: React.FC<HeroOnboardingProps> = ({ isMobile = false
             </motion.span>
           </AnimatePresence>
 
-          {/* Violet → Cyan underline beam */}
           <span
             className="absolute left-0 right-0 bottom-0 rounded-full"
             style={{
@@ -85,25 +77,12 @@ export const HeroOnboarding: React.FC<HeroOnboardingProps> = ({ isMobile = false
         </span>
       </h1>
 
-      {/* Subtitle */}
       <p
         className="mt-4 sm:mt-6 font-normal leading-relaxed text-sm sm:text-lg max-w-xl mx-auto"
         style={{ color: "#A1A1AA", ...reveal(phase >= 3), transitionDelay: "0.05s" }}
       >
         Built for thinkers, not just prompts.
       </p>
-
-      {/* Action Cue */}
-      <div
-        className="mt-8 text-xs font-mono tracking-widest uppercase animate-bounce"
-        style={{
-          color: "#52525b",
-          opacity: phase >= 4 ? 1 : 0,
-          transition: "opacity 0.6s ease",
-        }}
-      >
-        {isMobile ? "↑ swipe up to explore core" : "↓ scroll to enter the core"}
-      </div>
     </div>
   );
 };
