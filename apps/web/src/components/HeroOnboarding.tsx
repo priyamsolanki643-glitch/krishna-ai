@@ -5,19 +5,22 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const WORDS = ["thinks", "solves", "builds", "proves"];
 
-export const HeroOnboarding: React.FC = () => {
+interface HeroOnboardingProps {
+  isMobile?: boolean;
+}
+
+export const HeroOnboarding: React.FC<HeroOnboardingProps> = ({ isMobile = false }) => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [phase, setPhase] = useState(0);
 
-  // Sequential cinematic entrance
   useEffect(() => {
     const t1 = setTimeout(() => setPhase(1), 100);
     const t2 = setTimeout(() => setPhase(2), 620);
     const t3 = setTimeout(() => setPhase(3), 1100);
-    return () => [t1, t2, t3].forEach(clearTimeout);
+    const t4 = setTimeout(() => setPhase(4), 1500);
+    return () => [t1, t2, t3, t4].forEach(clearTimeout);
   }, []);
 
-  // Word cycler (Fast, snappy rotation)
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % WORDS.length);
@@ -34,70 +37,73 @@ export const HeroOnboarding: React.FC = () => {
   });
 
   return (
-    <section
-      className="w-full flex items-center justify-center overflow-x-hidden px-5 sm:px-8"
-      style={{ minHeight: "100svh" }}
-    >
-      <div className="w-full max-w-3xl mx-auto text-center">
+    <div className="flex flex-col items-center justify-center text-center w-full px-5 sm:px-8 select-none">
 
-        {/* Line 1 */}
-        <h1
-          className="font-bold text-white leading-[1.1] tracking-[-0.04em] m-0 whitespace-nowrap text-3xl sm:text-4xl md:text-6xl"
-          style={reveal(phase >= 1)}
-        >
-          Never think alone.
-        </h1>
+      {/* Line 1 */}
+      <h1
+        className="font-bold text-white leading-tight tracking-tight m-0 whitespace-nowrap text-3xl sm:text-5xl md:text-7xl"
+        style={reveal(phase >= 1)}
+      >
+        Never think alone.
+      </h1>
 
-        {/* Line 2 — with Framer Motion AnimatePresence Morph Word (Violet -> Cyan Shimmer) */}
-        <h1
-          className="font-bold text-white leading-[1.1] tracking-[-0.04em] mt-[0.08em] mb-0 whitespace-nowrap text-3xl sm:text-4xl md:text-6xl"
-          style={reveal(phase >= 2)}
-        >
-          AI that actually{" "}
-          <span className="relative inline-block pb-[0.05em]">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={currentWord}
-                initial={{ y: 12, opacity: 0, filter: "blur(5px)" }}
-                animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-                exit={{ y: -12, opacity: 0, filter: "blur(5px)" }}
-                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }} // Snappy Fast Apple Spring Curve
-                className="inline-block font-extrabold text-white"
-              >
-                {currentWord}.
-              </motion.span>
-            </AnimatePresence>
+      {/* Line 2 + Morph Word */}
+      <h1
+        className="font-bold text-white leading-tight tracking-tight mt-2 mb-0 whitespace-nowrap text-3xl sm:text-5xl md:text-7xl flex items-center justify-center gap-2 sm:gap-3"
+        style={reveal(phase >= 2)}
+      >
+        AI that actually{" "}
+        <span className="relative inline-block">
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={currentWord}
+              initial={{ y: 14, opacity: 0, filter: "blur(4px)" }}
+              animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+              exit={{ y: -14, opacity: 0, filter: "blur(4px)" }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="inline-block font-extrabold text-white"
+            >
+              {currentWord}.
+            </motion.span>
+          </AnimatePresence>
 
-            {/* Sleek Violet -> Cyan Shimmer Underline Beam with Subtle Neon Ambient Glow */}
-            <span
-              className="absolute left-0 right-0 bottom-0 rounded-full"
-              style={{
-                height: "2px",
-                background: "linear-gradient(90deg, #a855f7 0%, #38bdf8 35%, #ffffff 52%, #a855f7 75%, #38bdf8 100%)",
-                backgroundSize: "250% 100%",
-                animation: "shimmer-beam 2.4s linear infinite",
-                opacity: phase >= 2 ? 1 : 0,
-                transform: phase >= 2 ? "scaleX(1)" : "scaleX(0)",
-                transformOrigin: "left center",
-                transition: "opacity 0.5s ease 0.4s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s",
-                boxShadow: "0 0 12px rgba(168, 85, 247, 0.5), 0 0 4px rgba(56, 189, 248, 0.3)",
-              }}
-            />
-          </span>
-        </h1>
+          {/* Violet → Cyan underline beam */}
+          <span
+            className="absolute left-0 right-0 bottom-0 rounded-full"
+            style={{
+              height: "2px",
+              background: "linear-gradient(90deg, #a855f7 0%, #38bdf8 35%, #ffffff 52%, #a855f7 75%, #38bdf8 100%)",
+              backgroundSize: "250% 100%",
+              animation: "shimmer-beam 2.4s linear infinite",
+              opacity: phase >= 2 ? 1 : 0,
+              transform: phase >= 2 ? "scaleX(1)" : "scaleX(0)",
+              transformOrigin: "left center",
+              transition: "opacity 0.5s ease 0.4s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s",
+              boxShadow: "0 0 12px rgba(168,85,247,0.5), 0 0 4px rgba(56,189,248,0.3)",
+            }}
+          />
+        </span>
+      </h1>
 
-        {/* Line 3 — sub-text */}
-        <p
-          className="mt-5 sm:mt-6 font-normal leading-relaxed tracking-[0.005em] text-sm sm:text-base"
-          style={{
-            color: "#A1A1AA",
-            ...reveal(phase >= 3),
-            transitionDelay: "0.05s",
-          }}
-        >
-          Built for thinkers, not just prompts.
-        </p>
+      {/* Subtitle */}
+      <p
+        className="mt-4 sm:mt-6 font-normal leading-relaxed text-sm sm:text-lg max-w-xl mx-auto"
+        style={{ color: "#A1A1AA", ...reveal(phase >= 3), transitionDelay: "0.05s" }}
+      >
+        Built for thinkers, not just prompts.
+      </p>
+
+      {/* Action Cue */}
+      <div
+        className="mt-8 text-xs font-mono tracking-widest uppercase animate-bounce"
+        style={{
+          color: "#52525b",
+          opacity: phase >= 4 ? 1 : 0,
+          transition: "opacity 0.6s ease",
+        }}
+      >
+        {isMobile ? "↑ swipe up to explore core" : "↓ scroll to enter the core"}
       </div>
-    </section>
+    </div>
   );
 };
