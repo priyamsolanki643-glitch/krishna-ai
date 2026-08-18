@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { StarBackground } from "../components/StarBackground";
 import { HeroOnboarding } from "../components/HeroOnboarding";
 
 export default function Home() {
@@ -16,10 +15,7 @@ export default function Home() {
         overflow: "hidden",
       }}
     >
-      <StarBackground />
-      <div style={{ position: "relative", zIndex: 10 }}>
-        <HeroOnboarding />
-      </div>
+      <HeroOnboarding />
     </div>
   );
 }
