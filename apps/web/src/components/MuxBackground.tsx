@@ -15,12 +15,10 @@ export const MuxBackground: React.FC = () => {
     let destroyed = false;
     let hlsInstance: { destroy: () => void } | null = null;
 
-    // Use .then() (not async/await) for max Next.js compat
     import("hls.js")
       .then(({ default: Hls }) => {
         if (destroyed) return;
 
-        // Try hls.js first (works on Chrome/Firefox/Edge and modern Safari)
         if (Hls.isSupported()) {
           const hls = new Hls({ enableWorker: false });
           hlsInstance = hls;
@@ -36,7 +34,6 @@ export const MuxBackground: React.FC = () => {
             if (data.fatal) console.warn("[MuxBg] HLS error", data.type, data.details);
           });
         } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          // iOS Safari only fallback
           video.src = HLS_SRC;
           video.muted = true;
           video.play().catch(() => {});
@@ -59,15 +56,34 @@ export const MuxBackground: React.FC = () => {
         zIndex: 0,
         overflow: "hidden",
         pointerEvents: "none",
+        backgroundColor: "#000000",
       }}
     >
+      {/* High-contrast metallic chrome monochrome fluid background */}
       <video
         ref={videoRef}
         autoPlay
         muted
         loop
         playsInline
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+          filter: "grayscale(100%) contrast(165%) brightness(95%)",
+        }}
+      />
+
+      {/* Subtle radial vignette overlay keeping center typography crisp and 100% readable */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.8) 100%)",
+          pointerEvents: "none",
+        }}
       />
     </div>
   );
