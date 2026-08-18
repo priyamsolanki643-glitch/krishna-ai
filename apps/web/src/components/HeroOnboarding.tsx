@@ -47,12 +47,12 @@ export const HeroOnboarding: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center text-center w-full px-5 sm:px-8 select-none">
 
-      {/* Line 1 - Pure White */}
-      <h1 style={{ ...headingBase, color: "#ffffff", ...reveal(phase >= 1) }}>
+      {/* Line 1 */}
+      <h1 style={{ ...headingBase, ...reveal(phase >= 1) }}>
         Never think alone.
       </h1>
 
-      {/* Line 2 - Dual Tone: Muted Silver + White Morph Word */}
+      {/* Line 2 */}
       <h1
         style={{
           ...headingBase,
@@ -60,12 +60,12 @@ export const HeroOnboarding: React.FC = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: "0.25em",
+          gap: "0.2em",
           flexWrap: "wrap" as const,
           ...reveal(phase >= 2),
         }}
       >
-        <span style={{ color: "rgba(255, 255, 255, 0.48)" }}>AI that actually</span>
+        <span>AI that actually</span>
 
         <span style={{ position: "relative", display: "inline-block" }}>
           <AnimatePresence mode="wait">
