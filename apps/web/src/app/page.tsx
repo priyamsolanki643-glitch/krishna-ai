@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { PlanetaryPulseBackground } from "../components/PlanetaryPulseBackground";
 import { HeroOnboarding } from "../components/HeroOnboarding";
 
 export default function Home() {
@@ -13,10 +12,6 @@ export default function Home() {
         minHeight: "100svh",
       }}
     >
-      {/* Background layer: Iridescent Planetary Pulse Loop */}
-      <PlanetaryPulseBackground />
-
-      {/* Content layer: High contrast Bricolage Grotesque typography with morph word and shimmer */}
       <div className="relative z-10 flex w-full items-center justify-center">
         <HeroOnboarding />
       </div>
