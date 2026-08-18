@@ -1,19 +1,19 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { StarBackground } from "../components/StarBackground";
+import { ThreeBackground } from "../components/ThreeBackground";
 import { HeroOnboarding } from "../components/HeroOnboarding";
+import { Stage2Coding } from "../components/stages/Stage2Coding";
+import { Stage3Voice } from "../components/stages/Stage3Voice";
+import { Stage4Chat } from "../components/stages/Stage4Chat";
 import { PaginationDots } from "../components/PaginationDots";
-import { CodingIDECard } from "../components/cards/CodingIDECard";
-import { VoiceCoreCard } from "../components/cards/VoiceCoreCard";
-import { ReasoningCard } from "../components/cards/ReasoningCard";
-import { MultiAgentCard } from "../components/cards/MultiAgentCard";
-import { BentoGrid } from "../components/BentoGrid";
+
+const TOTAL_SECTIONS = 4;
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
-  const snapContainerRef = useRef<HTMLDivElement | null>(null);
+  const snapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -22,84 +22,102 @@ export default function Home() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Track active snap section on mobile via scroll position
+  // Track active snap section for pagination dots (mobile)
   useEffect(() => {
     if (!isMobile) return;
-    const container = snapContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const section = Math.round(container.scrollTop / window.innerHeight);
-      setActiveSection(Math.max(0, Math.min(2, section)));
+    const el = snapRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const s = Math.round(el.scrollTop / window.innerHeight);
+      setActiveSection(Math.max(0, Math.min(TOTAL_SECTIONS - 1, s)));
     };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
   }, [isMobile]);
 
-  // ─── MOBILE LAYOUT: CSS Snap Scroll ───────────────────────────────────────
+  // ── MOBILE ───────────────────────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div className="bg-black w-full max-w-full overflow-x-hidden" style={{ height: "100dvh" }}>
-        <StarBackground />
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "#000",
+          overflow: "hidden",
+        }}
+      >
+        {/* 3D Starfield */}
+        <ThreeBackground isMobile={true} totalSections={TOTAL_SECTIONS} />
 
-        {/* Snap Scroll Container */}
+        {/* Snap scroll container */}
         <div
-          ref={snapContainerRef}
-          className="snap-container relative z-10"
-          style={{ height: "100dvh" }}
+          ref={snapRef}
+          className="snap-container"
+          style={{ position: "relative", zIndex: 10, height: "100dvh" }}
         >
-          {/* Section 1: Hero */}
+          {/* Stage 1 — Hero */}
           <section className="snap-section flex flex-col items-center justify-center">
             <HeroOnboarding isMobile={true} />
           </section>
 
-          {/* Section 2: Coding IDE + Voice Core */}
-          <section className="snap-section flex flex-col items-center justify-center gap-3 px-4 py-6 overflow-y-auto">
-            <div className="w-full max-w-sm">
-              <CodingIDECard />
-            </div>
-            <div className="w-full max-w-sm">
-              <VoiceCoreCard />
-            </div>
+          {/* Stage 2 — Coding */}
+          <section className="snap-section flex flex-col items-center justify-center overflow-hidden">
+            <Stage2Coding />
           </section>
 
-          {/* Section 3: Reasoning + MultiAgent */}
-          <section className="snap-section flex flex-col items-center justify-center gap-3 px-4 py-6">
-            <div className="w-full max-w-sm">
-              <ReasoningCard />
-            </div>
-            <div className="w-full max-w-sm">
-              <MultiAgentCard />
-            </div>
+          {/* Stage 3 — Cybernetic Voice */}
+          <section className="snap-section overflow-hidden">
+            <Stage3Voice />
+          </section>
+
+          {/* Stage 4 — Multi-Agent Chat */}
+          <section className="snap-section flex flex-col items-center justify-center overflow-hidden">
+            <Stage4Chat />
           </section>
         </div>
 
-        {/* Mobile Pagination Dots */}
-        <PaginationDots total={3} active={activeSection} />
+        {/* Pagination dots */}
+        <PaginationDots total={TOTAL_SECTIONS} active={activeSection} />
       </div>
     );
   }
 
-  // ─── DESKTOP LAYOUT: Scroll-Driven ────────────────────────────────────────
+  // ── DESKTOP ──────────────────────────────────────────────────────────────
+  // 4 × 100vh = 400vh total — Three.js camera flies through as you scroll
   return (
-    <div className="bg-black overflow-x-hidden w-full">
-      {/* 3D Warp Starfield — scroll velocity linked */}
-      <StarBackground />
+    <div style={{ background: "#000", minHeight: `${TOTAL_SECTIONS * 100}vh` }}>
+      {/* Fixed 3D tunnel — scroll drives camera Z */}
+      <ThreeBackground isMobile={false} totalSections={TOTAL_SECTIONS} />
 
-      {/* Content layers above starfield */}
-      <div className="relative z-10">
-        {/* Section 1: Hero — sticky while scrolling through 100vh */}
+      {/* Content sections — stacked, each full-screen */}
+      <div style={{ position: "relative", zIndex: 10 }}>
+        {/* Stage 1 — Hero */}
         <section
-          className="min-h-screen flex items-center justify-center"
-          style={{ minHeight: "100svh" }}
+          style={{ height: "100vh" }}
+          className="flex flex-col items-center justify-center"
         >
           <HeroOnboarding isMobile={false} />
         </section>
 
-        {/* Section 2: Bento Grid Showcase */}
-        <section className="relative">
-          <BentoGrid />
+        {/* Stage 2 — Coding Terminal */}
+        <section
+          style={{ height: "100vh" }}
+          className="flex flex-col items-center justify-center"
+        >
+          <Stage2Coding />
+        </section>
+
+        {/* Stage 3 — Cybernetic Voice (full-bleed, no padding) */}
+        <section style={{ height: "100vh", position: "relative" }}>
+          <Stage3Voice />
+        </section>
+
+        {/* Stage 4 — Multi-Agent Chat */}
+        <section
+          style={{ height: "100vh" }}
+          className="flex flex-col items-center justify-center"
+        >
+          <Stage4Chat />
         </section>
       </div>
     </div>
