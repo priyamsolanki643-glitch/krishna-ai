@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <main
       style={{
-        background: "#000000",
+        background: "#0B0D10",
         minHeight: "100svh",
         display: "flex",
         alignItems: "center",

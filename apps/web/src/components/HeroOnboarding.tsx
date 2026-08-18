@@ -32,8 +32,6 @@ export const HeroOnboarding: React.FC = () => {
       "opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1)",
   });
 
-  // Shared heading style — NO gradient on the h1 itself to avoid
-  // WebkitTextFillColor inheritance breaking animated children
   const headingBase: React.CSSProperties = {
     fontFamily: "'Instrument Serif', serif",
     fontWeight: 400,
@@ -78,7 +76,6 @@ export const HeroOnboarding: React.FC = () => {
               style={{
                 display: "inline-block",
                 fontStyle: "italic",
-                // ↓ CRITICAL: override any inherited WebkitTextFillColor
                 color: "#ffffff",
                 WebkitTextFillColor: "#ffffff",
               }}
@@ -87,7 +84,7 @@ export const HeroOnboarding: React.FC = () => {
             </motion.span>
           </AnimatePresence>
 
-          {/* Shimmer underline */}
+          {/* Refined monochrome steel shimmer underline */}
           <span
             style={{
               position: "absolute",
@@ -97,16 +94,15 @@ export const HeroOnboarding: React.FC = () => {
               height: "2px",
               borderRadius: "9999px",
               background:
-                "linear-gradient(90deg, #a855f7 0%, #38bdf8 35%, #ffffff 52%, #a855f7 75%, #38bdf8 100%)",
+                "linear-gradient(90deg, #71717a 0%, #cbd5e1 50%, #52525b 100%)",
               backgroundSize: "250% 100%",
-              animation: "shimmer-beam 2.4s linear infinite",
+              animation: "shimmer-beam 2.8s linear infinite",
               opacity: phase >= 2 ? 1 : 0,
               transform: phase >= 2 ? "scaleX(1)" : "scaleX(0)",
               transformOrigin: "left center",
               transition:
                 "opacity 0.5s ease 0.4s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s",
-              boxShadow:
-                "0 0 12px rgba(168,85,247,0.5), 0 0 4px rgba(56,189,248,0.3)",
+              boxShadow: "0 0 8px rgba(203, 213, 225, 0.2)",
             }}
           />
         </span>

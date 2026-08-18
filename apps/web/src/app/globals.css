@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #000000;
+  --background: #0B0D10;
   --foreground: #ffffff;
 }
 
@@ -15,12 +15,12 @@
 html {
   font-family: "Bricolage Grotesque", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   font-optical-sizing: auto;
-  background: #000000;
+  background: #0B0D10;
   color: #ffffff;
 }
 
 body {
-  background-color: #000000;
+  background-color: #0B0D10;
   color: #ffffff;
   margin: 0;
   padding: 0;

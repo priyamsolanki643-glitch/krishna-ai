@@ -56,10 +56,10 @@ export const MuxBackground: React.FC = () => {
         zIndex: 0,
         overflow: "hidden",
         pointerEvents: "none",
-        backgroundColor: "#000000",
+        backgroundColor: "#0B0D10",
       }}
     >
-      {/* High-contrast metallic chrome monochrome fluid background */}
+      {/* Matte Slate & Cool Steel Tone Ribbon */}
       <video
         ref={videoRef}
         autoPlay
@@ -71,17 +71,17 @@ export const MuxBackground: React.FC = () => {
           height: "100%",
           objectFit: "cover",
           display: "block",
-          filter: "grayscale(100%) contrast(165%) brightness(95%)",
+          filter: "hue-rotate(185deg) saturate(35%) brightness(88%) contrast(120%)",
         }}
       />
 
-      {/* Subtle radial vignette overlay keeping center typography crisp and 100% readable */}
+      {/* Soft radial fade vignette overlay into #0B0D10 */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           background:
-            "radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.8) 100%)",
+            "radial-gradient(circle at center, transparent 0%, rgba(11, 13, 16, 0.4) 50%, #0B0D10 100%)",
           pointerEvents: "none",
         }}
       />
