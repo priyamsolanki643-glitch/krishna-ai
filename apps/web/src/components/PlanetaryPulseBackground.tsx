@@ -25,8 +25,8 @@ export const PlanetaryPulseBackground: React.FC = () => {
       {/* Ambient background glow halo 1 - Violet */}
       <motion.div
         animate={{
-          scale: [1, 1.15, 1],
-          opacity: [0.35, 0.55, 0.35],
+          scale: [1, 1.18, 1],
+          opacity: [0.35, 0.6, 0.35],
         }}
         transition={{
           duration: 8,
@@ -35,11 +35,11 @@ export const PlanetaryPulseBackground: React.FC = () => {
         }}
         style={{
           position: "absolute",
-          width: "min(90vw, 750px)",
-          height: "min(90vw, 750px)",
+          width: "min(95vw, 850px)",
+          height: "min(95vw, 850px)",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(168, 85, 247, 0.22) 0%, rgba(168, 85, 247, 0.08) 45%, transparent 70%)",
+            "radial-gradient(circle, rgba(168, 85, 247, 0.28) 0%, rgba(168, 85, 247, 0.08) 50%, transparent 75%)",
           filter: "blur(60px)",
         }}
       />
@@ -47,8 +47,8 @@ export const PlanetaryPulseBackground: React.FC = () => {
       {/* Ambient background glow halo 2 - Cyan */}
       <motion.div
         animate={{
-          scale: [1.1, 0.95, 1.1],
-          opacity: [0.25, 0.45, 0.25],
+          scale: [1.12, 0.95, 1.12],
+          opacity: [0.25, 0.5, 0.25],
         }}
         transition={{
           duration: 10,
@@ -58,11 +58,11 @@ export const PlanetaryPulseBackground: React.FC = () => {
         }}
         style={{
           position: "absolute",
-          width: "min(85vw, 680px)",
-          height: "min(85vw, 680px)",
+          width: "min(90vw, 780px)",
+          height: "min(90vw, 780px)",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, rgba(56, 189, 248, 0.05) 50%, transparent 75%)",
+            "radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, rgba(56, 189, 248, 0.06) 50%, transparent 75%)",
           filter: "blur(70px)",
         }}
       />
@@ -70,7 +70,7 @@ export const PlanetaryPulseBackground: React.FC = () => {
       {/* Floating video container with smooth organic breathing motion */}
       <motion.div
         animate={{
-          y: [-6, 6, -6],
+          y: [-8, 8, -8],
           scale: [0.98, 1.02, 0.98],
         }}
         transition={{
@@ -80,11 +80,11 @@ export const PlanetaryPulseBackground: React.FC = () => {
         }}
         className="relative flex items-center justify-center"
         style={{
-          width: "clamp(340px, 75vw, 860px)",
-          height: "clamp(340px, 75vw, 860px)",
+          width: "min(92vw, 860px)",
+          height: "min(92vw, 860px)",
         }}
       >
-        {/* Iridescent Pulse Loop Video with Radial Gradient Mask */}
+        {/* Iridescent Pulse Loop Video - Crystal Clear & 100% Visible */}
         <video
           ref={videoRef}
           src={VIDEO_SRC}
@@ -93,23 +93,21 @@ export const PlanetaryPulseBackground: React.FC = () => {
           muted
           playsInline
           preload="auto"
-          className="w-full h-full object-cover"
+          className="w-full h-full rounded-full"
           style={{
-            maskImage: "radial-gradient(circle at center, black 45%, transparent 75%)",
-            WebkitMaskImage: "radial-gradient(circle at center, black 45%, transparent 75%)",
-            mixBlendMode: "screen",
-            opacity: 0.95,
-            filter: "contrast(1.08) brightness(1.05)",
+            objectFit: "cover",
+            filter: "invert(1) hue-rotate(180deg) contrast(1.1) brightness(1.05)",
+            opacity: 1,
           }}
         />
       </motion.div>
 
-      {/* Subtle vignette layer to ensure perfect seamless darkness at boundaries */}
+      {/* Subtle vignette overlay to ensure seamless darkness at viewport boundaries */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.6) 80%, #000000 100%)",
+            "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 80%, #000000 100%)",
         }}
       />
     </div>
