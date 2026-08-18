@@ -67,7 +67,10 @@ export const MuxBackground: React.FC = () => {
         muted
         loop
         playsInline
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block",
+          /* Black liquid glass: desaturate + darken, keep reflective highlights */
+          filter: "saturate(0.08) brightness(0.22) contrast(1.5)",
+        }}
       />
     </div>
   );
