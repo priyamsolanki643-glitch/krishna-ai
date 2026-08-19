@@ -1,9 +1,20 @@
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&display=swap");
 @import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #0B0D10;
+  --background: #ffffff;
+  --foreground: #000000;
+  --sidebar-bg: #fafafa;
+  --sidebar-hover: #f4f4f5;
+  --border-color: rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  --background: #000000;
   --foreground: #ffffff;
+  --sidebar-bg: #0a0a0a;
+  --sidebar-hover: rgba(255, 255, 255, 0.05);
+  --border-color: rgba(255, 255, 255, 0.05);
 }
 
 *,
@@ -12,16 +23,24 @@
   box-sizing: border-box;
 }
 
-html {
-  font-family: "Bricolage Grotesque", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  font-optical-sizing: auto;
-  background: #0B0D10;
+::selection {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: inherit;
+}
+.dark ::selection {
+  background-color: rgba(255, 255, 255, 0.2);
   color: #ffffff;
 }
 
+html {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--background) !important;
+  color: var(--foreground);
+}
+
 body {
-  background-color: #0B0D10;
-  color: #ffffff;
+  background-color: var(--background) !important;
+  color: var(--foreground);
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -35,3 +54,5 @@ body {
   0%   { background-position: 200% center; }
   100% { background-position: -200% center; }
 }
+
+.animated-gradient-text { position: relative; display: inline-block; max-width: fit-content; vertical-align: baseline; overflow: visible; padding-bottom: 0.2em; } .gradient-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-size: 300% 100%; animation: text-gradient linear infinite; border-radius: inherit; z-index: 0; pointer-events: none; } .gradient-overlay::before { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: inherit; width: calc(100% - 2px); height: calc(100% - 2px); background-color: #000; z-index: -1; } @keyframes text-gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } } .text-content { display: inline-block; position: relative; z-index: 2; background-size: 300% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; animation: text-gradient linear infinite; overflow: visible; padding-bottom: 0.2em; }

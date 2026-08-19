@@ -3,13 +3,14 @@
 import React, { useEffect, useRef } from "react";
 import Hls from "hls.js";
 
-export const MuxBackground = () => {
+export const CouncilBackground = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    // Using the working MUX stream since the CloudFront URL is expired (403/404)
     const src = "https://stream.mux.com/8wrHPCX2dC3msyYU9ObwqNdm00u3ViXvOSHUMRYSEe5Q.m3u8";
 
     if (Hls.isSupported()) {
@@ -23,21 +24,15 @@ export const MuxBackground = () => {
   }, []);
 
   return (
-    <>
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden pointer-events-none z-0 bg-[#000000]">
       <video
         ref={videoRef}
         autoPlay
-        muted
         loop
+        muted
         playsInline
-        className="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-85 brightness-90 contrast-110"
+        className="w-full h-full object-cover pointer-events-none opacity-100"
       />
-      
-      {/* Soft Center Radial Contrast Mask */}
-      <div 
-        className="fixed inset-0 z-0 pointer-events-none"
-        style={{ background: 'radial-gradient(circle at center, rgba(0,0,0,0.5) 0%, transparent 70%)' }}
-      />
-    </>
+    </div>
   );
 };
