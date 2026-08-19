@@ -1,1 +1,13 @@
-{"name": "krishna-ai","version": "1.0.0","private": true,"workspaces": ["apps/*","packages/*"]}
+{
+  "name": "krishna-ai",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm --prefix apps/web run build"
+  }
+}
+
