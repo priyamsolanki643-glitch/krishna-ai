@@ -1,0 +1,147 @@
+:root {
+    --glass-bg: rgba(15, 23, 42, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --primary-color: #22d3ee; /* Cyan-400 */
+    --danger-color: #f87171; /* Red-400 */
+}
+
+body {
+    scroll-behavior: smooth;
+}
+
+/* Glassmorphism Panel */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(30, 41, 59, 0.3);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(71, 85, 105, 0.6);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.8);
+}
+
+/* Filter Buttons */
+.filter-btn {
+    color: #94a3b8; /* slate-400 */
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    color: #e2e8f0; /* slate-200 */
+}
+
+.filter-btn.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+/* Hover Lift Effect */
+.hover-lift {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+}
+
+/* Task Item Animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.task-enter {
+    animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Custom Checkbox */
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: rgba(30, 41, 59, 0.8);
+    border: 2px solid #475569;
+    border-radius: 50%;
+    width: 1.3rem;
+    height: 1.3rem;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: grid;
+    place-content: center;
+    flex-shrink: 0;
+}
+
+input[type="checkbox"]::after {
+    content: "";
+    width: 0.6em;
+    height: 0.6em;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    background-color: var(--primary-color);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+input[type="checkbox"]:hover {
+    border-color: #64748b;
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+input[type="checkbox"]:checked::after {
+    transform: scale(1);
+}
+
+/* Task Completion Styles */
+.task-completed .task-text {
+    text-decoration: line-through;
+    color: #64748b;
+    opacity: 0.7;
+}
+
+.task-completed {
+    opacity: 0.8;
+}
+
+/* Delete Button */
+.delete-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.task-item:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    background-color: rgba(248, 113, 113, 0.2);
+    color: var(--danger-color);
+}

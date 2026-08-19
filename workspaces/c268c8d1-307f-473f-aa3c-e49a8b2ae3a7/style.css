@@ -1,0 +1,144 @@
+:root {
+  --bg-color: #121212;
+  --calc-bg: #1e1e1e;
+  --display-color: #ffffff;
+  --secondary-text: #a5a5a5;
+  --btn-bg: #2d2d2d;
+  --btn-hover: #3d3d3d;
+  --operator-color: #ff9f0a;
+  --operator-hover: #ffb03b;
+  --equals-color: #32d74b;
+  --equals-hover: #4ce364;
+  --clear-color: #ff453a;
+  --clear-hover: #ff6961;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.calculator-container {
+  width: 100%;
+  max-width: 360px;
+  padding: 20px;
+}
+
+.calculator {
+  background-color: var(--calc-bg);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  padding: 20px;
+}
+
+.display {
+  background-color: #000;
+  color: var(--display-color);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: right;
+  margin-bottom: 20px;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+.previous-operand {
+  color: var(--secondary-text);
+  font-size: 1rem;
+  min-height: 24px;
+  margin-bottom: 5px;
+}
+
+.current-operand {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.btn {
+  height: 65px;
+  border: none;
+  border-radius: 15px;
+  background-color: var(--btn-bg);
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  user-select: none;
+}
+
+.btn:hover {
+  background-color: var(--btn-hover);
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.operator {
+  background-color: var(--operator-color);
+  color: #fff;
+  font-weight: bold;
+}
+
+.operator:hover {
+  background-color: var(--operator-hover);
+}
+
+.equals {
+  background-color: var(--equals-color);
+  color: #000;
+  font-weight: bold;
+}
+
+.equals:hover {
+  background-color: var(--equals-hover);
+}
+
+.span-two {
+  grid-column: span 2;
+}
+
+[data-action="clear"] {
+  background-color: var(--clear-color);
+}
+
+[data-action="clear"]:hover {
+  background-color: var(--clear-hover);
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+  .calculator-container {
+    padding: 10px;
+  }
+  
+  .btn {
+    height: 55px;
+    font-size: 1.1rem;
+  }
+  
+  .current-operand {
+    font-size: 2rem;
+  }
+}

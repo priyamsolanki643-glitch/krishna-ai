@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-900 text-white">
+<head>
+<meta charset="UTF-8">
+<title>Cyberpunk Kanban Board</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.3/dist/tailwind.min.css" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+</head>
+<body class="h-full flex flex-col">
+  <!-- Progress Bar -->
+  <div class="w-full bg-gray-800 p-2">
+    <div id="progress-bar" class="h-4 bg-gradient-to-r from-cyan-500 to-magenta-500 rounded-full" style="width:0%"></div>
+  </div>
+
+  <!-- Header Actions -->
+  <div class="flex justify-between items-center p-4">
+    <h1 class="text-2xl font-bold">Cyberpunk Kanban</h1>
+    <div class="flex space-x-4">
+      <button id="add-task-btn" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-magenta-500 text-white rounded hover:brightness-110 transition">
+        Add Task
+      </button>
+      <button id="clear-all-btn" class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-800 text-white rounded hover:brightness-110 transition">
+        Clear All
+      </button>
+    </div>
+  </div>
+
+  <!-- Board -->
+  <div id="board" class="flex-1 flex space-x-4 p-4 overflow-auto">
+    <!-- To-Do Column -->
+    <div class="flex-1 flex flex-col min-w-80 bg-gray-800 rounded-lg p-4 border-2 border-cyan-500 glow">
+      <h2 class="text-xl font-semibold mb-2">To-Do</h2>
+      <div id="todo" class="flex-1 flex flex-col gap-2" data-column="todo"></div>
+    </div>
+    <!-- In Progress Column -->
+    <div class="flex-1 flex flex-col min-w-80 bg-gray-800 rounded-lg p-4 border-2 border-magenta-500 glow">
+      <h2 class="text-xl font-semibold mb-2">In Progress</h2>
+      <div id="in-progress" class="flex-1 flex flex-col gap-2" data-column="in-progress"></div>
+    </div>
+    <!-- Completed Column -->
+    <div class="flex-1 flex flex-col min-w-80 bg-gray-800 rounded-lg p-4 border-2 border-cyan-500 glow">
+      <h2 class="text-xl font-semibold mb-2">Completed</h2>
+      <div id="completed" class="flex-1 flex flex-col gap-2" data-column="completed"></div>
+    </div>
+  </div>
+
+  <!-- No Tasks Message -->
+  <div id="empty-state" class="absolute inset-0 flex items-center justify-center bg-gray-900/70 backdrop-blur-sm hidden">
+    <div class="text-center">
+      <svg class="mx-auto mb-4 w-24 h-24 text-cyan-500 animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2s2-.9 2-2V10c0-1.1-.9-2-2-2zM4 12h2m12 0h2M8 12h2m4 0h2m-8 6h8" />
+      </svg>
+      <p class="text-2xl font-semibold">No tasks yet. Create one!</p>
+    </div>
+  </div>
+
+  <!-- Add Task Modal -->
+  <div id="add-task-modal" class="fixed inset-0 flex items-center justify-center bg-black/70 hidden">
+    <div class="bg-gray-800 rounded-lg p-6 w-80">
+      <h3 class="text-xl font-semibold mb-4 text-cyan-500">New Task</h3>
+      <input id="new-task-title" type="text" placeholder="Task title" class="w-full p-2 bg-gray-700 rounded mb-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+      <div class="flex justify-end space-x-2">
+        <button id="cancel-add" class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700">Cancel</button>
+        <button id="save-task" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-magenta-500 text-white rounded hover:brightness-110 transition">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-clear-modal" class="fixed inset-0 flex items-center justify-center bg-black/70 hidden">
+    <div class="bg-gray-800 rounded-lg p-6 w-80">
+      <h3 class="text-xl font-semibold mb-4 text-red-500">Confirm Clear All</h3>
+      <p class="mb-6">Are you sure you want to delete all tasks? This action cannot be undone.</p>
+      <div class="flex justify-end space-x-2">
+        <button id="cancel-clear" class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700">Cancel</button>
+        <button id="confirm-clear" class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-800 text-white rounded hover:brightness-110 transition">Clear All</button>
+      </div>
+    </div>
+  </div>
+
+<script src="script.js"></script>
+</body>
+</html>
