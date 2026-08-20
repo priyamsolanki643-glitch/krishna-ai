@@ -36,23 +36,24 @@ export default function AppWorkspacePage() {
       onTouchEnd={handleTouchEnd}
       className="flex h-screen w-full bg-[#000000] text-white font-sans overflow-hidden relative"
     >
-      {/* ── Top-Left Floating Hamburger Button (Smooth Slide with Sidebar) ── */}
+      {/* ── Top-Left Pure Minimalist 3 Lines (Slide with Sidebar) ── */}
       <motion.button
         type="button"
-        onClick={() => setIsSidebarOpen((prev) => !prev)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsSidebarOpen((prev) => !prev);
+        }}
         animate={{ 
-          x: isSidebarOpen ? 268 : 0 
+          x: isSidebarOpen ? 260 : 0 
         }}
-        transition={{ type: "spring", stiffness: 400, damping: 28 }}
-        className="fixed top-5 left-5 z-50 w-10 h-10 rounded-full flex items-center justify-center text-zinc-300 hover:text-white border border-white/20 border-t-white/35 backdrop-blur-2xl backdrop-saturate-[190%] shadow-[0_12px_32px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.35)] cursor-pointer active:scale-90 transition-colors"
-        style={{
-          background: "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%), rgba(18, 18, 22, 0.65)"
-        }}
-        title={isSidebarOpen ? "Close Council Drawer" : "Open Council Drawer"}
-        aria-label="Toggle Council Drawer"
+        transition={{ type: "spring", stiffness: 450, damping: 28 }}
+        className="fixed top-6 left-6 z-[60] text-zinc-400 hover:text-white active:scale-90 transition-transform cursor-pointer p-0 bg-transparent border-0 outline-none shadow-none flex items-center justify-center"
+        title={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
+        aria-label="Toggle Sidebar"
       >
-        <Menu className="w-4 h-4" />
+        <Menu className="w-5 h-5" />
       </motion.button>
+
 
       {/* Dynamic Session History Sidebar */}
       <Sidebar

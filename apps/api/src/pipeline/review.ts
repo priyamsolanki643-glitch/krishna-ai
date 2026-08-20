@@ -27,7 +27,7 @@ Return raw JSON only.`;
 
   const userPrompt = `Original Query: ${query}\n\nCurrent Draft to Review:\n${draft}`;
 
-  const rawResponse = await callGroq(systemPrompt, userPrompt, "openai/gpt-oss-20b");
+    const rawResponse = await callGroq(systemPrompt, userPrompt, "llama-3.1-8b-instant");
 
   try {
     const parsed = extractJSON(rawResponse);
