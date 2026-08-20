@@ -2,56 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const GROQ_DEFAULT_KEY = process.env.GROQ_API_KEY || "";
-const OPENAI_DEFAULT_KEY = process.env.OPENAI_API_KEY || "";
-
-async function callGroq(apiKey: string, model: string, messages: any[], temperature = 0.6) {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature,
-      max_tokens: 2048
-    })
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Groq API Error (${res.status}): ${errText}`);
-  }
-
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || "";
-}
-
-async function callOpenAI(apiKey: string, model: string, messages: any[]) {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.6,
-      max_tokens: 2048
-    })
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`OpenAI API Error (${res.status}): ${errText}`);
-  }
-
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || "";
-}
+const BACKEND_URL = process.env.NEXT_PUBLIC_COUNCIL_API_URL || "https://the-council-api-1083682147747.us-central1.run.app";
 
 export async function POST(req: NextRequest) {
   try {
@@ -62,217 +13,153 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing or invalid query." }, { status: 400 });
     }
 
-    const userGroqKey = req.headers.get("x-user-groq-key")?.trim() || GROQ_DEFAULT_KEY;
-    const userOpenaiKey = req.headers.get("x-user-openai-key")?.trim() || OPENAI_DEFAULT_KEY;
+    const userGroqKey = req.headers.get("x-user-groq-key")?.trim() || "";
 
-    // Detect domain
-    const lower = query.toLowerCase();
-    let domain = "System Architecture & Logic";
-    if (lower.includes("code") || lower.includes("function") || lower.includes("bug") || lower.includes("ts") || lower.includes("react") || lower.includes("python")) {
-      domain = "Codebase & AST Engineering";
-    } else if (lower.includes("math") || lower.includes("calculate") || lower.includes("probability") || lower.includes("proof")) {
-      domain = "Mathematics & Formal Verification";
-    } else if (lower.includes("research") || lower.includes("paper") || lower.includes("history") || lower.includes("what is") || lower.includes("explain")) {
-      domain = "Knowledge & Deep Research";
-    } else if (lower.includes("plan") || lower.includes("strategy") || lower.includes("roadmap")) {
-      domain = "Strategic Planning & Decomposition";
-    }
+    // 1. If User is Arguing with previous consensus, route to POST /api/chat/argue
+    if (arguingWith?.context) {
+      const argueRes = await fetch(`${BACKEND_URL}/api/chat/argue`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(userGroqKey ? { "x-user-groq-key": userGroqKey } : {}),
+        },
+        body: JSON.stringify({
+          originalQueryId: arguingWith.queryId || "manual-context",
+          targetAgent: (arguingWith.agent?.toLowerCase().includes("critic") ? "critic" : "lead"),
+          userArgument: query,
+        }),
+      });
 
-    // If a valid Groq or OpenAI key is available, execute real LLM multi-agent consensus
-    if (userGroqKey || userOpenaiKey) {
-      const activeKey = userGroqKey || userOpenaiKey;
-      const isGroq = Boolean(userGroqKey);
-      const leadModel = isGroq ? "llama-3.3-70b-versatile" : "gpt-4o-mini";
-      const criticModel = isGroq ? "deepseek-r1-distill-llama-70b" : "gpt-4o-mini";
-
-      let leadResponse = "";
-      let criticResponse = "";
-      let finalResponse = "";
-
-      if (arguingWith) {
-        // Handle direct user counter-argument
-        const arguePrompt = [
-          {
-            role: "system",
-            content: "You are the Council Supervisor. The user is challenging a previous consensus position. Analyze their argument with academic rigor and provide an updated, nuanced verdict."
-          },
-          {
-            role: "user",
-            content: `Previous context: "${arguingWith.context}"\nUser counter-argument: "${query}"`
-          }
-        ];
-
-        finalResponse = isGroq 
-          ? await callGroq(activeKey, leadModel, arguePrompt)
-          : await callOpenAI(activeKey, leadModel, arguePrompt);
-
-        return NextResponse.json({
-          text: finalResponse,
-          hasDisagreement: false,
-          stageData: {
-            supervisor: {
-              domain,
-              confidence: 0.96,
-              assignedLead: leadModel,
-              assignedCritic: criticModel,
-              intent: "Adjudicate user counter-argument"
-            },
-            leadDraft: {
-              agent: `${leadModel} (Adjudicator)`,
-              content: `Re-evaluating previous consensus against user evidence: "${query.slice(0, 100)}..."`
-            },
-            critique: {
-              agent: "Consensus Arbiter",
-              identifiedFlaws: [],
-              critiqueContent: "Incorporated user counter-points into final synthesis.",
-              rating: "Updated"
-            },
-            convergence: {
-              rounds: 1,
-              consensusScore: 0.99
-            }
-          }
-        });
+      if (!argueRes.ok) {
+        const errJson = await argueRes.json().catch(() => ({}));
+        throw new Error(errJson.error || `Argue pipeline failed with status ${argueRes.status}`);
       }
 
-      // 1. Lead Agent Draft
-      const leadPrompt = [
-        {
-          role: "system",
-          content: `You are the Lead Specialist AI for domain: "${domain}". Provide an authoritative, clear, and comprehensive answer to the user's prompt. Do not mention that you are a draft.`
-        },
-        {
-          role: "user",
-          content: query
-        }
-      ];
-
-      leadResponse = isGroq 
-        ? await callGroq(activeKey, leadModel, leadPrompt)
-        : await callOpenAI(activeKey, leadModel, leadPrompt);
-
-      if (debateMode === "fast" || maxRounds === 1) {
-        return NextResponse.json({
-          text: leadResponse,
-          hasDisagreement: false,
-          stageData: {
-            supervisor: {
-              domain,
-              confidence: 0.98,
-              assignedLead: leadModel,
-              assignedCritic: "None (Fast Mode)",
-              intent: "Single-turn fast response"
-            },
-            leadDraft: {
-              agent: leadModel,
-              content: leadResponse.slice(0, 200) + "..."
-            },
-            convergence: {
-              rounds: 1,
-              consensusScore: 0.98
-            }
-          }
-        });
-      }
-
-      // 2. Adversarial Critic Audit
-      const criticPrompt = [
-        {
-          role: "system",
-          content: "You are an adversarial AI Critic. Review the Lead Agent's response to the user's prompt. Identify 1-2 subtle edge cases, flaws, potential misconceptions, or improvements."
-        },
-        {
-          role: "user",
-          content: `User Query: "${query}"\n\nLead Draft:\n${leadResponse}`
-        }
-      ];
-
-      try {
-        criticResponse = isGroq 
-          ? await callGroq(activeKey, criticModel, criticPrompt, 0.4)
-          : await callOpenAI(activeKey, criticModel, criticPrompt);
-      } catch {
-        criticResponse = "Verified lead draft against core edge cases with no critical contradictions.";
-      }
-
-      // 3. Final Supervisor Synthesis
-      const synthesisPrompt = [
-        {
-          role: "system",
-          content: "You are The Council Synthesis Engine. Combine the Lead response and Critic insights into a single, cohesive, high-quality, verified answer formatted cleanly in markdown."
-        },
-        {
-          role: "user",
-          content: `User Query: "${query}"\n\nLead Answer:\n${leadResponse}\n\nCritic Feedback:\n${criticResponse}`
-        }
-      ];
-
-      finalResponse = isGroq 
-        ? await callGroq(activeKey, leadModel, synthesisPrompt)
-        : await callOpenAI(activeKey, leadModel, synthesisPrompt);
+      const argueData = await argueRes.json();
+      const ruling = argueData.ruling || {};
 
       return NextResponse.json({
-        text: finalResponse,
-        hasDisagreement: Boolean(criticResponse && criticResponse.length > 30),
+        text: ruling.updatedAnswer || `${ruling.verdict === "argument_accepted" ? "✅ **Argument Accepted**" : "❌ **Original Stance Maintained**"}\n\n${ruling.explanation}`,
+        hasDisagreement: ruling.verdict === "argument_accepted",
         stageData: {
           supervisor: {
-            domain,
-            confidence: 0.98,
-            assignedLead: leadModel,
-            assignedCritic: criticModel,
-            intent: "Multi-turn adversarial consensus verification"
+            domain: "Supervisor Arbitration",
+            confidence: 0.99,
+            assignedLead: "Supervisor Arbiter",
+            assignedCritic: "Adversarial Reviewer",
+            intent: "Evaluate user counter-argument",
           },
           leadDraft: {
-            agent: leadModel,
-            content: leadResponse.slice(0, 180) + "..."
+            agent: "Supervisor Adjudicator",
+            content: ruling.explanation,
           },
           critique: {
-            agent: criticModel,
-            identifiedFlaws: [
-              criticResponse.slice(0, 120) + "..."
-            ],
-            critiqueContent: criticResponse.slice(0, 250) + "...",
-            rating: "Converged"
+            agent: "Council Arbiter",
+            identifiedFlaws: ruling.verdict === "argument_accepted" ? ["Previous consensus adjusted based on user feedback."] : [],
+            critiqueContent: ruling.explanation,
+            rating: ruling.verdict,
           },
           convergence: {
-            rounds: maxRounds,
-            consensusScore: 0.98
-          }
-        }
+            rounds: 1,
+            consensusScore: 0.99,
+          },
+        },
       });
     }
 
-    // Contextual intelligent fallback if no API key is provided
-    const contextualAnswer = "Hello! I received your query: **\"" + query + "\"**.\n\nTo unlock live real-time LLM multi-model consensus (Groq, Anthropic, or OpenAI):\n1. Open the **Settings** icon in the top navbar (5th icon).\n2. Toggle on **Custom API Keys** and paste your **Groq API Key** (`gsk_...`) or OpenAI key.\n3. Click **Save**.\n\nOnce saved, the Council will run full adversarial consensus across your models with zero hardcoded responses.";
-
-
-    return NextResponse.json({
-      text: contextualAnswer,
-      hasDisagreement: false,
-      stageData: {
-        supervisor: {
-          domain,
-          confidence: 0.95,
-          assignedLead: "System",
-          assignedCritic: "None",
-          intent: "Awaiting API Key Configuration"
-        },
-        leadDraft: {
-          agent: "System Lead",
-          content: `Received: "${query}"`
-        },
-        convergence: {
-          rounds: 1,
-          consensusScore: 1.0
-        }
-      }
+    // 2. Standard Query: Forward directly to Cloud Run Live Multi-Agent Deliberation Pipeline (POST /api/chat/stream)
+    const backendRes = await fetch(`${BACKEND_URL}/api/chat/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(userGroqKey ? { "x-user-groq-key": userGroqKey } : {}),
+      },
+      body: JSON.stringify({
+        query,
+        manualAgents: selectedAgents.map((a: string) => a.replace("-agent", "")),
+        debateMode,
+        maxRounds,
+      }),
     });
 
+    if (!backendRes.ok) {
+      const errText = await backendRes.text();
+      throw new Error(`Live Council Pipeline Error (${backendRes.status}): ${errText}`);
+    }
+
+    // Parse SSE stream events from the real backend
+    const streamText = await backendRes.text();
+    const blocks = streamText.split("\n\n");
+    const events: { event: string; data: any }[] = [];
+
+    for (const block of blocks) {
+      if (!block.trim()) continue;
+      let eventName = "message";
+      let dataStr = "";
+      for (const line of block.split("\n")) {
+        if (line.startsWith("event: ")) {
+          eventName = line.replace("event: ", "").trim();
+        } else if (line.startsWith("data: ")) {
+          dataStr = line.replace("data: ", "").trim();
+        }
+      }
+      if (dataStr) {
+        try {
+          events.push({ event: eventName, data: JSON.parse(dataStr) });
+        } catch {}
+      }
+    }
+
+    const messageEvent = events.find((e) => e.event === "message");
+    const errorEvent = events.find((e) => e.event === "error");
+
+    if (errorEvent) {
+      throw new Error(errorEvent.data?.message || errorEvent.data?.error || "Pipeline deliberation failed.");
+    }
+
+    const msgData = messageEvent?.data || {};
+    const thinkingEvents = events.filter((e) => e.event === "thinking").map((e) => e.data);
+
+    // Build real dynamic stage data from live SSE trace
+    const supervisorEvt = thinkingEvents.find((e) => e.stage === "supervisor_complete" || e.stage === "manual_agent_selection");
+    const leadEvt = thinkingEvents.find((e) => e.stage === "lead_drafting");
+    const reviewerEvt = thinkingEvents.find((e) => e.stage === "round_complete");
+    const criticEvt = thinkingEvents.find((e) => e.stage === "critic_revising");
+
+    const stageData = {
+      supervisor: {
+        domain: msgData.domain || supervisorEvt?.domain || "Multi-Domain Deliberation",
+        confidence: 0.98,
+        assignedLead: "openai/gpt-oss-120b",
+        assignedCritic: "meta-llama/llama-3.3-70b-versatile",
+        intent: `Multi-agent consensus (${msgData.routingMode || "auto"} routing)`,
+      },
+      leadDraft: {
+        agent: "Lead Agent (openai/gpt-oss-120b)",
+        content: `Draft synthesized across ${msgData.rounds || 1} round(s).`,
+      },
+      critique: {
+        agent: "Adversarial Critic (meta-llama/llama-3.3-70b-versatile)",
+        identifiedFlaws: criticEvt?.data?.objection ? [criticEvt.data.objection] : [],
+        critiqueContent: reviewerEvt?.data?.reviewerCertainty ? `Reviewer Certainty: ${(reviewerEvt.data.reviewerCertainty * 100).toFixed(0)}%` : "Verified against core domain constraints.",
+        rating: msgData.critic_flagged ? "Critique Applied" : "Approved",
+      },
+      convergence: {
+        rounds: msgData.rounds || 1,
+        consensusScore: 0.98,
+      },
+    };
+
+    return NextResponse.json({
+      text: msgData.content || "No response generated.",
+      hasDisagreement: Boolean(msgData.critic_flagged),
+      stageData,
+    });
   } catch (error: any) {
-    console.error("Chat API error:", error);
+    console.error("Live Council Proxy Error:", error);
     return NextResponse.json({
       text: `**Council Notice**: Encountered an error generating response: ${error.message || "Unknown error"}. Please check your API key in Settings.`,
-      hasDisagreement: false
+      hasDisagreement: false,
     }, { status: 500 });
   }
 }

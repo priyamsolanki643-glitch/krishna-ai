@@ -207,7 +207,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
       borderRadius: 36,
       boxShadow: isLight
         ? "0 4px 20px 0 rgba(0,0,0,0.06)"
-        : "0 8px 30px 0 rgba(0,0,0,0.85), inset 0 1px 0 0 rgba(255,255,255,0.08)",
+        : "0 0 22px 0 rgba(255,255,255,0.25), 0 8px 30px 0 rgba(0,0,0,0.9), inset 0 1px 0 0 rgba(255,255,255,0.3)",
       transition: { type: "spring" as const, stiffness: 160, damping: 22 },
     },
     expanded: {
@@ -215,7 +215,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
       borderRadius: 24,
       boxShadow: isLight
         ? "0 12px 40px 0 rgba(0,0,0,0.12)"
-        : "0 16px 50px 0 rgba(0,0,0,0.95), inset 0 1px 0 0 rgba(255,255,255,0.12)",
+        : "0 0 28px 0 rgba(255,255,255,0.3), 0 16px 50px 0 rgba(0,0,0,0.95), inset 0 1px 0 0 rgba(255,255,255,0.35)",
       transition: { type: "spring" as const, stiffness: 160, damping: 22 },
     },
   };
@@ -225,11 +225,12 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
       <motion.div
         ref={wrapperRef}
         className={cn(
-          "w-full max-w-3xl border transition-colors duration-300 relative",
+          "w-full max-w-3xl border transition-all duration-300 relative",
           isLight
-            ? "bg-white border-zinc-200 text-zinc-950 shadow-md"
-            : "bg-[#000000] border-white/15 text-white backdrop-blur-2xl"
+            ? "bg-white border-zinc-300 text-zinc-950 shadow-md"
+            : "bg-[#000000] border-white/60 text-white backdrop-blur-2xl"
         )}
+
         variants={containerVariants}
         animate={isExpanded ? "expanded" : "collapsed"}
         initial="collapsed"

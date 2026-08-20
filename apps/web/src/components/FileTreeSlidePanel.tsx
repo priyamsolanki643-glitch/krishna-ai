@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FolderTree, FileText, Code2, FileCode, Plus, X, Copy, Check, 
@@ -14,112 +14,7 @@ export interface ProjectFile {
   content: string;
 }
 
-export const DEFAULT_PROJECT_FILES: ProjectFile[] = [
-  {
-    id: "consensus-core",
-    name: "consensus_core.ts",
-    language: "typescript",
-    size: "3.4 KB",
-    updatedAt: "Just now",
-    content: `/**
- * The Council - Multi-Agent Cognitive Consensus Engine
- * Compile multi-model deliberation into verified outputs
- */
-
-export interface AgentDebateRound {
-  round: number;
-  leadDraft: string;
-  criticisms: string[];
-  consensusDelta: number;
-}
-
-export async function executeCouncilLoop(prompt: string): Promise<string> {
-  const supervisor = classifyDomain(prompt);
-  let round = 1;
-  let converged = false;
-  
-  while (!converged && round <= 3) {
-    const draft = await generateLeadProposal(supervisor.lead, prompt);
-    const audit = await auditLogicFlaws(supervisor.critic, draft);
-    
-    if (audit.confidence >= 0.95) {
-      converged = true;
-      return synthesizeFinalConsensus(draft, audit);
-    }
-    round++;
-  }
-  return "Consensus converged with high confidence.";
-}`
-  },
-  {
-    id: "pipeline-supervisor",
-    name: "supervisor_routing.py",
-    language: "python",
-    size: "2.1 KB",
-    updatedAt: "2 hours ago",
-    content: `from typing import Dict, List
-import dataclasses
-
-@dataclasses.dataclass
-class SupervisorRouting:
-    domain: str
-    lead_model: str
-    critic_model: str
-    confidence: float
-
-def route_prompt_to_council(prompt: str) -> SupervisorRouting:
-    """Classify user query and assign adversarial pairs"""
-    return SupervisorRouting(
-        domain="System Logic & Architecture",
-        lead_model="claude-3-7-sonnet",
-        critic_model="deepseek-r1",
-        confidence=0.985
-    )`
-  },
-  {
-    id: "council-schema",
-    name: "council_schema.sql",
-    language: "sql",
-    size: "1.8 KB",
-    updatedAt: "Yesterday",
-    content: `CREATE TABLE council_sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL,
-    domain VARCHAR(64) NOT NULL,
-    consensus_score FLOAT NOT NULL,
-    rounds INT DEFAULT 1,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE debate_rounds (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    session_id UUID REFERENCES council_sessions(id) ON DELETE CASCADE,
-    round_index INT NOT NULL,
-    lead_agent VARCHAR(64) NOT NULL,
-    critic_agent VARCHAR(64) NOT NULL,
-    draft_content TEXT NOT NULL,
-    critique_content TEXT NOT NULL
-);`
-  },
-  {
-    id: "architecture-spec",
-    name: "architecture_spec.md",
-    language: "markdown",
-    size: "4.2 KB",
-    updatedAt: "3 days ago",
-    content: `# The Council V3.2 Architecture
-Compiled by Priyam Solanki and Amrit Ujjwal
-
-## Problem Solved
-Eliminates monolithic single-pass hallucinations via adversarial multi-agent cognitive architecture.
-
-## Pipeline Layers
-1. **Supervisor Classification**: Intent & Domain assignment.
-2. **Lead Agent Generation**: Draft proposal.
-3. **Adversarial Critic Audit**: Logic & edge case verification.
-4. **Consensus Convergence**: Iterative refinement loop.`
-  }
-];
+export const DEFAULT_PROJECT_FILES: ProjectFile[] = [];
 
 interface FileTreeSlidePanelProps {
   isOpen: boolean;

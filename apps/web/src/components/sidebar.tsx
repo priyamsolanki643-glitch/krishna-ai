@@ -6,13 +6,10 @@ import {
   Plus, 
   FilePlus, 
   MessageSquare, 
-  Folder, 
   Trash2, 
   MoreVertical, 
   Menu, 
-  Search, 
-  Clock, 
-  FolderTree
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/utils/supabase/client";
@@ -49,8 +46,6 @@ export function Sidebar({
   const router = useRouter();
 
   const [touchStart, setTouchStart] = useState(0);
-  const [isSearchActive, setIsSearchActive] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [historyData, setHistoryData] = useState<HistoryGroup[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [activeChatMenu, setActiveChatMenu] = useState<string | null>(null);
@@ -101,8 +96,7 @@ export function Sidebar({
     }
   };
 
-  const fetchThreads = async (query?: string) => {
-    if (!query) setIsLoadingHistory(true);
+  const fetchThreads = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (isAnonymous || !session) { 
@@ -112,7 +106,6 @@ export function Sidebar({
       const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080").replace(/\/$/, "");
       const url = new URL(`${baseUrl}/api/v1/threads`);
       url.searchParams.append("t", String(Date.now()));
-      if (query) url.searchParams.append("q", query);
 
       const res = await fetch(url.toString(), {
         headers: { "Authorization": `Bearer ${session?.access_token}` },
@@ -158,13 +151,6 @@ export function Sidebar({
     return () => window.removeEventListener("refresh-sidebar", handleRefresh);
   }, []);
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      fetchThreads(searchQuery);
-    }, 400);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
   const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.targetTouches[0].clientX);
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStart - e.changedTouches[0].clientX > 50) setIsOpen(false);
@@ -180,18 +166,19 @@ export function Sidebar({
             e.stopPropagation();
             setIsOpen(false);
           }}
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm lg:hidden"
         />
       )}
 
+      {/* Seamless Pitch Black Sidebar Container (Zero Borders / Zero Dividing White Lines) */}
       <aside
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         className={cn(
-          "fixed lg:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-screen transition-all duration-300 overflow-hidden font-sans",
+          "fixed lg:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-screen transition-all duration-300 overflow-hidden font-sans border-0 border-none",
           isLight 
-            ? "bg-white/95 backdrop-blur-2xl lg:bg-zinc-50/90 border-r border-zinc-200 text-zinc-900" 
-            : "bg-zinc-950/95 backdrop-blur-2xl lg:bg-[#08080a] border-r border-white/10 text-white",
+            ? "bg-white text-zinc-900" 
+            : "bg-[#000000] text-white",
           isOpen ? "w-[260px] translate-x-0 opacity-100" : "w-0 -translate-x-full opacity-0"
         )}
         style={{ height: "100dvh" }}
@@ -216,7 +203,7 @@ export function Sidebar({
                 onClick={() => setIsOpen(false)}
                 className={cn(
                   "p-1.5 rounded-lg transition-colors cursor-pointer",
-                  isLight ? "text-zinc-500 hover:text-zinc-950 hover:bg-zinc-200" : "text-zinc-400 hover:text-white hover:bg-white/10"
+                  isLight ? "text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100" : "text-zinc-400 hover:text-white hover:bg-white/10"
                 )}
                 title="Close sidebar"
               >
@@ -233,17 +220,17 @@ export function Sidebar({
               if (window.innerWidth < 1024) setIsOpen(false);
             }}
             className={cn(
-              "flex items-center justify-center gap-2 w-full font-medium py-2 px-4 rounded-xl transition-all cursor-pointer text-xs shrink-0 shadow-sm active:scale-[0.98]",
+              "flex items-center justify-center gap-2 w-full font-medium py-2.5 px-4 rounded-full transition-all cursor-pointer text-xs shrink-0 active:scale-[0.98]",
               isLight 
                 ? "bg-zinc-950 text-white hover:bg-zinc-800" 
-                : "bg-white text-zinc-950 hover:bg-zinc-100"
+                : "bg-white text-black font-semibold hover:bg-zinc-200"
             )}
           >
-            <Plus className="size-4" />
+            <Plus className="size-4 stroke-[2.5]" />
             <span>New chat</span>
           </button>
 
-          {/* 2. Apple-Style "Add new file" Button */}
+          {/* 2. Apple-Style Pill "Add new file" Button (Pitch Black with Glowing White Light Border) */}
           <button 
             type="button"
             onClick={() => {
@@ -251,53 +238,19 @@ export function Sidebar({
               if (window.innerWidth < 1024) setIsOpen(false);
             }}
             className={cn(
-              "flex items-center gap-2.5 w-full font-medium py-2 px-3 rounded-xl border transition-all cursor-pointer text-xs shrink-0 active:scale-[0.98]",
+              "flex items-center justify-center gap-2 w-full font-medium py-2.5 px-4 rounded-full transition-all cursor-pointer text-xs shrink-0 active:scale-[0.98]",
               isLight
-                ? "bg-zinc-100/80 hover:bg-zinc-200/80 border-zinc-200 text-zinc-800 hover:text-zinc-950"
-                : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-300 hover:text-white"
+                ? "bg-white text-zinc-900 border border-zinc-950 shadow-sm hover:bg-zinc-50"
+                : "bg-[#000000] text-white border border-white shadow-[0_0_14px_rgba(255,255,255,0.45)] hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]"
             )}
           >
-            <FilePlus className="size-4 text-zinc-400 shrink-0" />
-            <span className="truncate">Add new file</span>
+            <FilePlus className="size-4 text-white shrink-0" />
+            <span className="font-semibold tracking-tight">Add new file</span>
           </button>
-
-          {/* Quick Search */}
-          <div className="pt-1">
-            {isSearchActive ? (
-              <div className={cn(
-                "flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs",
-                isLight ? "bg-zinc-100 border-zinc-300" : "bg-black/60 border-white/15"
-              )}>
-                <Search className="size-3.5 text-zinc-400 shrink-0" />
-                <input 
-                  autoFocus
-                  type="text" 
-                  placeholder="Search recent activity..." 
-                  className="bg-transparent border-none outline-none text-xs w-full text-zinc-100 placeholder:text-zinc-500"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onBlur={() => !searchQuery && setIsSearchActive(false)}
-                  onKeyDown={(e) => e.key === "Escape" && setIsSearchActive(false)}
-                />
-              </div>
-            ) : (
-              <button 
-                type="button"
-                onClick={() => setIsSearchActive(true)}
-                className={cn(
-                  "flex items-center gap-2 w-full px-2.5 py-1.5 text-xs text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer",
-                  isLight && "hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950"
-                )}
-              >
-                <Search className="size-3.5" />
-                <span>Search activity...</span>
-              </button>
-            )}
-          </div>
         </div>
 
-        {/* ── Scrollable History List & Recent Activity (Folders & Chats) ── */}
-        <div className="flex-1 px-3 py-2 flex flex-col gap-4 overflow-y-auto no-scrollbar">
+        {/* ── Scrollable Recent Projects & Chats List (Directly below Add new file) ── */}
+        <div className="flex-1 px-3 py-3 flex flex-col gap-3 overflow-y-auto no-scrollbar">
           {isOpen && (
             <>
               {isLoadingHistory ? (
@@ -306,16 +259,13 @@ export function Sidebar({
                 const RECENT_GROUPS = ["Today", "Yesterday", "Previous 7 Days", "Older"];
                 const finalHistory = historyData
                   .filter(g => RECENT_GROUPS.includes(g.group))
-                  .map(g => ({
-                    ...g,
-                    chats: g.chats.filter((c: ChatThread) => (c?.title || "").toLowerCase().includes(searchQuery.toLowerCase()))
-                  })).filter(g => g.chats.length > 0);
+                  .filter(g => g.chats.length > 0);
 
                 if (finalHistory.length === 0) {
                   return (
                     <div className="px-3 py-8 text-center text-zinc-500 text-xs flex flex-col items-center gap-1.5">
                       <Clock className="size-4 text-zinc-600" />
-                      <span>No recent chat activity</span>
+                      <span>No recent chats</span>
                     </div>
                   );
                 }
@@ -323,7 +273,7 @@ export function Sidebar({
                 return finalHistory.map((group, i) => (
                   <div key={i} className="space-y-1">
                     <div className={cn(
-                      "text-[10px] font-mono font-semibold tracking-wider uppercase px-2 mb-1",
+                      "text-[10px] font-mono font-semibold tracking-wider uppercase px-2.5 mb-1",
                       isLight ? "text-zinc-400" : "text-zinc-500"
                     )}>
                       {group.group}
@@ -338,14 +288,14 @@ export function Sidebar({
                             if (window.innerWidth < 1024) setIsOpen(false);
                           }}
                           className={cn(
-                            "w-full text-left py-1.5 px-2.5 pr-7 rounded-lg transition-colors text-xs truncate cursor-pointer flex items-center gap-2",
+                            "w-full text-left py-2 px-3 pr-7 rounded-xl transition-colors text-xs truncate cursor-pointer flex items-center gap-2",
                             isLight
-                              ? "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                              ? "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
                               : "text-zinc-400 hover:text-white hover:bg-white/5"
                           )}
                         >
-                          <MessageSquare className="size-3.5 shrink-0 opacity-60" />
-                          <span className="truncate">{chat.title?.replace(/^\[Sent:.*?\]\s*/i, "") || "Untitled Conversation"}</span>
+                          <MessageSquare className="size-3.5 shrink-0 opacity-50" />
+                          <span className="truncate">{chat.title?.replace(/^\[Sent:.*?\]\s*/i, "") || "Untitled Chat"}</span>
                         </button>
 
                         <button
@@ -355,7 +305,7 @@ export function Sidebar({
                             setActiveChatMenu(activeChatMenu === chat.id ? null : chat.id);
                           }}
                           className={cn(
-                            "absolute right-1 top-1/2 -translate-y-1/2 p-1 transition-opacity rounded cursor-pointer",
+                            "absolute right-1.5 top-1/2 -translate-y-1/2 p-1 transition-opacity rounded cursor-pointer",
                             "opacity-100 md:opacity-0 md:group-hover:opacity-100",
                             activeChatMenu === chat.id ? "md:opacity-100" : "",
                             isLight ? "text-zinc-400 hover:text-zinc-900" : "text-zinc-500 hover:text-white"
@@ -367,8 +317,8 @@ export function Sidebar({
 
                         {activeChatMenu === chat.id && (
                           <div className={cn(
-                            "absolute right-2 top-7 z-50 w-28 rounded-lg border shadow-xl overflow-hidden py-1",
-                            isLight ? "bg-white border-zinc-200" : "bg-zinc-900 border-white/10"
+                            "absolute right-2 top-7 z-50 w-28 rounded-xl border shadow-2xl overflow-hidden py-1",
+                            isLight ? "bg-white border-zinc-200" : "bg-zinc-950 border-white/10"
                           )}>
                             <button
                               type="button"
@@ -376,7 +326,7 @@ export function Sidebar({
                               className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[11px] text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                             >
                               <Trash2 className="size-3" />
-                              <span>Delete chat</span>
+                              <span>Delete</span>
                             </button>
                           </div>
                         )}
@@ -389,17 +339,17 @@ export function Sidebar({
           )}
         </div>
 
-        {/* ── Non-Clickable Sleek Operator Profile Row (Dropdown Removed) ── */}
+        {/* ── Non-Clickable Sleek Operator Profile Row (Zero Dropdown / Seamless Pitch Black) ── */}
         <div className={cn(
-          "p-3 border-t shrink-0 select-none pointer-events-none",
-          isLight ? "border-zinc-200 bg-zinc-50" : "border-white/5 bg-black/20"
+          "p-3.5 shrink-0 select-none pointer-events-none border-0 border-none",
+          isLight ? "bg-zinc-50" : "bg-[#000000]"
         )}>
-          <div className="flex items-center gap-2.5 px-2 py-1.5">
+          <div className="flex items-center gap-2.5 px-1">
             <div className={cn(
-              "size-7 rounded-full flex items-center justify-center shrink-0 border",
+              "size-7 rounded-full flex items-center justify-center shrink-0",
               isLight 
-                ? "bg-zinc-200 border-zinc-300 text-zinc-900" 
-                : "bg-white/10 border-white/10 text-white"
+                ? "bg-zinc-200 text-zinc-900" 
+                : "bg-white/10 text-white"
             )}>
               <span className="text-[11px] font-bold uppercase">
                 {isAnonymous ? "A" : userName.charAt(0)}

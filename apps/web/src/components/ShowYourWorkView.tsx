@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ChevronDown, ChevronRight, ShieldAlert, Cpu, Sparkles, Brain, CheckCircle2, 
@@ -54,43 +54,11 @@ export function ShowYourWorkView({
   const [isDissentModalOpen, setIsDissentModalOpen] = useState<boolean>(false);
   const [expandedSection, setExpandedSection] = useState<string | null>("lead");
 
-  if (mode === "off" && !stageData?.convergence?.overruledDissent) {
+  if ((mode === "off" && !stageData?.convergence?.overruledDissent) || !stageData) {
     return null;
   }
 
-  const defaultStageData: AgentStageData = stageData || {
-    supervisor: {
-      domain: "Cognitive Architecture & Logic",
-      confidence: 0.98,
-      assignedLead: "Claude 3.7 Sonnet",
-      assignedCritic: "DeepSeek R1",
-      intent: "System design & multi-agent synthesis"
-    },
-    leadDraft: {
-      agent: "Claude 3.7 Sonnet",
-      content: "Proposed robust architecture separating consensus verification loop from token generation to eliminate monolithic single-pass hallucinations."
-    },
-    critique: {
-      agent: "DeepSeek R1 (Adversarial Critic)",
-      identifiedFlaws: [
-        "Single-round consensus could deadlock on edge cases without strict confidence delta threshold.",
-        "Latency budget exceeds 1.5s if all 3 agents trigger synchronous re-computation."
-      ],
-      critiqueContent: "Identified edge case in deadlock arbitration. Recommended asynchronous supervisor escalation threshold.",
-      rating: "Iterate with Threshold"
-    },
-    convergence: {
-      rounds: 2,
-      consensusScore: 0.96,
-      overruledDissent: {
-        agent: "DeepSeek R1",
-        dissentPoint: "Advocated for strict AST syntax verification before synthesis.",
-        reasonOverruled: "Overruled by Supervisor: LLM confidence reached 96% and external sandbox verification is handled downstream."
-      }
-    }
-  };
-
-  const data = defaultStageData;
+  const data = stageData;
 
   return (
     <div className="w-full my-3 space-y-2 select-none">
