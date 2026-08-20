@@ -36,23 +36,22 @@ export default function AppWorkspacePage() {
       onTouchEnd={handleTouchEnd}
       className="flex h-screen w-full bg-[#000000] text-white font-sans overflow-hidden relative"
     >
-      {/* ── Top-Left Pure Minimalist 3 Lines (Slide with Sidebar) ── */}
-      <motion.button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsSidebarOpen((prev) => !prev);
-        }}
-        animate={{ 
-          x: isSidebarOpen ? 260 : 0 
-        }}
-        transition={{ type: "spring", stiffness: 450, damping: 28 }}
-        className="fixed top-6 left-6 z-[60] text-zinc-400 hover:text-white active:scale-90 transition-transform cursor-pointer p-0 bg-transparent border-0 outline-none shadow-none flex items-center justify-center"
-        title={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
-        aria-label="Toggle Sidebar"
-      >
-        <Menu className="w-5 h-5" />
-      </motion.button>
+      {/* ── Top-Left Pure Minimalist 3 Lines (When Sidebar Closed) ── */}
+      {!isSidebarOpen && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsSidebarOpen(true);
+          }}
+          className="fixed top-6 left-6 z-40 text-zinc-400 hover:text-white active:scale-90 transition-transform cursor-pointer p-0 bg-transparent border-0 outline-none shadow-none flex items-center justify-center"
+          title="Open Sidebar"
+          aria-label="Open Sidebar"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      )}
+
 
 
       {/* Dynamic Session History Sidebar */}

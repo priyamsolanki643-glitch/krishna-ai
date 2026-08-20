@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Archive, LogOut, MoreVertical, Trash2, Atom, Target, Clock } from "lucide-react";
+import { Plus, Search, Archive, LogOut, MoreVertical, Trash2, Atom, Target, Clock, Menu } from "lucide-react";
+
 import { supabase } from "@/utils/supabase/client";
 import { SidebarHistorySkeleton } from "./ui/skeleton";
 
@@ -195,11 +196,23 @@ const { data: { session } } = await supabase.auth.getSession();
               <GyroLogo size={22} className="mr-2" />
               {isOpen && (
                 <span className="font-sans font-bold text-[14px] text-white tracking-[0.15em] uppercase">
-                  LUMENSKY
+                  THE COUNCIL
                 </span>
               )}
             </div>
+            {isOpen && (
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="text-zinc-400 hover:text-white p-1 cursor-pointer bg-transparent border-0 outline-none transition-colors flex items-center justify-center active:scale-90"
+                title="Close sidebar"
+                aria-label="Close sidebar"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
           </div>
+
 
           {/* New Thread Button */}
           <button 

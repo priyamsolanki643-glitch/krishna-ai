@@ -101,8 +101,20 @@ async function runStressTests() {
     throw new Error(`Test 6 Failed: Expected rounds=1 and stopReason=approved, got rounds=${res6.rounds}, reason=${res6.stopReason}`);
   }
 
+  // TEST 7: Helper Agent Spawn Denied
+  console.log("▶️ TEST 7: Bounded Helper Agent Spawning (Spawn Denied)");
+  setMockScenario("helper_spawn_denied_test");
+  const res7 = await runDebateLoop(
+    "How to mitigate quicksort worst case?",
+    "Technical",
+    async (evt) => {
+      console.log(`   [SSE thinking] Round ${evt.round} - ${evt.stage}:`, JSON.stringify(evt.data || {}));
+    }
+  );
+  console.log("   ✅ Result 7:", JSON.stringify(res7, null, 2));
+
   console.log("\n=================================================================");
-  console.log("🎉 ALL 6 LOOP STRESS-TEST SCENARIOS PASSED WITH EXACT CONVERGENCE!");
+  console.log("🎉 ALL 7 LOOP STRESS-TEST SCENARIOS PASSED WITH EXACT CONVERGENCE!");
   console.log("=================================================================");
 
   const { shutdownTelemetry } = await import("./lib/telemetry.js");

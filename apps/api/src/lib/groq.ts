@@ -17,7 +17,7 @@ function getGroqClient(): Groq | null {
 }
 
 // Fallback test scenario state for stress-testing when no key is present
-export type MockScenario = "default" | "reject_then_approve" | "convergence_test" | "max_rounds_test" | "circuit_breaker_test" | "helper_spawn_test";
+export type MockScenario = "default" | "reject_then_approve" | "convergence_test" | "max_rounds_test" | "circuit_breaker_test" | "helper_spawn_test" | "helper_spawn_denied_test";
 let currentMockScenario: MockScenario = "default";
 let mockCallCounter = { lead: 0, reviewer: 0 };
 
@@ -161,6 +161,32 @@ export async function callGroq(
       }
       return JSON.stringify({
         content: `Draft round 2: Median-of-three solves this.`,
+        confidence: 0.95,
+        is_mock: true,
+      });
+    }
+
+    if (currentMockScenario === "helper_spawn_denied_test") {
+      if (mockCallCounter.lead === 1) {
+        return JSON.stringify({
+          content: `Draft round 1: Need help.`,
+          confidence: 0.4,
+          needs_help: true,
+          help_query: "Query 1",
+          is_mock: true,
+        });
+      }
+      if (mockCallCounter.lead === 2) {
+        return JSON.stringify({
+          content: `Draft round 2: Still need help.`,
+          confidence: 0.5,
+          needs_help: true, // Should be denied!
+          help_query: "Query 2",
+          is_mock: true,
+        });
+      }
+      return JSON.stringify({
+        content: `Draft round 3: Proceeding anyway.`,
         confidence: 0.95,
         is_mock: true,
       });

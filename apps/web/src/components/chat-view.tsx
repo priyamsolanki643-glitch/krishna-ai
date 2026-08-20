@@ -392,18 +392,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#000000] relative overflow-hidden font-sans">
-      
-      {/* Section 1: Slim Top Council Navbar */}
-      <CouncilNavbar
-        onOpenSidebar={onOpenSidebar}
-        onOpenFileTree={() => setIsFileTreeOpen(true)}
-        showYourWorkMode={showYourWorkMode}
-        onCycleShowYourWork={cycleShowYourWork}
-        onOpenTeamSelector={() => setIsTeamSelectorOpen(true)}
-        onNewChat={handleNewThread}
-        isAutoTeam={isAutoTeam}
-        selectedModelCount={selectedModelIds.length}
-      />
+
 
       {/* Section 5: Team / Model Selector Modal */}
       <TeamSelectorModal
