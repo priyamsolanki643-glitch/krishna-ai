@@ -1,9 +1,11 @@
 import { z } from "zod";
 
 export const DraftOutputSchema = z.object({
-  content: z.string().min(1, "Draft content cannot be empty"),
-  confidence: z.number().min(0).max(1),
-  is_mock: z.boolean().default(false),
+  content: z.string().min(1, "Draft content cannot be empty").describe("The generated draft response"),
+  confidence: z.number().min(0).max(1).describe("The agent's confidence in the generated draft"),
+  needs_help: z.boolean().default(false).describe("Explicitly flag if the Lead is stuck and requests dynamic helper spawning"),
+  help_query: z.string().optional().describe("If needs_help is true, specify the exact sub-problem or question for the Helper"),
+  is_mock: z.boolean().default(false).describe("Flag indicating if the response is a mock fallback"),
 });
 
 export type DraftOutput = z.infer<typeof DraftOutputSchema>;

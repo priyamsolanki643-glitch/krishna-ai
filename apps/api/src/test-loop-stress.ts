@@ -8,7 +8,7 @@ async function runStressTests() {
   console.log("🧪 STRESS-TESTING THE COUNCIL DEBATE LOOP LOGIC (MOCK MODE)");
   console.log("=================================================================\n");
 
-  /*
+
   // TEST 1: Rejection -> Multi-round Revision -> Approval
   console.log("▶️ TEST 1: Rejection on Round 1 -> Lead Revises with Context -> Approved on Round 2");
   setMockScenario("reject_then_approve");
@@ -69,7 +69,7 @@ async function runStressTests() {
     throw new Error(`Test 4 Failed: Expected rounds=1 and stopReason=approved, got rounds=${res4.rounds}, reason=${res4.stopReason}`);
   }
   console.log("\n-----------------------------------------------------------------\n");
-  */
+
 
   // TEST 5: Circuit Breaker
   console.log("▶️ TEST 5: Circuit Breaker on Lead Agent (Forced Throw)");
@@ -86,8 +86,23 @@ async function runStressTests() {
     throw new Error(`Test 5 Failed: Expected stopReason=agent_failure_circuit_breaker, got ${res5.stopReason}`);
   }
 
+  // TEST 6: Helper Agent Spawning
+  console.log("▶️ TEST 6: Bounded Helper Agent Spawning");
+  setMockScenario("helper_spawn_test");
+  const res6 = await runDebateLoop(
+    "How to mitigate quicksort worst case?",
+    "Technical",
+    async (evt) => {
+      console.log(`   [SSE thinking] Round ${evt.round} - ${evt.stage}:`, JSON.stringify(evt.data || {}));
+    }
+  );
+  console.log("   ✅ Result 6:", JSON.stringify(res6, null, 2));
+  if (res6.stopReason !== "approved" || res6.rounds !== 1) {
+    throw new Error(`Test 6 Failed: Expected rounds=1 and stopReason=approved, got rounds=${res6.rounds}, reason=${res6.stopReason}`);
+  }
+
   console.log("\n=================================================================");
-  console.log("🎉 ALL 5 LOOP STRESS-TEST SCENARIOS PASSED WITH EXACT CONVERGENCE!");
+  console.log("🎉 ALL 6 LOOP STRESS-TEST SCENARIOS PASSED WITH EXACT CONVERGENCE!");
   console.log("=================================================================");
 }
 

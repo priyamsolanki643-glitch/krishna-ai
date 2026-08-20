@@ -10,7 +10,7 @@ export interface DebateResult {
 }
 
 export type DebateProgressCallback = (event: {
-  stage: "lead_drafting" | "reviewer_critiquing" | "round_complete";
+  stage: "lead_drafting" | "reviewer_critiquing" | "round_complete" | "helper_researching";
   round: number;
   data?: any;
 }) => Promise<void>;

@@ -1,6 +1,8 @@
 import { setup, assign, fromPromise } from "xstate";
 import { runLead } from "../pipeline/draft.js";
 import { runReviewer } from "../pipeline/review.js";
+import { runHelper } from "../pipeline/helper.js";
+import { validateSpawnRequest } from "../lib/planValidator.js";
 import type { DebateResult, DebateProgressCallback } from "../pipeline/loop.js";
 
 interface DebateContext {
@@ -16,6 +18,9 @@ interface DebateContext {
   stopReason: "approved" | "converged" | "max_rounds_hit" | "agent_failure_circuit_breaker" | null;
   leadFailures: number;
   reviewerFailures: number;
+  spawnsCount: number;
+  currentHelpQuery: string;
+  helperContext: string;
 }
 
 const MAX_ROUNDS = 5;
@@ -60,6 +65,19 @@ export const debateMachine = setup({
         return critique;
       }
     ),
+    invokeHelper: fromPromise(
+      async ({ input }: { input: { helpQuery: string; domain: string; onProgress?: DebateProgressCallback; round: number } }) => {
+        if (input.onProgress) {
+          await input.onProgress({
+            stage: "helper_researching",
+            round: input.round,
+            data: { helpQuery: input.helpQuery },
+          } as any);
+        }
+        const helperResult = await runHelper(input.helpQuery, input.domain);
+        return helperResult;
+      }
+    ),
   },
   guards: {
     isApproved: ({ event }) => (event as any).output.verdict === "approve",
@@ -73,6 +91,8 @@ export const debateMachine = setup({
     isMaxRoundsHit: ({ context }) => context.round >= MAX_ROUNDS,
     leadCircuitBroken: ({ context }) => context.leadFailures >= 1,
     reviewerCircuitBroken: ({ context }) => context.reviewerFailures >= 1,
+    needsHelp: ({ event }) => (event as any).output.needs_help === true,
+    isSpawnAllowed: ({ context }) => validateSpawnRequest(context.spawnsCount).allowed,
   }
 }).createMachine({
   id: "debateLoop",
@@ -89,6 +109,9 @@ export const debateMachine = setup({
     stopReason: null,
     leadFailures: 0,
     reviewerFailures: 0,
+    spawnsCount: 0,
+    currentHelpQuery: "",
+    helperContext: "",
   }),
   states: {
     drafting: {
@@ -100,16 +123,30 @@ export const debateMachine = setup({
           toneInstruction: context.toneInstruction,
           onProgress: context.onProgress,
           round: context.round,
+          helperContext: context.helperContext,
         }),
-        onDone: {
-          target: "reviewing",
-          actions: assign({
-            currentDraftContent: ({ event }) => event.output.content,
-            leadConfidenceHistory: ({ context, event }) => [...context.leadConfidenceHistory, event.output.confidence],
-            isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
-            leadFailures: 0, // Reset on success
-          })
-        },
+        onDone: [
+          {
+            guard: "needsHelp",
+            target: "requesting_spawn",
+            actions: assign({
+              currentDraftContent: ({ event }) => event.output.content,
+              leadConfidenceHistory: ({ context, event }) => [...context.leadConfidenceHistory, event.output.confidence],
+              isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
+              leadFailures: 0,
+              currentHelpQuery: ({ event }) => event.output.help_query || "General stuck context",
+            })
+          },
+          {
+            target: "reviewing",
+            actions: assign({
+              currentDraftContent: ({ event }) => event.output.content,
+              leadConfidenceHistory: ({ context, event }) => [...context.leadConfidenceHistory, event.output.confidence],
+              isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
+              leadFailures: 0,
+            })
+          }
+        ],
         onError: [
           {
             guard: "leadCircuitBroken",
@@ -126,6 +163,39 @@ export const debateMachine = setup({
             })
           }
         ]
+      }
+    },
+    requesting_spawn: {
+      always: [
+        {
+          guard: "isSpawnAllowed",
+          target: "spawning_helper"
+        },
+        {
+          target: "reviewing" // If denied, proceed to review with whatever draft we got
+        }
+      ]
+    },
+    spawning_helper: {
+      entry: assign({ spawnsCount: ({ context }) => context.spawnsCount + 1 }),
+      invoke: {
+        src: "invokeHelper",
+        input: ({ context }) => ({
+          helpQuery: context.currentHelpQuery,
+          domain: "coding", // Defaulting for now, can be extracted from Supervisor later
+          onProgress: context.onProgress,
+          round: context.round,
+        }),
+        onDone: {
+          target: "drafting",
+          actions: assign({
+            helperContext: ({ context, event }) => context.helperContext + "\n\n" + event.output.result,
+            isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
+          })
+        },
+        onError: {
+          target: "drafting", // On error, just go back to drafting, don't break the whole loop
+        }
       }
     },
     reviewing: {

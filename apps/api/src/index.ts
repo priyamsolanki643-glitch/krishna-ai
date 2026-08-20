@@ -75,18 +75,29 @@ app.post("/api/chat/stream", async (c) => {
       });
 
       // 3. Final Message Event
-      await stream.writeSSE({
-        event: "message",
-        data: JSON.stringify({
-          content: debate.finalDraft,
-          rounds: debate.rounds,
-          stopReason: debate.stopReason,
-          leadConfidenceHistory: debate.leadConfidenceHistory,
-          domain: supervisor.domain,
-          emotion: supervisor.emotion,
-          is_mock: debate.is_mock,
-        }),
-      });
+      if (debate.stopReason === "agent_failure_circuit_breaker") {
+        await stream.writeSSE({
+          event: "error",
+          data: JSON.stringify({
+            message: "agent_failure_circuit_breaker: Internal agents failed to reach consensus due to an unexpected error. Please try again later.",
+            rounds: debate.rounds,
+            is_mock: debate.is_mock
+          }),
+        });
+      } else {
+        await stream.writeSSE({
+          event: "message",
+          data: JSON.stringify({
+            content: debate.finalDraft,
+            rounds: debate.rounds,
+            stopReason: debate.stopReason,
+            leadConfidenceHistory: debate.leadConfidenceHistory,
+            domain: supervisor.domain,
+            emotion: supervisor.emotion,
+            is_mock: debate.is_mock,
+          }),
+        });
+      }
     });
   } catch (error: any) {
     return c.json({ error: error.message || "Failed to process stream" }, 500);

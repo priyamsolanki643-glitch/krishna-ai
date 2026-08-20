@@ -17,7 +17,7 @@ function getGroqClient(): Groq | null {
 }
 
 // Fallback test scenario state for stress-testing when no key is present
-export type MockScenario = "default" | "reject_then_approve" | "convergence_test" | "max_rounds_test" | "circuit_breaker_test";
+export type MockScenario = "default" | "reject_then_approve" | "convergence_test" | "max_rounds_test" | "circuit_breaker_test" | "helper_spawn_test";
 let currentMockScenario: MockScenario = "default";
 let mockCallCounter = { lead: 0, reviewer: 0 };
 
@@ -127,6 +127,13 @@ export async function callGroq(
     });
   }
 
+  if (systemPrompt.includes("You are a specialized Helper Agent in The Council.")) {
+    return JSON.stringify({
+      result: "Median-of-three is a pivot strategy that selects the median of the first, middle, and last elements to avoid O(n^2) time on sorted data.",
+      is_mock: true
+    });
+  }
+
   if (systemPrompt.includes("Lead Agent") || systemPrompt.includes("DraftOutputSchema") || systemPrompt.includes("confidence")) {
     mockCallCounter.lead++;
     if (currentMockScenario === "convergence_test") {
@@ -140,6 +147,23 @@ export async function callGroq(
 
     if (currentMockScenario === "circuit_breaker_test") {
       throw new Error("Simulated API failure for Circuit Breaker");
+    }
+
+    if (currentMockScenario === "helper_spawn_test") {
+      if (mockCallCounter.lead === 1) {
+        return JSON.stringify({
+          content: `Draft round 1: I'm stuck on pivot strategies.`,
+          confidence: 0.4,
+          needs_help: true,
+          help_query: "What is the median-of-three pivot strategy?",
+          is_mock: true,
+        });
+      }
+      return JSON.stringify({
+        content: `Draft round 2: Median-of-three solves this.`,
+        confidence: 0.95,
+        is_mock: true,
+      });
     }
 
     if (currentMockScenario === "max_rounds_test") {
