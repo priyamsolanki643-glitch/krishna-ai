@@ -733,12 +733,11 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, onRequireAut
 
       {/* ── Message stream area ── */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar relative z-10 pt-16">
-        <div className="max-w-[720px] mx-auto px-4 md:px-8 flex-1 flex flex-col w-full">
-          <AnimatePresence mode="wait">
+        <div className="max-w-[720px] mx-auto px-4 md:px-8 min-h-full flex flex-col">
           
           {isLoadingThread ? (
             /* Skeleton Loading State for old thread */
-            <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-6 space-y-6 animate-message-reveal">
+            <div className="py-6 space-y-6 animate-message-reveal">
               {/* Skeleton: user message right-aligned */}
               <div className="flex justify-end">
                 <div className="max-w-[65%] space-y-2">
@@ -769,17 +768,10 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, onRequireAut
                   <div className="skeleton-line h-[16px] w-[240px]" />
                 </div>
               </div>
-            </motion.div>
+            </div>
           ) : isInitial ? (
-            /* Optical Center Container & Council Kinetic Morph Headline */
-            <motion.div
-              key="empty-greeting"
-              initial={{ opacity: 1, scale: 1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96, y: -20, filter: "blur(6px)" }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="flex-1 flex flex-col items-center justify-center -mt-12 select-none text-center px-4"
-            >
+            /* Council Kinetic Morph Empty State */
+            <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 select-none">
               <div 
                 className="reveal-chat-item relative flex flex-col items-center justify-center w-full isolate text-center space-y-2 max-w-2xl px-4"
                 style={{ animationDelay: "50ms" }}
@@ -788,7 +780,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, onRequireAut
                   Hi Ujjwal,
                 </h1>
                 
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight flex flex-wrap items-center justify-center gap-x-3 gap-y-1 drop-shadow-[0_4px_24px_rgba(255,255,255,0.15)]">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight flex flex-wrap items-center justify-center gap-2 sm:gap-3 drop-shadow-[0_4px_24px_rgba(255,255,255,0.15)]">
                   <span>ready to</span>
                   <span className="relative inline-flex items-center justify-center min-w-[90px] sm:min-w-[110px] md:min-w-[130px] h-[36px] sm:h-[44px] md:h-[52px]">
                     <AnimatePresence mode="wait">
@@ -820,10 +812,10 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, onRequireAut
                   <span>something today?</span>
                 </h2>
               </div>
-            </motion.div>
+            </div>
           ) : (
             /* Messages list (bubbleless, flat style) */
-            <motion.div key="messages" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="py-4 space-y-4">
+            <div className="py-4 space-y-4">
               {messages.map((m) => {
                 const isUser = m.role === "user";
 
@@ -1028,18 +1020,19 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, onRequireAut
                 </div>
               )}
 
-            </motion.div>
+            </div>
           )}
-          </AnimatePresence>
-
 
         </div>
       </div>
 
       {/* ── Input Box (Trajectory Forge copy) ── */}
-      <div className="relative z-20 pt-2 mb-8 sm:mb-10 max-w-3xl mx-auto w-full px-4 shrink-0">
+      <div 
+        className="shrink-0 px-4 md:px-8 pt-2 bg-[#000000] relative z-10"
+        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+      >
         <div 
-          className="reveal-chat-item w-full mx-auto"
+          className="reveal-chat-item max-w-[720px] w-full mx-auto"
           style={{ animationDelay: "550ms" }}
         >
           
@@ -1060,41 +1053,34 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, onRequireAut
               </button>
 
               {/* Attachment Menu Popover */}
-              <AnimatePresence>
-                {isAttachMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    transition={{ duration: 0.15, ease: "easeOut" }}
-                    className="absolute bottom-full left-0 mb-3 bg-[#18181b] border border-white/15 rounded-[22px] p-1.5 flex flex-col shadow-[0_15px_40px_rgba(0,0,0,0.9)] min-w-[150px] z-50 overflow-hidden"
-                  >
+              {isAttachMenuOpen && (
+                <div className="absolute bottom-full left-0 mb-4 bg-[#1a1b1e] rounded-[24px] p-2 flex flex-col shadow-2xl min-w-[160px] animate-scale-in origin-bottom-left z-50 overflow-hidden max-h-[50vh] overflow-y-auto">
+                  <div className="flex flex-col gap-1 animate-fade-in">
                     <button 
                       onClick={() => { cameraInputRef.current?.click(); setIsAttachMenuOpen(false); }}
-                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-[#d4d4d8] hover:text-white transition-colors text-[13.5px] text-left cursor-pointer"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-[#d4d4d8] hover:text-white transition-colors text-[14px] text-left cursor-pointer"
                     >
-                      <Camera className="size-[17px] text-zinc-400" />
+                      <Camera className="size-[18px]" />
                       <span>Camera</span>
                     </button>
                     <button 
                       onClick={() => { photosInputRef.current?.click(); setIsAttachMenuOpen(false); }}
-                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-[#d4d4d8] hover:text-white transition-colors text-[13.5px] text-left cursor-pointer"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-[#d4d4d8] hover:text-white transition-colors text-[14px] text-left cursor-pointer"
                     >
-                      <Image className="size-[17px] text-zinc-400" />
+                      <Image className="size-[18px]" />
                       <span>Photos</span>
                     </button>
                     <button 
                       onClick={() => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); }}
-                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-[#d4d4d8] hover:text-white transition-colors text-[13.5px] text-left cursor-pointer"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-[#d4d4d8] hover:text-white transition-colors text-[14px] text-left cursor-pointer"
                     >
-                      <Paperclip className="size-[17px] text-zinc-400" />
+                      <Paperclip className="size-[18px]" />
                       <span>Files</span>
                     </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  </div>
+                </div>
+              )}
             </div>
-
 
             {/* Input area */}
             <div className="flex-1 flex flex-col justify-center min-w-0">
@@ -1216,7 +1202,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, onRequireAut
           {/* Subtext info */}
           <div className="mt-3 text-center">
             <span className="font-sans text-[11px] text-[#52525b]">
-              The Council can make mistakes. Verify important information.
+              Lumensky helps you execute faster, but always double-check the details.
             </span>
           </div>
 
