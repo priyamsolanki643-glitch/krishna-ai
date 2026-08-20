@@ -11,7 +11,10 @@ export default function AppWorkspacePage() {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVaultOpen, setIsVaultOpen] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const touchStartX = useRef<number>(0);
+
+  const isLight = theme === "light";
 
   // Swipe Gestures
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -34,7 +37,9 @@ export default function AppWorkspacePage() {
     <div 
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="flex h-screen w-full bg-[#000000] text-white font-sans overflow-hidden relative"
+      className={`flex h-screen w-full font-sans overflow-hidden relative transition-colors duration-300 ${
+        isLight ? "bg-[#ffffff] text-zinc-950" : "bg-[#000000] text-white"
+      }`}
     >
       {/* ── Top-Left Pure Minimalist 3 Lines (When Sidebar Closed) ── */}
       {!isSidebarOpen && (
@@ -44,7 +49,9 @@ export default function AppWorkspacePage() {
             e.stopPropagation();
             setIsSidebarOpen(true);
           }}
-          className="fixed top-6 left-6 z-40 text-zinc-400 hover:text-white active:scale-90 transition-transform cursor-pointer p-0 bg-transparent border-0 outline-none shadow-none flex items-center justify-center"
+          className={`fixed top-6 left-6 z-40 active:scale-90 transition-transform cursor-pointer p-0 bg-transparent border-0 outline-none shadow-none flex items-center justify-center ${
+            isLight ? "text-zinc-600 hover:text-zinc-950" : "text-zinc-400 hover:text-white"
+          }`}
           title="Open Sidebar"
           aria-label="Open Sidebar"
         >
@@ -52,12 +59,11 @@ export default function AppWorkspacePage() {
         </button>
       )}
 
-
-
       {/* Dynamic Session History Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
+        theme={theme}
         onOpenVault={() => setIsVaultOpen(true)}
         onSignOut={() => router.push("/")}
       />
@@ -67,9 +73,13 @@ export default function AppWorkspacePage() {
         onClick={() => {
           if (isSidebarOpen) setIsSidebarOpen(false);
         }}
-        className="flex-1 flex flex-col h-full min-w-0 bg-[#000000] relative overflow-hidden"
+        className={`flex-1 flex flex-col h-full min-w-0 relative overflow-hidden transition-colors duration-300 ${
+          isLight ? "bg-[#ffffff]" : "bg-[#000000]"
+        }`}
       >
         <ChatView
+          theme={theme}
+          onThemeChange={setTheme}
           onOpenSidebar={() => setIsSidebarOpen((prev) => !prev)}
           onOpenVault={() => setIsVaultOpen(true)}
         />
@@ -77,5 +87,6 @@ export default function AppWorkspacePage() {
     </div>
   );
 }
+
 
 

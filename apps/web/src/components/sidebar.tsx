@@ -26,10 +26,13 @@ interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   isAnonymous?: boolean;
+  theme?: "dark" | "light";
 }
 
-export function Sidebar({ onOpenVault, onSignOut, isOpen, setIsOpen, isAnonymous }: SidebarProps) {
+export function Sidebar({ onOpenVault, onSignOut, isOpen, setIsOpen, isAnonymous, theme = "dark" }: SidebarProps) {
+  const isLight = theme === "light";
   const router = useRouter();
+
   const [activeItem, setActiveItem] = useState("trajectory");
   const [touchStart, setTouchStart] = useState(0);
   const [isSearchActive, setIsSearchActive] = useState(false);
@@ -171,7 +174,11 @@ const { data: { session } } = await supabase.auth.getSession();
       <aside
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className={`fixed lg:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-screen transition-all duration-300 bg-black/40 backdrop-blur-2xl lg:bg-transparent lg:backdrop-blur-none overflow-hidden ${
+        className={`fixed lg:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-screen transition-all duration-300 overflow-hidden ${
+          isLight 
+            ? "bg-white/90 backdrop-blur-2xl lg:bg-zinc-50/80 border-r border-zinc-200 text-zinc-900" 
+            : "bg-black/40 backdrop-blur-2xl lg:bg-transparent lg:backdrop-blur-none text-white"
+        } ${
           isOpen ? "w-[260px] translate-x-0 opacity-100" : "w-0 -translate-x-full opacity-0"
         }`}
         style={{ height: '100dvh' }}
@@ -195,7 +202,9 @@ const { data: { session } } = await supabase.auth.getSession();
             <div className="flex items-center">
               <GyroLogo size={22} className="mr-2" />
               {isOpen && (
-                <span className="font-sans font-bold text-[14px] text-white tracking-[0.15em] uppercase">
+                <span className={`font-sans font-bold text-[14px] tracking-[0.15em] uppercase ${
+                  isLight ? "text-zinc-950" : "text-white"
+                }`}>
                   THE COUNCIL
                 </span>
               )}
@@ -204,7 +213,9 @@ const { data: { session } } = await supabase.auth.getSession();
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-zinc-400 hover:text-white p-1 cursor-pointer bg-transparent border-0 outline-none transition-colors flex items-center justify-center active:scale-90"
+                className={`p-1 cursor-pointer bg-transparent border-0 outline-none transition-colors flex items-center justify-center active:scale-90 ${
+                  isLight ? "text-zinc-500 hover:text-zinc-950" : "text-zinc-400 hover:text-white"
+                }`}
                 title="Close sidebar"
                 aria-label="Close sidebar"
               >
@@ -220,12 +231,15 @@ const { data: { session } } = await supabase.auth.getSession();
               window.dispatchEvent(new Event('new-thread'));
               setIsOpen(false);
             }}
-            className="flex items-center justify-center gap-2 w-full bg-white text-black font-medium py-2 px-4 rounded-full hover:bg-gray-100 transition-colors cursor-pointer text-[13px] shrink-0"
+            className={`flex items-center justify-center gap-2 w-full font-medium py-2 px-4 rounded-full transition-colors cursor-pointer text-[13px] shrink-0 ${
+              isLight ? "bg-zinc-950 text-white hover:bg-zinc-800" : "bg-white text-black hover:bg-gray-100"
+            }`}
           >
             <Plus className="size-4" />
             {isOpen && <span>New thread</span>}
           </button>
         </div>
+
 
         {/* ── Navigation Links ── */}
         <div className="px-3 shrink-0 flex flex-col gap-0.5">

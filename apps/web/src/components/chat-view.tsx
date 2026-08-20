@@ -31,8 +31,11 @@ interface ChatViewProps {
   onOpenSidebar: () => void;
   onOpenVault: () => void;
   isAnonymous?: boolean;
+  theme?: "dark" | "light";
+  onThemeChange?: (t: "dark" | "light") => void;
 }
-export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewProps) {
+export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dark", onThemeChange }: ChatViewProps) {
+  const isLight = theme === "light";
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
@@ -393,18 +396,23 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
   const isInitial = messages.length === 0 && !isLoadingThread;
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#000000] relative overflow-hidden font-sans">
+    <div className={`flex-1 flex flex-col h-full relative overflow-hidden font-sans transition-colors duration-300 ${
+      isLight ? "bg-[#ffffff] text-zinc-950" : "bg-[#000000] text-white"
+    }`}>
 
       {/* ── Top Floating Minimal Menu Dock with Downward Expanding Submenus ── */}
       <div className="fixed top-4 inset-x-0 z-40 flex justify-center pointer-events-none px-4">
         <div className="pointer-events-auto">
           <BottomMenu
+            theme={theme}
+            onThemeChange={onThemeChange}
             onNewChat={handleNewThread}
             onOpenFiles={() => setIsFileTreeOpen(true)}
             onOpenTeam={() => setIsTeamSelectorOpen(true)}
           />
         </div>
       </div>
+
 
 
       <TeamSelectorModal
@@ -471,11 +479,15 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
                 className="flex-1 flex flex-col items-center justify-center -mt-12 select-none text-center px-4"
               >
                 <div className="reveal-chat-item relative flex flex-col items-center justify-center w-full isolate text-center space-y-3 max-w-3xl px-4">
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight leading-none mb-2 drop-shadow-[0_4px_30px_rgba(255,255,255,0.18)]">
+                  <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-['Instrument_Serif',serif] font-normal tracking-tight leading-none mb-2 ${
+                    isLight ? "text-zinc-950" : "text-white drop-shadow-[0_4px_30px_rgba(255,255,255,0.18)]"
+                  }`}>
                     Hi Ujjwal,
                   </h1>
                   
-                  <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight flex items-center justify-center gap-x-2.5 sm:gap-x-4 drop-shadow-[0_4px_30px_rgba(255,255,255,0.18)] whitespace-nowrap">
+                  <h2 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-['Instrument_Serif',serif] font-normal tracking-tight flex items-center justify-center gap-x-2.5 sm:gap-x-4 whitespace-nowrap ${
+                    isLight ? "text-zinc-900" : "text-white drop-shadow-[0_4px_30px_rgba(255,255,255,0.18)]"
+                  }`}>
                     <span>ready to</span>
                     <span className="relative inline-flex items-center justify-center min-w-[85px] sm:min-w-[115px] md:min-w-[145px] lg:min-w-[165px] h-[44px] sm:h-[58px] md:h-[72px] lg:h-[82px]">
                       <AnimatePresence mode="wait">
@@ -485,17 +497,23 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
                           animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
                           exit={{ y: -20, opacity: 0, filter: "blur(5px)" }}
                           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                          className="absolute inset-0 flex items-center justify-center font-['Instrument_Serif',serif] font-normal text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl italic"
+                          className={`absolute inset-0 flex items-center justify-center font-['Instrument_Serif',serif] font-normal text-4xl sm:text-5xl md:text-6xl lg:text-7xl italic ${
+                            isLight ? "text-zinc-950" : "text-white"
+                          }`}
                         >
                           {currentWord}
                         </motion.span>
                       </AnimatePresence>
                       
-                      <div className="absolute -bottom-1 left-0 right-0 h-[2px] bg-white/15 overflow-hidden rounded-full">
+                      <div className={`absolute -bottom-1 left-0 right-0 h-[2px] overflow-hidden rounded-full ${
+                        isLight ? "bg-zinc-200" : "bg-white/15"
+                      }`}>
                         <motion.div
                           className="absolute inset-0"
                           style={{
-                            background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.95) 50%, transparent 100%)",
+                            background: isLight
+                              ? "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.7) 50%, transparent 100%)"
+                              : "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.95) 50%, transparent 100%)",
                             backgroundSize: "200% 100%",
                           }}
                           animate={{ backgroundPosition: ["200% 0%", "-100% 0%"] }}
@@ -505,6 +523,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
                     </span>
                     <span>today?</span>
                   </h2>
+
                 </div>
 
               </motion.div>
@@ -653,7 +672,11 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
         )}
 
         {/* Floating Capsule Input Console */}
-        <div className="relative flex items-center gap-2 bg-[#09090b] rounded-[32px] px-3 py-2 border border-white/20 hover:border-white/30 transition-colors shadow-[0_10px_35px_rgba(0,0,0,0.8)]">
+        <div className={`relative flex items-center gap-2 rounded-[32px] px-3 py-2 transition-all duration-300 ${
+          isLight 
+            ? "bg-white/90 border border-zinc-200 shadow-[0_10px_35px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,1)] hover:border-zinc-300" 
+            : "bg-[#09090b] border border-white/20 hover:border-white/30 shadow-[0_10px_35px_rgba(0,0,0,0.8)]"
+        }`}>
           
           {/* Plus / Attach Button */}
           <div className="relative shrink-0 flex items-center justify-center">
@@ -661,7 +684,9 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
               type="button"
               onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)}
               className={`size-10 rounded-full grid place-items-center transition-all duration-200 cursor-pointer active:scale-90 ${
-                isAttachMenuOpen ? "bg-white/15 text-white" : "hover:bg-white/5 text-zinc-400 hover:text-white"
+                isAttachMenuOpen 
+                  ? (isLight ? "bg-zinc-200 text-zinc-950" : "bg-white/15 text-white") 
+                  : (isLight ? "hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950" : "hover:bg-white/5 text-zinc-400 hover:text-white")
               }`}
               title="Attach media or files"
             >
@@ -676,27 +701,37 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="absolute bottom-full left-0 mb-3 bg-[#141416] border border-white/15 rounded-[22px] p-1.5 flex flex-col shadow-[0_15px_40px_rgba(0,0,0,0.9)] min-w-[150px] z-50 overflow-hidden"
+                  className={`absolute bottom-full left-0 mb-3 rounded-[22px] p-1.5 flex flex-col min-w-[150px] z-50 overflow-hidden ${
+                    isLight 
+                      ? "bg-white/95 border border-zinc-200 shadow-[0_15px_40px_rgba(0,0,0,0.1)] text-zinc-900" 
+                      : "bg-[#141416] border border-white/15 shadow-[0_15px_40px_rgba(0,0,0,0.9)] text-zinc-300"
+                  }`}
                 >
                   <button 
                     onClick={() => { cameraInputRef.current?.click(); setIsAttachMenuOpen(false); }}
-                    className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-zinc-300 hover:text-white transition-colors text-[13px] text-left cursor-pointer"
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-colors text-[13px] text-left cursor-pointer ${
+                      isLight ? "hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950" : "hover:bg-white/5 text-zinc-300 hover:text-white"
+                    }`}
                   >
-                    <Camera className="size-4 text-zinc-400" />
+                    <Camera className={`size-4 ${isLight ? "text-zinc-500" : "text-zinc-400"}`} />
                     <span>Camera</span>
                   </button>
                   <button 
                     onClick={() => { photosInputRef.current?.click(); setIsAttachMenuOpen(false); }}
-                    className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-zinc-300 hover:text-white transition-colors text-[13px] text-left cursor-pointer"
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-colors text-[13px] text-left cursor-pointer ${
+                      isLight ? "hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950" : "hover:bg-white/5 text-zinc-300 hover:text-white"
+                    }`}
                   >
-                    <Image className="size-4 text-zinc-400" />
+                    <Image className={`size-4 ${isLight ? "text-zinc-500" : "text-zinc-400"}`} />
                     <span>Photos</span>
                   </button>
                   <button 
                     onClick={() => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); }}
-                    className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-zinc-300 hover:text-white transition-colors text-[13px] text-left cursor-pointer"
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-colors text-[13px] text-left cursor-pointer ${
+                      isLight ? "hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950" : "hover:bg-white/5 text-zinc-300 hover:text-white"
+                    }`}
                   >
-                    <Paperclip className="size-4 text-zinc-400" />
+                    <Paperclip className={`size-4 ${isLight ? "text-zinc-500" : "text-zinc-400"}`} />
                     <span>Files</span>
                   </button>
                 </motion.div>
@@ -709,13 +744,17 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
             {selectedFiles.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1 pb-1">
                 {selectedFiles.map((file, idx) => (
-                  <div key={idx} className="relative flex items-center gap-2 px-3 py-1 rounded-xl bg-white/5 text-xs text-zinc-300 pr-7">
+                  <div key={idx} className={`relative flex items-center gap-2 px-3 py-1 rounded-xl text-xs pr-7 ${
+                    isLight ? "bg-zinc-100 text-zinc-800" : "bg-white/5 text-zinc-300"
+                  }`}>
                     <Paperclip className="size-3" />
                     <span className="truncate max-w-[100px]">{file.name}</span>
                     <button
                       type="button"
                       onClick={() => removeSelectedFile(idx)}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 size-5 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white"
+                      className={`absolute right-1 top-1/2 -translate-y-1/2 size-5 rounded-full flex items-center justify-center ${
+                        isLight ? "hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900" : "hover:bg-white/10 text-zinc-400 hover:text-white"
+                      }`}
                     >
                       <X className="size-3" />
                     </button>
@@ -727,7 +766,9 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
             <div className="relative flex-1 flex flex-col justify-center min-w-0 min-h-[26px]">
               {!(isInputFocused || input.length > 0) && (
                 <div className="absolute inset-y-0 left-1 right-2 flex items-center pointer-events-none overflow-hidden h-full">
-                  <span className="text-zinc-500 text-[14.5px] sm:text-[15.5px] truncate w-full">
+                  <span className={`text-[14.5px] sm:text-[15.5px] truncate w-full ${
+                    isLight ? "text-zinc-400" : "text-zinc-500"
+                  }`}>
                     {placeholders[placeholderIndex]}
                   </span>
                 </div>
@@ -740,7 +781,9 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
                 onBlur={() => setIsInputFocused(false)}
                 onKeyDown={handleKeyDown}
                 rows={1}
-                className="w-full bg-transparent outline-none resize-none text-[15.5px] py-1 px-1 no-scrollbar text-white leading-relaxed"
+                className={`w-full bg-transparent outline-none resize-none text-[15.5px] py-1 px-1 no-scrollbar leading-relaxed ${
+                  isLight ? "text-zinc-950" : "text-white"
+                }`}
                 style={{ maxHeight: 120 }}
               />
             </div>
@@ -756,7 +799,9 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
               type="button"
               onClick={toggleRecording}
               className={`size-10 rounded-full grid place-items-center cursor-pointer transition-all duration-300 active:scale-90 relative ${
-                isRecording ? "bg-red-500/20 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.4)]" : "hover:bg-white/10 text-zinc-400 hover:text-white"
+                isRecording 
+                  ? "bg-red-500/20 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.4)]" 
+                  : (isLight ? "hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950" : "hover:bg-white/10 text-zinc-400 hover:text-white")
               }`}
               title={isRecording ? "Stop listening" : "Speak voice command or prompt"}
             >
@@ -787,13 +832,14 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
                 disabled={!input.trim() && selectedFiles.length === 0}
                 className={`size-10 rounded-full grid place-items-center transition-all cursor-pointer ${
                   !input.trim() && selectedFiles.length === 0
-                    ? "bg-white/5 text-white/30 border border-white/5 cursor-not-allowed"
-                    : "bg-white text-black hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)] font-bold"
+                    ? (isLight ? "bg-zinc-100 text-zinc-300 cursor-not-allowed" : "bg-white/5 text-white/30 border border-white/5 cursor-not-allowed")
+                    : (isLight ? "bg-zinc-950 text-white hover:scale-105 active:scale-95 shadow-md font-bold" : "bg-white text-black hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)] font-bold")
                 }`}
                 title="Send to The Council (Long press for Quick Answer override)"
               >
                 <ArrowUp className="size-5 stroke-[2.5]" />
               </button>
+
 
               <AnimatePresence>
                 {isLongPressMenuOpen && (
