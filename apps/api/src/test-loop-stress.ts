@@ -104,6 +104,9 @@ async function runStressTests() {
   console.log("\n=================================================================");
   console.log("🎉 ALL 6 LOOP STRESS-TEST SCENARIOS PASSED WITH EXACT CONVERGENCE!");
   console.log("=================================================================");
+
+  const { shutdownTelemetry } = await import("./lib/telemetry.js");
+  await shutdownTelemetry();
 }
 
 runStressTests().catch((err) => {

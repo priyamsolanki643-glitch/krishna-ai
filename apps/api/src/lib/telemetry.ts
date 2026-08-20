@@ -1,11 +1,18 @@
-import { trace, context, Tracer } from "@opentelemetry/api";
-import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
-import { ConsoleSpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { trace, Tracer } from "@opentelemetry/api";
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { ConsoleSpanExporter } from "@opentelemetry/sdk-trace-node";
 
 // Initialize OpenTelemetry
-const provider = new NodeTracerProvider();
-provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
-provider.register();
+const sdk = new NodeSDK({
+  traceExporter: new ConsoleSpanExporter(),
+  instrumentations: [],
+});
+
+sdk.start();
+
+export const shutdownTelemetry = async () => {
+  await sdk.shutdown();
+};
 
 export const getTracer = (): Tracer => trace.getTracer("the-council-api");
 
@@ -16,6 +23,7 @@ export async function withSpan<T>(
 ): Promise<T> {
   const tracer = getTracer();
   return tracer.startActiveSpan(name, { attributes }, async (span) => {
+    // console.log(`[OTel] Started span ${name}`);
     try {
       const result = await fn();
       return result;
