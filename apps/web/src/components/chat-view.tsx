@@ -221,12 +221,19 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
       }
     };
 
+    const handleOpenAddFile = () => {
+      setIsFileTreeOpen(true);
+    };
+
     window.addEventListener("new-thread", handleNewThread);
     window.addEventListener("load-thread", handleLoadThread);
+    window.addEventListener("open-add-file", handleOpenAddFile);
     return () => {
       window.removeEventListener("new-thread", handleNewThread);
       window.removeEventListener("load-thread", handleLoadThread);
+      window.removeEventListener("open-add-file", handleOpenAddFile);
     };
+
   }, []);
 
   useEffect(() => {
