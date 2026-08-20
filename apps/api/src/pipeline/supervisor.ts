@@ -19,7 +19,7 @@ You MUST return ONLY a valid JSON object matching this schema:
 }
 Return raw JSON only.`;
 
-    const rawResponse = await callGroq(systemPrompt, query, "llama-3.1-8b-instant");
+    const rawResponse = await callGroq(systemPrompt, query, "openai/gpt-oss-20b");
 
   try {
     const parsed = extractJSON(rawResponse);

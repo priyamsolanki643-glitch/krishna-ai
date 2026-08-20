@@ -12,7 +12,7 @@ Domain context: ${domain}
 Provide a direct, factual, and concise solution to the problem provided.
 Do NOT format as JSON. Provide plain text/markdown.`;
 
-    const rawResponse = await callGroq(systemPrompt, `Problem: ${problemDescription}`, "llama-3.1-8b-instant");
+    const rawResponse = await callGroq(systemPrompt, `Problem: ${problemDescription}`, "openai/gpt-oss-20b");
 
   // In mock mode, callGroq will return JSON due to other matchers or a generic string.
   // We'll parse is_mock manually for now if it happens to be JSON, but normally it's plain text.

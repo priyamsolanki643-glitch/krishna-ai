@@ -461,9 +461,9 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
                     Hi Ujjwal,
                   </h1>
                   
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight flex flex-wrap items-center justify-center gap-x-3 gap-y-1 drop-shadow-[0_4px_24px_rgba(255,255,255,0.15)]">
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight flex items-center justify-center gap-x-2 sm:gap-x-3 drop-shadow-[0_4px_24px_rgba(255,255,255,0.15)] whitespace-nowrap">
                     <span>ready to</span>
-                    <span className="relative inline-flex items-center justify-center min-w-[90px] sm:min-w-[110px] md:min-w-[130px] h-[36px] sm:h-[44px] md:h-[52px]">
+                    <span className="relative inline-flex items-center justify-center min-w-[70px] sm:min-w-[95px] md:min-w-[110px] h-[36px] sm:h-[44px] md:h-[52px]">
                       <AnimatePresence mode="wait">
                         <motion.span
                           key={currentWord}
@@ -489,8 +489,9 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
                         />
                       </div>
                     </span>
-                    <span>something today?</span>
+                    <span>today?</span>
                   </h2>
+
                 </div>
               </motion.div>
             ) : (

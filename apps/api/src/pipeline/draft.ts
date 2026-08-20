@@ -33,7 +33,7 @@ You MUST return ONLY a valid JSON object strictly matching this schema:
 }
 Return raw JSON only. Set "needs_help" to true ONLY if you are genuinely stuck and need an ephemeral Helper Agent to research a specific sub-problem.`;
 
-  const rawResponse = await callGroq(systemPrompt, query, "llama-3.3-70b-versatile");
+  const rawResponse = await callGroq(systemPrompt, query, "openai/gpt-oss-120b");
 
   try {
     const parsed = extractJSON(rawResponse);
