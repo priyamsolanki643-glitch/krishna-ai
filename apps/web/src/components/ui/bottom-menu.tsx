@@ -323,10 +323,10 @@ export default function TopNavMenu({
         ref={containerRef}
         className={cn("relative flex flex-col items-center", className)}
       >
-        <div className={`flex items-center gap-1 rounded-[18px] p-1 transition-colors duration-300 z-20 ${
+        <div className={`flex items-center gap-1 rounded-[18px] p-1 transition-all duration-300 z-20 ${
           isLight 
-            ? "bg-white/85 backdrop-blur-2xl border border-zinc-200 shadow-[0_12px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,1)]"
-            : "bg-zinc-950/80 backdrop-blur-2xl border border-white/15 shadow-[0_12px_40px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.15)]"
+            ? "bg-white/85 backdrop-blur-2xl border border-zinc-300 shadow-[0_12px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,1)]"
+            : "bg-zinc-950/80 backdrop-blur-2xl border border-white/60 shadow-[0_0_20px_rgba(255,255,255,0.25),0_12px_40px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.3)]"
         }`}>
           {MAIN_NAV.map(({ icon: DefaultIcon, name, label }) => {
             const Icon = name === "theme" ? (isLight ? Sun : Moon) : DefaultIcon;
@@ -372,13 +372,14 @@ export default function TopNavMenu({
               <div className={`rounded-[18px] transition-colors duration-300 ${
                 isLight
                   ? "bg-white/95 backdrop-blur-2xl border border-zinc-200 shadow-[0_20px_50px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,1)]"
-                  : "bg-zinc-950/95 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.15)]"
+                  : "bg-zinc-950/95 backdrop-blur-2xl border border-white/40 shadow-[0_0_25px_rgba(255,255,255,0.2),0_20px_50px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.2)]"
               }`}>
                 {content}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+
       </div>
 
       <FileViewerModal

@@ -473,15 +473,16 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                     setIsPinMenuOpen(false);
                   }}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-xs font-medium cursor-pointer",
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-xs font-medium cursor-pointer bg-black",
                     isModelsMenuOpen
                       ? isLight
-                        ? "text-zinc-950 bg-zinc-100 font-semibold"
-                        : "text-white bg-white/10 font-semibold"
+                        ? "border border-zinc-950 text-zinc-950 shadow-sm bg-white font-semibold"
+                        : "border border-white text-white shadow-[0_0_12px_rgba(255,255,255,0.45)] bg-black font-semibold"
                       : isLight
-                      ? "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100/60"
-                      : "text-zinc-300 hover:text-white hover:bg-white/5"
+                      ? "border border-transparent text-zinc-600 hover:text-zinc-950 bg-transparent"
+                      : "border border-transparent text-zinc-400 hover:text-white bg-black/50"
                   )}
+
                   title="Configure Council Model Agents Team"
                 >
                   <span className="tracking-tight">Models</span>
