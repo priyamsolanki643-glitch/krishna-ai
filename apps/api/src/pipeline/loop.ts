@@ -20,6 +20,8 @@ export interface DebateResult {
 export interface DebateLoopOptions {
   leadModel?: string;
   reviewerModel?: string;
+  maxRounds?: number;
+  userGroqKey?: string;
 }
 
 export async function runDebateLoop(
@@ -28,14 +30,16 @@ export async function runDebateLoop(
   onProgress?: DebateProgressCallback,
   options?: DebateLoopOptions
 ): Promise<DebateResult> {
-  return withSpan("runDebateLoop", { query, leadModel: options?.leadModel, reviewerModel: options?.reviewerModel }, async () => {
+  return withSpan("runDebateLoop", { query, leadModel: options?.leadModel, reviewerModel: options?.reviewerModel, maxRounds: options?.maxRounds }, async () => {
     const actor = createActor(debateMachine, {
       input: { 
         query, 
         toneInstruction, 
         onProgress,
         leadModel: options?.leadModel,
-        reviewerModel: options?.reviewerModel
+        reviewerModel: options?.reviewerModel,
+        maxRounds: options?.maxRounds,
+        userGroqKey: options?.userGroqKey,
       }
     });
     

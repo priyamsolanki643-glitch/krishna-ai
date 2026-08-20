@@ -16,7 +16,8 @@ export async function runArgumentRuling(
   originalQuery: string,
   originalPosition: string,
   targetAgent: "lead" | "reviewer" | "critic",
-  userArgument: string
+  userArgument: string,
+  userGroqKey?: string
 ): Promise<ArgumentRuling> {
   return withSpan("runArgumentRuling", { targetAgent }, async () => {
     const systemPrompt = `You are the Supervisor of The Council acting as an impartial judge.
@@ -41,7 +42,7 @@ Return raw JSON only.`;
 
     const userPrompt = `Original Query: ${originalQuery}\n\nOriginal ${targetAgent} Position/Answer:\n${originalPosition}\n\nUser Counter-Argument:\n${userArgument}`;
 
-    const rawResponse = await callGroq(systemPrompt, userPrompt, GROQ_MODELS.supervisor);
+    const rawResponse = await callGroq(systemPrompt, userPrompt, GROQ_MODELS.supervisor, userGroqKey);
 
     try {
       const parsed = extractJSON(rawResponse);

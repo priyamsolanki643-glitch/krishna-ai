@@ -12,6 +12,8 @@ interface DebateContext {
   onProgress?: DebateProgressCallback;
   leadModel?: string;
   reviewerModel?: string;
+  maxRounds: number;
+  userGroqKey?: string;
   
   round: number;
   leadConfidenceHistory: number[];
@@ -31,7 +33,6 @@ interface DebateContext {
   criticObjection: string;
 }
 
-const MAX_ROUNDS = 5;
 const CONVERGENCE_EPSILON = 0.05;
 
 export const debateMachine = setup({
@@ -43,20 +44,22 @@ export const debateMachine = setup({
       onProgress?: DebateProgressCallback;
       leadModel?: string;
       reviewerModel?: string;
+      maxRounds?: number;
+      userGroqKey?: string;
     },
   },
   actors: {
     invokeLead: fromPromise(
-      async ({ input }: { input: { query: string; previousCritiqueSummary: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; helperContext?: string; modelOverride?: string } }) => {
+      async ({ input }: { input: { query: string; previousCritiqueSummary: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; helperContext?: string; modelOverride?: string; userGroqKey?: string } }) => {
         if (input.onProgress) {
           await input.onProgress({ stage: "lead_drafting", round: input.round });
         }
-        const draft = await runLead(input.query, input.previousCritiqueSummary, input.toneInstruction, input.helperContext, input.modelOverride);
+        const draft = await runLead(input.query, input.previousCritiqueSummary, input.toneInstruction, input.helperContext, input.modelOverride, input.userGroqKey);
         return draft;
       }
     ),
     invokeReviewer: fromPromise(
-      async ({ input }: { input: { query: string; draftContent: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; draftConfidence: number; modelOverride?: string } }) => {
+      async ({ input }: { input: { query: string; draftContent: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; draftConfidence: number; modelOverride?: string; userGroqKey?: string } }) => {
         if (input.onProgress) {
           await input.onProgress({
             stage: "reviewer_critiquing",
@@ -64,7 +67,7 @@ export const debateMachine = setup({
             data: { leadDraftConfidence: input.draftConfidence },
           });
         }
-        const critique = await runReviewer(input.query, input.draftContent, input.toneInstruction, input.modelOverride);
+        const critique = await runReviewer(input.query, input.draftContent, input.toneInstruction, input.modelOverride, input.userGroqKey);
         if (input.onProgress) {
           await input.onProgress({
             stage: "round_complete",
@@ -93,19 +96,19 @@ export const debateMachine = setup({
       }
     ),
     invokeCritic: fromPromise(
-      async ({ input }: { input: { query: string; finalDraft: string; onProgress?: DebateProgressCallback; round: number } }) => {
+      async ({ input }: { input: { query: string; finalDraft: string; onProgress?: DebateProgressCallback; round: number; userGroqKey?: string } }) => {
         if (input.onProgress) {
           await input.onProgress({
             stage: "critic_reviewing",
             round: input.round,
           } as any);
         }
-        const criticResult = await runCritic(input.query, input.finalDraft);
+        const criticResult = await runCritic(input.query, input.finalDraft, input.userGroqKey);
         return criticResult;
       }
     ),
     invokeCriticRevisionLead: fromPromise(
-      async ({ input }: { input: { query: string; objection: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; modelOverride?: string } }) => {
+      async ({ input }: { input: { query: string; objection: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; modelOverride?: string; userGroqKey?: string } }) => {
         if (input.onProgress) {
           await input.onProgress({
             stage: "critic_revising",
@@ -114,7 +117,7 @@ export const debateMachine = setup({
           } as any);
         }
         const critiqueFeedback = `ADVERSARIAL CRITIC OBJECTION (Address this flaw directly):\n${input.objection}`;
-        const draft = await runLead(input.query, critiqueFeedback, input.toneInstruction, undefined, input.modelOverride);
+        const draft = await runLead(input.query, critiqueFeedback, input.toneInstruction, undefined, input.modelOverride, input.userGroqKey);
         return draft;
       }
     )
@@ -128,7 +131,7 @@ export const debateMachine = setup({
       const delta = Math.abs(currentConfidence - prevConfidence);
       return delta < CONVERGENCE_EPSILON;
     },
-    isMaxRoundsHit: ({ context }) => context.round >= MAX_ROUNDS,
+    isMaxRoundsHit: ({ context }) => context.round >= context.maxRounds,
     leadCircuitBroken: ({ context }) => context.leadFailures >= 1,
     reviewerCircuitBroken: ({ context }) => context.reviewerFailures >= 1,
     needsHelp: ({ event }) => (event as any).output.needs_help === true,
@@ -145,6 +148,8 @@ export const debateMachine = setup({
     onProgress: input.onProgress,
     leadModel: input.leadModel,
     reviewerModel: input.reviewerModel,
+    maxRounds: input.maxRounds || 5,
+    userGroqKey: input.userGroqKey,
     round: 1,
     leadConfidenceHistory: [],
     currentDraftContent: "",
@@ -172,6 +177,7 @@ export const debateMachine = setup({
           round: context.round,
           helperContext: context.helperContext,
           modelOverride: context.leadModel,
+          userGroqKey: context.userGroqKey,
         }),
         onDone: [
           {
@@ -257,6 +263,7 @@ export const debateMachine = setup({
           round: context.round,
           draftConfidence: context.leadConfidenceHistory[context.round - 1],
           modelOverride: context.reviewerModel,
+          userGroqKey: context.userGroqKey,
         }),
         onDone: [
           {
@@ -322,6 +329,7 @@ export const debateMachine = setup({
           finalDraft: context.currentDraftContent,
           onProgress: context.onProgress,
           round: context.round,
+          userGroqKey: context.userGroqKey,
         }),
         onDone: [
           {
@@ -364,6 +372,7 @@ export const debateMachine = setup({
           onProgress: context.onProgress,
           round: context.round,
           modelOverride: context.leadModel,
+          userGroqKey: context.userGroqKey,
         }),
         onDone: {
           target: "done",

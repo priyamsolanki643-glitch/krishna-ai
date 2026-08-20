@@ -8,7 +8,7 @@ export interface SafetyResult {
   confidence: number;
 }
 
-export async function runSafetyCheck(text: string): Promise<SafetyResult> {
+export async function runSafetyCheck(text: string, userGroqKey?: string): Promise<SafetyResult> {
   return withSpan("runSafetyCheck", { role: "safety" }, async () => {
     const systemPrompt = `You are the Safety Guardrail Agent in The Council.
 Analyze the final generated response for severe harm, hate speech, dangerous illegal instructions, or critical safety violations.
@@ -22,7 +22,7 @@ Return JSON:
     const userPrompt = `Content to review:\n${text}`;
 
     try {
-      const res = await callGroq(systemPrompt, userPrompt, GROQ_MODELS.safety);
+      const res = await callGroq(systemPrompt, userPrompt, GROQ_MODELS.safety, userGroqKey);
       const parsed = JSON.parse(res);
       console.log(`🛡️ [Safety Check] Passed: ${parsed.is_safe}, Category: ${parsed.category || "none"}`);
       return {
