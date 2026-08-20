@@ -408,7 +408,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
             </div>
 
 
-            {/* Mic Button with FP-Glitch Audio Wave Animation */}
+            {/* Mic Button */}
             <button
               type="button"
               tabIndex={-1}
@@ -429,33 +429,9 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
               {isRecording && (
                 <span className="absolute inset-0 rounded-full border border-red-500/60 animate-ping opacity-75 pointer-events-none" />
               )}
-              {isRecording ? (
-                <div className="flex items-center gap-[2.5px] h-4 px-0.5 relative z-10">
-                  <motion.span
-                    className="w-[2.5px] bg-red-400 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
-                    animate={{ height: ["4px", "14px", "4px"] }}
-                    transition={{ repeat: Infinity, duration: 0.55, ease: "easeInOut" }}
-                  />
-                  <motion.span
-                    className="w-[2.5px] bg-red-400 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
-                    animate={{ height: ["12px", "4px", "12px"] }}
-                    transition={{ repeat: Infinity, duration: 0.65, ease: "easeInOut", delay: 0.1 }}
-                  />
-                  <motion.span
-                    className="w-[2.5px] bg-red-400 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
-                    animate={{ height: ["6px", "16px", "6px"] }}
-                    transition={{ repeat: Infinity, duration: 0.5, ease: "easeInOut", delay: 0.2 }}
-                  />
-                  <motion.span
-                    className="w-[2.5px] bg-red-400 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
-                    animate={{ height: ["8px", "13px", "4px"] }}
-                    transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.15 }}
-                  />
-                </div>
-              ) : (
-                <Mic size={19} />
-              )}
+              <Mic size={19} className="relative z-10" />
             </button>
+
 
 
             {/* Send Button: Clean Arrow Icon */}
