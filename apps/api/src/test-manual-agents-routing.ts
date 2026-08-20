@@ -2,18 +2,24 @@ import { app } from "./index.js";
 
 async function parseHonoSSE(res: Response): Promise<{ events: { event: string; data: any }[]; finalMessage: any }> {
   const text = await res.text();
-  const lines = text.split("\n");
+  const blocks = text.split("\n\n");
   const events: { event: string; data: any }[] = [];
-  let currentEvent = "";
 
-  for (const line of lines) {
-    if (line.startsWith("event: ")) {
-      currentEvent = line.replace("event: ", "").trim();
-    } else if (line.startsWith("data: ")) {
-      const dataStr = line.replace("data: ", "").trim();
+  for (const block of blocks) {
+    if (!block.trim()) continue;
+    let eventName = "message";
+    let dataStr = "";
+    for (const line of block.split("\n")) {
+      if (line.startsWith("event: ")) {
+        eventName = line.replace("event: ", "").trim();
+      } else if (line.startsWith("data: ")) {
+        dataStr = line.replace("data: ", "").trim();
+      }
+    }
+    if (dataStr) {
       try {
         const data = JSON.parse(dataStr);
-        events.push({ event: currentEvent, data });
+        events.push({ event: eventName, data });
       } catch {}
     }
   }

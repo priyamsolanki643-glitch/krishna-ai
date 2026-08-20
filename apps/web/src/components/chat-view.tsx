@@ -311,11 +311,6 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
     const textToSend = customText || input;
     if ((!textToSend.trim() && selectedFiles.length === 0) || isThinking) return;
 
-    const domains = ["System Logic & Architecture", "Adversarial Code Audit", "Mathematics & Proofs", "Strategic Synthesis"];
-    const matchedDomain = domains[Math.floor(Math.random() * domains.length)];
-    setRoutingDomain(matchedDomain);
-    setIsRoutingPulse(true);
-
     const userMessageText = textToSend.trim();
     const currentArguing = arguingWith;
 
@@ -331,61 +326,74 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
     setSelectedFiles([]);
     setFilePreviews([]);
     setArguingWith(null);
+    setIsThinking(true);
+    setIsRoutingPulse(true);
 
-    setTimeout(async () => {
+    try {
+      let userGroqKey = "";
+      let userOpenaiKey = "";
+      let userAnthropicKey = "";
+      let debateMode = "deep";
+      let maxRounds = 2;
+
+      if (typeof window !== "undefined") {
+        userGroqKey = localStorage.getItem("council_key_groq") || "";
+        userOpenaiKey = localStorage.getItem("council_key_openai") || "";
+        userAnthropicKey = localStorage.getItem("council_key_anthropic") || "";
+        debateMode = localStorage.getItem("council_debate_mode") || "deep";
+        const storedRounds = localStorage.getItem("council_max_rounds");
+        if (storedRounds) maxRounds = Number(storedRounds);
+      }
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-groq-key": userGroqKey,
+          "x-user-openai-key": userOpenaiKey,
+          "x-user-anthropic-key": userAnthropicKey,
+        },
+        body: JSON.stringify({
+          query: userMessageText,
+          selectedAgents: selectedModelIds,
+          debateMode: isSkipDebateMode ? "fast" : debateMode,
+          maxRounds: isSkipDebateMode ? 1 : maxRounds,
+          arguingWith: currentArguing
+        })
+      });
+
+      const data = await res.json();
       setIsRoutingPulse(false);
-      setIsThinking(true);
 
-      setTimeout(() => {
-        const councilMsg: Message = {
-          id: String(Date.now() + 1),
-          role: "council",
-          text: currentArguing 
-            ? `The Council has audited your counter-argument against **${currentArguing.agent}**.\n\n### Council Adjudication\nYour point regarding *"${currentArguing.context.slice(0, 80)}..."* has been incorporated into the consensus matrix. The adversarial critique has been updated.`
-            : `### Consensus Resolution\n\nThe Council has synthesized a verified, hallucination-resistant response for your query.\n\n` +
-              `\`\`\`typescript\n// Verified Council Consensus Engine\nexport function executeConsensus() {\n  return { verified: true, rounds: ${isSkipDebateMode ? 1 : 2}, score: 0.98 };\n}\n\`\`\`\n\n` +
-              `1. **Architectural Separation**: Separated deliberation loop from token generation.\n2. **Adversarial Assurance**: Cross-checked edge cases with DeepSeek R1.\n3. **Final Verdict**: Converged with zero unresolved contradictions.`,
-          createdAt: new Date().toISOString(),
-          hasDisagreement: !isSkipDebateMode,
-          stageData: {
-            supervisor: {
-              domain: matchedDomain,
-              confidence: 0.98,
-              assignedLead: isAutoTeam ? "Claude 3.7 Sonnet" : (AVAILABLE_MODELS.find(m => m.id === selectedModelIds[0])?.name || "Lead Model"),
-              assignedCritic: isAutoTeam ? "DeepSeek R1" : (AVAILABLE_MODELS.find(m => m.id === selectedModelIds[1])?.name || "Critic Model"),
-              intent: isSkipDebateMode ? "Fast single-lead response" : "Full adversarial deliberation loop"
-            },
-            leadDraft: {
-              agent: isAutoTeam ? "Claude 3.7 Sonnet" : "Custom Lead",
-              content: "Initial draft proposing structural verification to eliminate single-pass monolithic failure modes."
-            },
-            critique: {
-              agent: isAutoTeam ? "DeepSeek R1 (Adversarial Critic)" : "Custom Critic",
-              identifiedFlaws: isSkipDebateMode ? [] : [
-                "Potential latency overhead if asynchronous worker threads are not decoupled.",
-                "Edge condition in fallback token distribution."
-              ],
-              critiqueContent: isSkipDebateMode ? "Debate skipped per quick answer override." : "Audited draft. Edge conditions resolved via secondary convergence pass.",
-              rating: "Converged"
-            },
-            convergence: {
-              rounds: isSkipDebateMode ? 1 : 2,
-              consensusScore: 0.98,
-              overruledDissent: isSkipDebateMode ? undefined : {
-                agent: "DeepSeek R1",
-                dissentPoint: "Advocated for AST syntax re-validation.",
-                reasonOverruled: "Overruled: Syntax verified by parser in sub-millisecond layer."
-              }
-            }
-          }
-        };
+      if (data.stageData?.supervisor?.domain) {
+        setRoutingDomain(data.stageData.supervisor.domain);
+      }
 
-        setMessages((prev) => [...prev, councilMsg]);
-        setIsThinking(false);
-      }, 1200);
+      const councilMsg: Message = {
+        id: String(Date.now() + 1),
+        role: "council",
+        text: data.text || "No response generated.",
+        createdAt: new Date().toISOString(),
+        hasDisagreement: Boolean(data.hasDisagreement),
+        stageData: data.stageData
+      };
 
-    }, 600);
+      setMessages((prev) => [...prev, councilMsg]);
+    } catch (err: any) {
+      console.error("Failed to generate council response:", err);
+      setIsRoutingPulse(false);
+      const errorMsg: Message = {
+        id: String(Date.now() + 1),
+        role: "council",
+        text: `**Council Notice**: Failed to connect to consensus pipeline: ${err.message || "Network error"}. Please ensure your API Key is saved in Settings.`,
+        createdAt: new Date().toISOString()
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setIsThinking(false);
+    }
   };
+
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
