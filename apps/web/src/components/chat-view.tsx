@@ -15,6 +15,7 @@ import { CouncilNavbar } from "./CouncilNavbar";
 import { TeamSelectorModal, AVAILABLE_MODELS } from "./TeamSelectorModal";
 import { FileTreeSlidePanel, DEFAULT_PROJECT_FILES, ProjectFile } from "./FileTreeSlidePanel";
 import { ShowYourWorkView, ShowYourWorkMode, AgentStageData } from "./ShowYourWorkView";
+import BottomMenu from "./ui/bottom-menu";
 
 
 interface Message {
@@ -393,6 +394,18 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#000000] relative overflow-hidden font-sans">
+
+      {/* ── Top Floating Minimal Menu Dock with Downward Expanding Submenus ── */}
+      <div className="fixed top-4 inset-x-0 z-40 flex justify-center pointer-events-none px-4">
+        <div className="pointer-events-auto">
+          <BottomMenu
+            onNewChat={handleNewThread}
+            onOpenFiles={() => setIsFileTreeOpen(true)}
+            onOpenTeam={() => setIsTeamSelectorOpen(true)}
+          />
+        </div>
+      </div>
+
 
       <TeamSelectorModal
 
