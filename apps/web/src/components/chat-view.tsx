@@ -456,32 +456,32 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 className="flex-1 flex flex-col items-center justify-center -mt-12 select-none text-center px-4"
               >
-                <div className="reveal-chat-item relative flex flex-col items-center justify-center w-full isolate text-center space-y-2 max-w-2xl px-4">
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight leading-none mb-2 drop-shadow-[0_4px_24px_rgba(255,255,255,0.15)]">
+                <div className="reveal-chat-item relative flex flex-col items-center justify-center w-full isolate text-center space-y-3 max-w-3xl px-4">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight leading-none mb-2 drop-shadow-[0_4px_30px_rgba(255,255,255,0.18)]">
                     Hi Ujjwal,
                   </h1>
                   
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight flex items-center justify-center gap-x-2 sm:gap-x-3 drop-shadow-[0_4px_24px_rgba(255,255,255,0.15)] whitespace-nowrap">
+                  <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight flex items-center justify-center gap-x-2.5 sm:gap-x-4 drop-shadow-[0_4px_30px_rgba(255,255,255,0.18)] whitespace-nowrap">
                     <span>ready to</span>
-                    <span className="relative inline-flex items-center justify-center min-w-[70px] sm:min-w-[95px] md:min-w-[110px] h-[36px] sm:h-[44px] md:h-[52px]">
+                    <span className="relative inline-flex items-center justify-center min-w-[85px] sm:min-w-[115px] md:min-w-[145px] lg:min-w-[165px] h-[44px] sm:h-[58px] md:h-[72px] lg:h-[82px]">
                       <AnimatePresence mode="wait">
                         <motion.span
                           key={currentWord}
-                          initial={{ y: 16, opacity: 0, filter: "blur(4px)" }}
+                          initial={{ y: 20, opacity: 0, filter: "blur(5px)" }}
                           animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-                          exit={{ y: -16, opacity: 0, filter: "blur(4px)" }}
+                          exit={{ y: -20, opacity: 0, filter: "blur(5px)" }}
                           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                          className="absolute inset-0 flex items-center justify-center font-['Instrument_Serif',serif] font-normal text-white text-3xl sm:text-4xl md:text-5xl italic"
+                          className="absolute inset-0 flex items-center justify-center font-['Instrument_Serif',serif] font-normal text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl italic"
                         >
                           {currentWord}
                         </motion.span>
                       </AnimatePresence>
                       
-                      <div className="absolute -bottom-1 left-0 right-0 h-[1.5px] bg-white/10 overflow-hidden rounded-full">
+                      <div className="absolute -bottom-1 left-0 right-0 h-[2px] bg-white/15 overflow-hidden rounded-full">
                         <motion.div
                           className="absolute inset-0"
                           style={{
-                            background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.9) 50%, transparent 100%)",
+                            background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.95) 50%, transparent 100%)",
                             backgroundSize: "200% 100%",
                           }}
                           animate={{ backgroundPosition: ["200% 0%", "-100% 0%"] }}
@@ -491,8 +491,8 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
                     </span>
                     <span>today?</span>
                   </h2>
-
                 </div>
+
               </motion.div>
             ) : (
               /* Active Message Stream */
