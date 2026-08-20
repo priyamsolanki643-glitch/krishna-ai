@@ -7,7 +7,10 @@ export function isMockMode(): boolean {
   return !process.env.GROQ_API_KEY;
 }
 
-function getGroqClient(): Groq | null {
+function getGroqClient(apiKeyOverride?: string): Groq | null {
+  if (apiKeyOverride) {
+    return new Groq({ apiKey: apiKeyOverride });
+  }
   if (!groqClient && process.env.GROQ_API_KEY) {
     groqClient = new Groq({
       apiKey: process.env.GROQ_API_KEY,
@@ -39,9 +42,10 @@ export function setMockScenario(scenario: MockScenario) {
 export async function callGroq(
   systemPrompt: string,
   userPrompt: string,
-  model: string = "openai/gpt-oss-20b"
+  model: string = "openai/gpt-oss-20b",
+  userGroqKey?: string
 ): Promise<string> {
-  const client = getGroqClient();
+  const client = getGroqClient(userGroqKey);
 
   if (client) {
     try {
@@ -54,6 +58,10 @@ export async function callGroq(
       });
       return response.choices[0]?.message?.content || "";
     } catch (err: any) {
+      if (userGroqKey) {
+        // If a custom key was provided and failed, do not silently fallback to server key
+        throw new Error(`Invalid Groq API key provided: ${err.message}`);
+      }
       // If higher tier model hits rate limit or error, fallback to fast 20b model
       if (model !== "openai/gpt-oss-20b") {
         console.warn(`⚠️ Groq model ${model} failed, falling back to openai/gpt-oss-20b: ${err.message}`);

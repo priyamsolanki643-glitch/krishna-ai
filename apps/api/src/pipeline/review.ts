@@ -8,7 +8,8 @@ export async function runReviewer(
   query: string,
   draft: string,
   toneInstruction?: string,
-  modelOverride?: string
+  modelOverride?: string,
+  userGroqKey?: string
 ): Promise<CritiqueOutput> {
   const activeModel = modelOverride || GROQ_MODELS.reviewer;
 
@@ -31,7 +32,7 @@ Return raw JSON only.`;
 
     const userPrompt = `Original Query: ${query}\n\nCurrent Draft to Review:\n${draft}`;
 
-    const rawResponse = await callGroq(systemPrompt, userPrompt, activeModel);
+    const rawResponse = await callGroq(systemPrompt, userPrompt, activeModel, userGroqKey);
 
     try {
       const parsed = extractJSON(rawResponse);

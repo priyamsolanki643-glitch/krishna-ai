@@ -9,7 +9,8 @@ export async function runLead(
   previousCritique?: string,
   toneInstruction?: string,
   helperContext?: string,
-  modelOverride?: string
+  modelOverride?: string,
+  userGroqKey?: string
 ): Promise<DraftOutput> {
   const activeModel = modelOverride || GROQ_MODELS.lead;
 
@@ -37,7 +38,7 @@ You MUST return ONLY a valid JSON object strictly matching this schema:
 }
 Return raw JSON only. Set "needs_help" to true ONLY if you are genuinely stuck and need an ephemeral Helper Agent to research a specific sub-problem.`;
 
-    const rawResponse = await callGroq(systemPrompt, query, activeModel);
+    const rawResponse = await callGroq(systemPrompt, query, activeModel, userGroqKey);
 
     try {
       const parsed = extractJSON(rawResponse);

@@ -4,7 +4,7 @@ import { SupervisorOutputSchema, SupervisorOutput } from "../schemas/agent.js";
 import { withSpan } from "../lib/telemetry.js";
 import { GROQ_MODELS } from "../config/models.js";
 
-export async function runSupervisor(query: string): Promise<SupervisorOutput> {
+export async function runSupervisor(query: string, userGroqKey?: string): Promise<SupervisorOutput> {
   return withSpan("runSupervisor", { role: "supervisor" }, async () => {
     const systemPrompt = `You are the Supervisor of The Council.
 Your role is to analyze the user's query and classify:
@@ -24,7 +24,7 @@ You MUST return ONLY a valid JSON object matching this schema:
 }
 Return raw JSON only.`;
 
-    const rawResponse = await callGroq(systemPrompt, query, GROQ_MODELS.supervisor);
+    const rawResponse = await callGroq(systemPrompt, query, GROQ_MODELS.supervisor, userGroqKey);
 
     try {
       const parsed = extractJSON(rawResponse);

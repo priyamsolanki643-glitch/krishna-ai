@@ -5,7 +5,8 @@ import type { DebateResult } from "./loop.js";
 
 export async function mergeTeamOutputs(
   query: string,
-  results: { domain: string; result: DebateResult }[]
+  results: { domain: string; result: DebateResult }[],
+  userGroqKey?: string
 ): Promise<string> {
   return withSpan("mergeTeamOutputs", { role: "compiler" }, async () => {
     const systemPrompt = `You are the Compiler Agent in The Council.
@@ -24,7 +25,8 @@ Do NOT output JSON. Output the comprehensive merged response directly in Markdow
     const mergedOutput = await callGroq(
       systemPrompt,
       userPrompt,
-      GROQ_MODELS.compiler
+      GROQ_MODELS.compiler,
+      userGroqKey
     );
 
     return mergedOutput;

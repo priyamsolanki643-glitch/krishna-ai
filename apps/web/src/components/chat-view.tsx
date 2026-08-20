@@ -16,6 +16,7 @@ import { TeamSelectorModal, AVAILABLE_MODELS } from "./TeamSelectorModal";
 import { FileTreeSlidePanel, DEFAULT_PROJECT_FILES, ProjectFile } from "./FileTreeSlidePanel";
 import { ShowYourWorkView, ShowYourWorkMode, AgentStageData } from "./ShowYourWorkView";
 import BottomMenu from "./ui/bottom-menu";
+import { AIChatInput } from "./ui/ai-chat-input";
 
 
 interface Message {
@@ -682,214 +683,28 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
           </div>
         )}
 
-        {/* Floating Capsule Input Console */}
-        <div className={`relative flex items-center gap-2 rounded-[32px] px-3 py-2 transition-all duration-300 ${
-          isLight 
-            ? "bg-white/90 border border-zinc-200 shadow-[0_10px_35px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,1)] hover:border-zinc-300" 
-            : "bg-[#09090b] border border-white/20 hover:border-white/30 shadow-[0_10px_35px_rgba(0,0,0,0.8)]"
-        }`}>
-          
-          {/* Plus / Attach Button */}
-          <div className="relative shrink-0 flex items-center justify-center">
-            <button
-              type="button"
-              onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)}
-              className={`size-10 rounded-full grid place-items-center transition-all duration-200 cursor-pointer active:scale-90 ${
-                isAttachMenuOpen 
-                  ? (isLight ? "bg-zinc-200 text-zinc-950" : "bg-white/15 text-white") 
-                  : (isLight ? "hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950" : "hover:bg-white/5 text-zinc-400 hover:text-white")
-              }`}
-              title="Attach media or files"
-            >
-              <Plus className={`size-5 transition-transform duration-200 ${isAttachMenuOpen ? "rotate-45" : ""}`} />
-            </button>
+        {/* Modern Interactive AIChatInput Console */}
+        <AIChatInput
+          value={input}
+          onChange={setInput}
+          onSend={(text, options) => {
+            if (options?.think) {
+              setShowYourWorkMode("council");
+            }
+            handleSend();
+          }}
+          isRecording={isRecording}
+          onToggleRecording={toggleRecording}
+          onAttachClick={() => fileInputRef.current?.click()}
+          selectedFiles={selectedFiles}
+          onRemoveFile={removeSelectedFile}
+          theme={theme}
+          disabled={isThinking}
+        />
 
-            {/* Popover Menu */}
-            <AnimatePresence>
-              {isAttachMenuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                  className={`absolute bottom-full left-0 mb-3 rounded-[22px] p-1.5 flex flex-col min-w-[150px] z-50 overflow-hidden ${
-                    isLight 
-                      ? "bg-white/95 border border-zinc-200 shadow-[0_15px_40px_rgba(0,0,0,0.1)] text-zinc-900" 
-                      : "bg-[#141416] border border-white/15 shadow-[0_15px_40px_rgba(0,0,0,0.9)] text-zinc-300"
-                  }`}
-                >
-                  <button 
-                    onClick={() => { cameraInputRef.current?.click(); setIsAttachMenuOpen(false); }}
-                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-colors text-[13px] text-left cursor-pointer ${
-                      isLight ? "hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950" : "hover:bg-white/5 text-zinc-300 hover:text-white"
-                    }`}
-                  >
-                    <Camera className={`size-4 ${isLight ? "text-zinc-500" : "text-zinc-400"}`} />
-                    <span>Camera</span>
-                  </button>
-                  <button 
-                    onClick={() => { photosInputRef.current?.click(); setIsAttachMenuOpen(false); }}
-                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-colors text-[13px] text-left cursor-pointer ${
-                      isLight ? "hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950" : "hover:bg-white/5 text-zinc-300 hover:text-white"
-                    }`}
-                  >
-                    <Image className={`size-4 ${isLight ? "text-zinc-500" : "text-zinc-400"}`} />
-                    <span>Photos</span>
-                  </button>
-                  <button 
-                    onClick={() => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); }}
-                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-colors text-[13px] text-left cursor-pointer ${
-                      isLight ? "hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950" : "hover:bg-white/5 text-zinc-300 hover:text-white"
-                    }`}
-                  >
-                    <Paperclip className={`size-4 ${isLight ? "text-zinc-500" : "text-zinc-400"}`} />
-                    <span>Files</span>
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Text Input Area */}
-          <div className="flex-1 flex flex-col justify-center min-w-0">
-            {selectedFiles.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1 pb-1">
-                {selectedFiles.map((file, idx) => (
-                  <div key={idx} className={`relative flex items-center gap-2 px-3 py-1 rounded-xl text-xs pr-7 ${
-                    isLight ? "bg-zinc-100 text-zinc-800" : "bg-white/5 text-zinc-300"
-                  }`}>
-                    <Paperclip className="size-3" />
-                    <span className="truncate max-w-[100px]">{file.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeSelectedFile(idx)}
-                      className={`absolute right-1 top-1/2 -translate-y-1/2 size-5 rounded-full flex items-center justify-center ${
-                        isLight ? "hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900" : "hover:bg-white/10 text-zinc-400 hover:text-white"
-                      }`}
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="relative flex-1 flex flex-col justify-center min-w-0 min-h-[26px]">
-              {!(isInputFocused || input.length > 0) && (
-                <div className="absolute inset-y-0 left-1 right-2 flex items-center pointer-events-none overflow-hidden h-full">
-                  <span className={`text-[14.5px] sm:text-[15.5px] truncate w-full ${
-                    isLight ? "text-zinc-400" : "text-zinc-500"
-                  }`}>
-                    {placeholders[placeholderIndex]}
-                  </span>
-                </div>
-              )}
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setIsInputFocused(false)}
-                onKeyDown={handleKeyDown}
-                rows={1}
-                className={`w-full bg-transparent outline-none resize-none text-[15.5px] py-1 px-1 no-scrollbar leading-relaxed ${
-                  isLight ? "text-zinc-950" : "text-white"
-                }`}
-                style={{ maxHeight: 120 }}
-              />
-            </div>
-
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple className="hidden" />
-            <input type="file" accept="image/*,video/*" ref={photosInputRef} onChange={handleFileChange} multiple className="hidden" />
-            <input type="file" accept="image/*" ref={cameraInputRef} onChange={handleFileChange} capture="environment" className="hidden" />
-          </div>
-
-          {/* Right Actions: Mic & Send */}
-          <div className="shrink-0 flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={toggleRecording}
-              className={`size-10 rounded-full grid place-items-center cursor-pointer transition-all duration-300 active:scale-90 relative ${
-                isRecording 
-                  ? "bg-red-500/20 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.4)]" 
-                  : (isLight ? "hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950" : "hover:bg-white/10 text-zinc-400 hover:text-white")
-              }`}
-              title={isRecording ? "Stop listening" : "Speak voice command or prompt"}
-            >
-              {isRecording && (
-                <span className="absolute inset-0 rounded-full border border-red-500/50 animate-ping opacity-75" />
-              )}
-              <Mic className="size-5 relative z-10" />
-            </button>
-
-            <div className="relative">
-              <button
-                type="button"
-                onMouseDown={() => {
-                  sendButtonPressTimer.current = setTimeout(() => {
-                    setIsLongPressMenuOpen(true);
-                  }, 500);
-                }}
-                onMouseUp={() => clearTimeout(sendButtonPressTimer.current)}
-                onTouchStart={() => {
-                  sendButtonPressTimer.current = setTimeout(() => {
-                    setIsLongPressMenuOpen(true);
-                  }, 500);
-                }}
-                onTouchEnd={() => clearTimeout(sendButtonPressTimer.current)}
-                onClick={() => {
-                  if (!isLongPressMenuOpen) handleSend();
-                }}
-                disabled={!input.trim() && selectedFiles.length === 0}
-                className={`size-10 rounded-full grid place-items-center transition-all cursor-pointer ${
-                  !input.trim() && selectedFiles.length === 0
-                    ? (isLight ? "bg-zinc-100 text-zinc-300 cursor-not-allowed" : "bg-white/5 text-white/30 border border-white/5 cursor-not-allowed")
-                    : (isLight ? "bg-zinc-950 text-white hover:scale-105 active:scale-95 shadow-md font-bold" : "bg-white text-black hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)] font-bold")
-                }`}
-                title="Send to The Council (Long press for Quick Answer override)"
-              >
-                <ArrowUp className="size-5 stroke-[2.5]" />
-              </button>
-
-
-              <AnimatePresence>
-                {isLongPressMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute bottom-full right-0 mb-3 bg-[#18181b] border border-white/15 rounded-2xl p-2 shadow-2xl min-w-[200px] z-50 text-xs text-white space-y-1"
-                  >
-                    <div className="text-[10px] uppercase font-bold text-zinc-500 px-2 py-1">Routing Override</div>
-                    <button
-                      onClick={() => {
-                        setIsSkipDebateMode(true);
-                        setIsLongPressMenuOpen(false);
-                        handleSend();
-                      }}
-                      className="w-full text-left px-2.5 py-2 rounded-xl hover:bg-white/10 flex items-center gap-2"
-                    >
-                      <Zap className="size-3.5 text-yellow-400" />
-                      <span>⚡ Quick Answer (Skip Debate)</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsSkipDebateMode(false);
-                        setIsLongPressMenuOpen(false);
-                        handleSend();
-                      }}
-                      className="w-full text-left px-2.5 py-2 rounded-xl hover:bg-white/10 flex items-center gap-2"
-                    >
-                      <Shield className="size-3.5 text-purple-400" />
-                      <span>🛡 Full Consensus (Deep Debate)</span>
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-        </div>
+        <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple className="hidden" />
+        <input type="file" accept="image/*,video/*" ref={photosInputRef} onChange={handleFileChange} multiple className="hidden" />
+        <input type="file" accept="image/*" ref={cameraInputRef} onChange={handleFileChange} capture="environment" className="hidden" />
 
         {/* Section 7: Subtext */}
         <div className="mt-3 text-center">
@@ -903,3 +718,4 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
     </div>
   );
 }
+

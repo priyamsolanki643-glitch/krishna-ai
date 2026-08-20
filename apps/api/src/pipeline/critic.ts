@@ -6,7 +6,8 @@ import { GROQ_MODELS } from "../config/models.js";
 
 export async function runCritic(
   query: string,
-  finalDraft: string
+  finalDraft: string,
+  userGroqKey?: string
 ): Promise<CriticOutput> {
   return withSpan("runCritic", { role: "critic" }, async () => {
     const systemPrompt = `You are the final adversarial Critic Agent in The Council.
@@ -23,7 +24,7 @@ Return raw JSON only. Reject ONLY if there is a substantive, high-confidence fla
 
     const userPrompt = `Original Query: ${query}\n\nConverged Draft to Review:\n${finalDraft}`;
 
-    const rawResponse = await callGroq(systemPrompt, userPrompt, GROQ_MODELS.critic);
+    const rawResponse = await callGroq(systemPrompt, userPrompt, GROQ_MODELS.critic, userGroqKey);
 
     try {
       const parsed = extractJSON(rawResponse);

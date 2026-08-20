@@ -4,7 +4,8 @@ import { GROQ_MODELS } from "../config/models.js";
 
 export async function runResponseArchitect(
   finalDraft: string,
-  toneInstruction?: string
+  toneInstruction?: string,
+  userGroqKey?: string
 ): Promise<string> {
   return withSpan("runResponseArchitect", { role: "responseArchitect" }, async () => {
     const tone = toneInstruction ? `Style & Tone Requirements: ${toneInstruction}` : "Deliver a clean, structured, and helpful response.";
@@ -22,7 +23,8 @@ Do NOT output JSON. Return the final, polished response directly in Markdown.`;
     const formattedResponse = await callGroq(
       systemPrompt,
       userPrompt,
-      GROQ_MODELS.responseArchitect
+      GROQ_MODELS.responseArchitect,
+      userGroqKey
     );
 
     return formattedResponse;
