@@ -359,22 +359,54 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
               </AnimatePresence>
             </div>
 
-            {/* Clean Text Input (No placeholder text) */}
-            <div className="relative flex-1 min-w-0">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className={cn(
-                  "flex-1 border-0 outline-0 rounded-md py-2 px-1 text-sm sm:text-base bg-transparent w-full font-normal leading-relaxed",
-                  isLight ? "text-zinc-950" : "text-white"
-                )}
-                style={{ position: "relative", zIndex: 1 }}
-                onFocus={handleActivate}
-              />
+            {/* Clean Text Input or FP-Style Live Audio Wave Listening Bar */}
+            <div className="relative flex-1 min-w-0 flex items-center">
+
+              {isRecording ? (
+                <div className="flex items-center gap-2.5 px-2 py-1 text-xs sm:text-sm text-red-400 font-medium tracking-wide">
+                  <div className="flex items-center gap-[3px] h-3.5">
+                    <motion.span
+                      className="w-[3px] bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
+                      animate={{ height: ["4px", "16px", "4px"] }}
+                      transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut" }}
+                    />
+                    <motion.span
+                      className="w-[3px] bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
+                      animate={{ height: ["14px", "4px", "14px"] }}
+                      transition={{ repeat: Infinity, duration: 0.7, ease: "easeInOut", delay: 0.1 }}
+                    />
+                    <motion.span
+                      className="w-[3px] bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
+                      animate={{ height: ["6px", "18px", "6px"] }}
+                      transition={{ repeat: Infinity, duration: 0.5, ease: "easeInOut", delay: 0.2 }}
+                    />
+                    <motion.span
+                      className="w-[3px] bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
+                      animate={{ height: ["11px", "5px", "11px"] }}
+                      transition={{ repeat: Infinity, duration: 0.65, ease: "easeInOut", delay: 0.15 }}
+                    />
+                  </div>
+                  <span className="animate-pulse font-mono tracking-wider text-xs uppercase text-red-300">
+                    Listening...
+                  </span>
+                </div>
+              ) : (
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className={cn(
+                    "flex-1 border-0 outline-0 rounded-md py-2 px-1 text-sm sm:text-base bg-transparent w-full font-normal leading-relaxed",
+                    isLight ? "text-zinc-950" : "text-white"
+                  )}
+                  style={{ position: "relative", zIndex: 1 }}
+                  onFocus={handleActivate}
+                />
+              )}
             </div>
+
 
             {/* Mic Button with FP-Glitch Audio Wave Animation */}
             <button
