@@ -43,23 +43,7 @@ export function CouncilNavbar({
         }}
       >
         
-        {/* 1. Hamburger / Sidebar Drawer Trigger */}
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.90 }}
-          transition={springTransition}
-          onClick={onOpenSidebar}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-300 hover:text-white border border-transparent hover:border-white/20 hover:bg-white/[0.12] active:bg-white/[0.18] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] transition-all duration-200 cursor-pointer"
-          title="Open Council Drawer"
-          aria-label="Open Council Drawer"
-        >
-          <Menu className="w-4 h-4" />
-        </motion.button>
-
-        {/* Translucent Divider */}
-        <div className="h-4 w-[1px] bg-gradient-to-b from-transparent via-white/20 to-transparent mx-0.5" />
-
-        {/* 2. File Tree / Project Shade Trigger */}
+        {/* 1. File Tree / Project Shade Trigger */}
         <motion.button
           type="button"
           whileTap={{ scale: 0.90 }}
@@ -71,6 +55,7 @@ export function CouncilNavbar({
         >
           <FolderGit2 className="w-4 h-4" />
         </motion.button>
+
 
         {/* 3. Show Your Work (Nested Glass Capsule within Navbar) */}
         <motion.button
