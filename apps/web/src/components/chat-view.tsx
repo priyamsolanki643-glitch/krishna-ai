@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useState, useRef, useEffect } from "react";
@@ -448,7 +448,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
         )}
       </AnimatePresence>
       {/* Message Stream & Canvas Area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar relative z-10 pt-16 flex flex-col">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar relative z-10 pt-24 pb-12 flex flex-col">
         <div className="max-w-[760px] mx-auto px-4 md:px-8 flex-1 flex flex-col w-full">
           
           <AnimatePresence mode="wait">
