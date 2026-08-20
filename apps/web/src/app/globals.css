@@ -56,3 +56,55 @@ body {
 }
 
 .animated-gradient-text { position: relative; display: inline-block; max-width: fit-content; vertical-align: baseline; overflow: visible; padding-bottom: 0.2em; } .gradient-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-size: 300% 100%; animation: text-gradient linear infinite; border-radius: inherit; z-index: 0; pointer-events: none; } .gradient-overlay::before { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: inherit; width: calc(100% - 2px); height: calc(100% - 2px); background-color: #000; z-index: -1; } @keyframes text-gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } } .text-content { display: inline-block; position: relative; z-index: 2; background-size: 300% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; animation: text-gradient linear infinite; overflow: visible; padding-bottom: 0.2em; }
+
+/* ── FP Chat & UI Enhancements ── */
+.shimmer-text-white {
+  color: transparent;
+  background: linear-gradient(90deg, #52525b, #ffffff, #ffffff, #ffffff, #52525b) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: 3.5s linear infinite shimmer;
+}
+
+.shimmer-text-lumensky {
+  color: transparent;
+  background: linear-gradient(90deg, #666 0%, #fff 40%, #fff 60%, #666 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 2.5s linear infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes chatReveal {
+  0% { opacity: 0; transform: translateY(12px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.reveal-chat-item {
+  animation: chatReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes messageReveal {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-message-reveal {
+  animation: messageReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.skeleton-line {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes oracle-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
