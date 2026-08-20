@@ -99,7 +99,7 @@ async function runLiveFullSystemSmokeTest() {
       userArgument: "Actually, can you provide the historical origin of the name Paris and its Latin root?",
     }),
   });
-  const rulingJson = await res5.json();
+  const rulingJson: any = await res5.json();
   console.log(`   ✅ Status: ${res5.status}`);
   console.log(`   Ruling Verdict: ${rulingJson.ruling?.verdict}`);
   console.log(`   Supervisor Explanation: ${rulingJson.ruling?.explanation?.slice(0, 160)}...`);
@@ -113,7 +113,7 @@ async function runLiveFullSystemSmokeTest() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query: longQuery }),
   });
-  const abuseJson = await res6.json();
+  const abuseJson: any = await res6.json();
   console.log(`   ✅ Status: ${res6.status} (Expected 400), Error: ${abuseJson.error}`);
 
   console.log("\n=================================================================");

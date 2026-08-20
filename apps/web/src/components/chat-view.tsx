@@ -15,6 +15,9 @@ import { CouncilNavbar } from "./CouncilNavbar";
 import { TeamSelectorModal, AVAILABLE_MODELS } from "./TeamSelectorModal";
 import { FileTreeSlidePanel, DEFAULT_PROJECT_FILES, ProjectFile } from "./FileTreeSlidePanel";
 import { ShowYourWorkView, ShowYourWorkMode, AgentStageData } from "./ShowYourWorkView";
+import GradientMenu from "./ui/gradient-menu";
+import { IoHomeOutline, IoVideocamOutline, IoCameraOutline, IoShareSocialOutline, IoHeartOutline } from "react-icons/io5";
+
 
 interface Message {
   id: string;
@@ -392,6 +395,22 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#000000] relative overflow-hidden font-sans">
+
+      {/* ── Top Floating Gradient Expandable Menu Dock ── */}
+      <div className="fixed top-4 inset-x-0 z-40 flex justify-center pointer-events-none px-4">
+        <div className="pointer-events-auto">
+          <GradientMenu
+            items={[
+              { title: "Home", icon: <IoHomeOutline />, gradientFrom: "#a955ff", gradientTo: "#ea51ff", onClick: handleNewThread },
+              { title: "Files", icon: <IoVideocamOutline />, gradientFrom: "#56CCF2", gradientTo: "#2F80ED", onClick: () => setIsFileTreeOpen(true) },
+              { title: "Debate", icon: <IoCameraOutline />, gradientFrom: "#FF9966", gradientTo: "#FF5E62", onClick: cycleShowYourWork },
+              { title: "Models", icon: <IoShareSocialOutline />, gradientFrom: "#80FF72", gradientTo: "#7EE8FA", onClick: () => setIsTeamSelectorOpen(true) },
+              { title: "Council", icon: <IoHeartOutline />, gradientFrom: "#ffa9c6", gradientTo: "#f434e2", onClick: onOpenVault }
+            ]}
+          />
+        </div>
+      </div>
+
 
       <TeamSelectorModal
 
