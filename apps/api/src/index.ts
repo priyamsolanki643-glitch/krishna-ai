@@ -542,26 +542,34 @@ app.get("/api/project/:projectId/export", async (c) => {
     return c.json({ error: `Project '${projectId}' not found` }, 404);
   }
 
-  const archive = archiver("zip", { zlib: { level: 9 } });
-  const passThrough = new PassThrough();
-  archive.pipe(passThrough);
+  const zipBuffer = await new Promise<Buffer>((resolve, reject) => {
+    const archive = archiver("zip", { zlib: { level: 9 } });
+    const chunks: Buffer[] = [];
 
-  for (const file of project.files) {
-    archive.append(file.content, { name: file.filename });
-  }
+    archive.on("data", (chunk: Buffer) => chunks.push(chunk));
+    archive.on("end", () => resolve(Buffer.concat(chunks)));
+    archive.on("error", (err: any) => reject(err));
 
-  // Include project metadata summary
-  archive.append(
-    JSON.stringify({ projectId: project.id, projectName: project.name, exportedAt: new Date().toISOString() }, null, 2),
-    { name: "project-meta.json" }
-  );
+    for (const file of project.files) {
+      archive.append(file.content, { name: file.filename });
+    }
 
-  archive.finalize();
+    // Include project metadata summary
+    archive.append(
+      JSON.stringify({ projectId: project.id, projectName: project.name, exportedAt: new Date().toISOString() }, null, 2),
+      { name: "project-meta.json" }
+    );
 
-  c.header("Content-Type", "application/zip");
-  c.header("Content-Disposition", `attachment; filename="${project.name.toLowerCase().replace(/\s+/g, "_")}_export.zip"`);
+    archive.finalize();
+  });
 
-  return c.body(Readable.toWeb(passThrough) as any);
+  return new Response(zipBuffer, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/zip",
+      "Content-Disposition": `attachment; filename="${project.name.toLowerCase().replace(/\s+/g, "_")}_export.zip"`,
+    },
+  });
 });
 
 // -------------------------------------------------------------
