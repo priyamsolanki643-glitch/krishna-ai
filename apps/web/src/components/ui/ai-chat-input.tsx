@@ -19,10 +19,14 @@ import {
   Sparkles, 
   Compass, 
   Check,
-  ChevronDown
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+
 
 export interface AgentModelOption {
   id: string;
@@ -469,31 +473,30 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                     setIsPinMenuOpen(false);
                   }}
                   className={cn(
-                    "flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all text-xs font-medium cursor-pointer",
-                    isModelsMenuOpen || activeAgents.length > 0
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-xs font-medium cursor-pointer",
+                    isModelsMenuOpen
                       ? isLight
-                        ? "bg-zinc-200 text-zinc-950 border border-zinc-300 shadow-sm"
-                        : "bg-white/15 text-white border border-white/20 shadow-sm"
+                        ? "text-zinc-950 bg-zinc-100 font-semibold"
+                        : "text-white bg-white/10 font-semibold"
                       : isLight
-                      ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
-                      : "bg-white/5 text-zinc-300 hover:bg-white/10"
+                      ? "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100/60"
+                      : "text-zinc-300 hover:text-white hover:bg-white/5"
                   )}
                   title="Configure Council Model Agents Team"
                 >
-                  <Bot className="size-3.5" />
-                  <span>Models</span>
+                  <span className="tracking-tight">Models</span>
                   <span
                     className={cn(
                       "text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold",
-                      isLight ? "bg-zinc-300 text-zinc-950" : "bg-white/20 text-white"
+                      isLight ? "bg-zinc-200 text-zinc-950" : "bg-white/15 text-white"
                     )}
                   >
                     {activeAgents.length}
                   </span>
-                  <ChevronDown className={cn("size-3 transition-transform duration-200", isModelsMenuOpen && "rotate-180")} />
+                  <ChevronUp className={cn("size-3.5 transition-transform duration-200", isModelsMenuOpen && "rotate-180")} />
                 </button>
 
-                {/* Models Upward Dropdown: 6 Council Agents with Checkboxes */}
+                {/* Models Upward Dropdown: v-switch-12 Card Structure */}
                 <AnimatePresence>
                   {isModelsMenuOpen && (
                     <motion.div
@@ -503,17 +506,22 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                       style={{ transformOrigin: "bottom left" }}
                       className={cn(
-                        "absolute bottom-full left-0 mb-3 rounded-2xl p-2 flex flex-col min-w-[310px] sm:min-w-[340px] z-50 shadow-2xl border backdrop-blur-2xl max-h-[380px] overflow-y-auto no-scrollbar",
+                        "absolute bottom-full left-0 mb-3 w-full min-w-[320px] sm:min-w-[360px] overflow-hidden rounded-xl border shadow-2xl backdrop-blur-2xl z-50",
                         isLight
-                          ? "bg-white/95 border-zinc-200 text-zinc-900 shadow-[0_20px_50px_rgba(0,0,0,0.12)]"
-                          : "bg-[#09090b]/95 border-white/15 text-zinc-200 shadow-[0_20px_50px_rgba(0,0,0,0.95)]"
+                          ? "bg-white/95 border-zinc-200 text-zinc-950 shadow-[0_20px_50px_rgba(0,0,0,0.12)]"
+                          : "bg-[#09090b]/95 border-white/10 text-white shadow-[0_20px_50px_rgba(0,0,0,0.95)]"
                       )}
                     >
-                      {/* Header */}
-                      <div className="flex items-center justify-between px-2.5 py-1.5 pb-2 border-b border-white/10 mb-1">
+                      {/* v-switch-12 Header */}
+                      <div className={cn(
+                        "border-b px-4 py-3 flex items-center justify-between",
+                        isLight ? "border-zinc-200 bg-zinc-50/50" : "border-white/10 bg-white/[0.02]"
+                      )}>
                         <div>
-                          <div className="font-semibold text-xs text-white">Council Agent Team</div>
-                          <div className="text-[10px] text-zinc-400">Selected agents will debate this query</div>
+                          <p className="font-semibold text-sm">Council Models</p>
+                          <p className={cn("text-[11px]", isLight ? "text-zinc-500" : "text-zinc-400")}>
+                            Select active agents for debate quorum
+                          </p>
                         </div>
                         <button
                           type="button"
@@ -527,61 +535,46 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                               else setInternalSelectedAgents(all);
                             }
                           }}
-                          className="text-[10px] underline text-zinc-400 hover:text-white cursor-pointer"
+                          className={cn(
+                            "text-[10px] font-medium underline cursor-pointer",
+                            isLight ? "text-zinc-600 hover:text-zinc-950" : "text-zinc-400 hover:text-white"
+                          )}
                         >
                           {activeAgents.length === COUNCIL_AGENTS.length ? "Reset default" : "Select all"}
                         </button>
                       </div>
 
-                      {/* Agent Checkbox List */}
-                      <div className="space-y-0.5">
-                        {COUNCIL_AGENTS.map((agent) => {
-                          const Icon = agent.icon;
-                          const isChecked = activeAgents.includes(agent.id);
+                      {/* v-switch-12 Divide-y Items List */}
+                      <div className={cn("divide-y max-h-[340px] overflow-y-auto no-scrollbar", isLight ? "divide-zinc-200" : "divide-white/10")}>
+                        {COUNCIL_AGENTS.map(({ id, name, category, icon: Icon }, i) => {
+                          const isChecked = activeAgents.includes(id);
 
                           return (
-                            <button
-                              key={agent.id}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleAgent(agent.id);
-                              }}
-                              className={cn(
-                                "w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer group",
-                                isChecked
-                                  ? isLight
-                                    ? "bg-zinc-100 text-zinc-950"
-                                    : "bg-white/10 text-white"
-                                  : isLight
-                                  ? "hover:bg-zinc-100 text-zinc-600 hover:text-zinc-950"
-                                  : "hover:bg-white/5 text-zinc-400 hover:text-zinc-200"
-                              )}
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                                <div className="p-1.5 rounded-lg bg-white/5 text-zinc-300">
-                                  <Icon className="size-4" />
+                            <div key={id}>
+                              <div className="flex items-center gap-3 px-4 py-3">
+                                <div className={cn(
+                                  "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                                  isLight ? "bg-zinc-100 text-zinc-700" : "bg-white/5 text-zinc-300"
+                                )}>
+                                  <Icon
+                                    aria-hidden="true"
+                                    className="size-4"
+                                  />
                                 </div>
-                                <div className="truncate">
-                                  <div className="font-semibold text-xs truncate">{agent.name}</div>
-                                  <div className="text-[10px] text-zinc-500 truncate">{agent.category}</div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm">{name}</p>
+                                  <p className={cn("text-xs truncate", isLight ? "text-zinc-500" : "text-zinc-400")}>
+                                    {category}
+                                  </p>
                                 </div>
+                                <Switch
+                                  checked={isChecked}
+                                  onCheckedChange={() => toggleAgent(id)}
+                                  size="sm"
+                                />
                               </div>
-
-                              {/* Custom Styled Checkbox */}
-                              <div
-                                className={cn(
-                                  "size-4 rounded-md border flex items-center justify-center transition-all shrink-0",
-                                  isChecked
-                                    ? "bg-white text-black border-white shadow-sm"
-                                    : isLight
-                                    ? "border-zinc-300 bg-white"
-                                    : "border-white/20 bg-white/5 group-hover:border-white/40"
-                                )}
-                              >
-                                {isChecked && <Check className="size-3 stroke-[3]" />}
-                              </div>
-                            </button>
+                              {i === 2 && <Separator className={cn(isLight ? "bg-zinc-200" : "bg-white/10")} />}
+                            </div>
                           );
                         })}
                       </div>
@@ -589,6 +582,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                   )}
                 </AnimatePresence>
               </div>
+
 
               {/* Deep Search Toggle */}
               <motion.button
