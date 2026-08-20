@@ -2,6 +2,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { isMockMode } from "./lib/groq.js";
+import { GROQ_MODELS } from "./config/models.js";
 import { runSupervisor } from "./pipeline/supervisor.js";
 import { runDebateLoop } from "./pipeline/loop.js";
 import { runLead } from "./pipeline/draft.js";
@@ -132,7 +133,7 @@ app.post("/api/chat/stream", async (c) => {
 
     const body = await c.req.json();
     const query = body.query;
-    const manualTeam = body.manualTeam as string[] | undefined;
+    const manualAgents = (body.manualAgents || body.manualTeam) as string[] | undefined;
     const debateMode: "fast" | "deep" = body.debateMode === "fast" ? "fast" : "deep";
     const requestedMaxRounds = typeof body.maxRounds === "number" ? Math.min(5, Math.max(1, body.maxRounds)) : 5;
 
@@ -149,17 +150,15 @@ app.post("/api/chat/stream", async (c) => {
 
     const queryId = body.queryId || randomUUID();
     const startTime = Date.now();
+    const routingMode: "auto" | "manual" = (manualAgents && manualAgents.length > 0) ? "manual" : "auto";
 
     return streamSSE(c, async (stream) => {
       try {
-        let qualifyingDomains: { domain: any; score: number }[] = [];
-        let toneInstruction = "Provide a direct, technical, and clear explanation.";
+        let qualifyingDomains: { domain: string; score: number; model?: string }[] = [];
+        let toneInstruction = "Provide a clear, direct answer.";
         let supervisorEmotion: any = "neutral";
-        let supervisorPrimaryDomain: any = "general";
+        let supervisorPrimaryDomain: string = "general";
         let isMockExecution = isMockMode();
-
-        let customLeadModel: string | undefined = undefined;
-        let customReviewerModel: string | undefined = undefined;
 
         // FAST MODE OVERRIDE (Skip Reviewer/Critic, single Lead call -> Response Architect)
         if (debateMode === "fast") {
@@ -172,7 +171,8 @@ app.post("/api/chat/stream", async (c) => {
             }),
           });
 
-          const leadDraft = await runLead(query, undefined, toneInstruction, undefined, manualTeam?.[0], userGroqKey);
+          const leadModel = manualAgents?.[0] ? ((GROQ_MODELS as any)[manualAgents[0]] || manualAgents[0]) : undefined;
+          const leadDraft = await runLead(query, undefined, toneInstruction, undefined, leadModel, userGroqKey);
           
           await stream.writeSSE({
             event: "thinking",
@@ -197,6 +197,7 @@ app.post("/api/chat/stream", async (c) => {
               domain: "general",
               domains: [{ domain: "general", score: 1.0 }],
               emotion: "neutral",
+              routingMode,
               critic_flagged: false,
               safety: { is_safe: safety.is_safe, category: safety.category },
               is_mock: isMockExecution,
@@ -205,28 +206,33 @@ app.post("/api/chat/stream", async (c) => {
           return;
         }
 
-        // DEEP MODE: 1. Manual Team or Supervisor Stage
-        if (manualTeam && manualTeam.length > 0) {
-          customLeadModel = manualTeam[0];
-          customReviewerModel = manualTeam[1] || undefined;
-
+        // DEEP MODE:
+        // 1. MANUAL AGENTS ROUTING (SKIPS Supervisor completely BEFORE runSupervisor is called)
+        if (routingMode === "manual" && manualAgents && manualAgents.length > 0) {
           await stream.writeSSE({
             event: "thinking",
             data: JSON.stringify({
-              stage: "custom_team_selection",
-              message: `Bypassing Supervisor domain scoring. Using custom team: Lead (${customLeadModel})${customReviewerModel ? `, Reviewer (${customReviewerModel})` : ""}...`,
-              manualTeam,
+              stage: "manual_agent_selection",
+              message: `Manual agents selected: [${manualAgents.join(", ")}]. Skipping Supervisor classification entirely.`,
+              manualAgents,
+              routingMode: "manual",
               is_mock: isMockMode(),
             }),
           });
 
-          qualifyingDomains = [{ domain: "general", score: 1.0 }];
+          supervisorPrimaryDomain = manualAgents[0];
+          qualifyingDomains = manualAgents.map((domain) => {
+            const model = (GROQ_MODELS as any)[domain] || domain;
+            return { domain, score: 1.0, model };
+          });
         } else {
+          // AUTO ROUTING: Invoke Supervisor
           await stream.writeSSE({
             event: "thinking",
             data: JSON.stringify({
               stage: "supervisor",
               message: "Supervisor analyzing query domain and emotional state...",
+              routingMode: "auto",
               is_mock: isMockMode(),
             }),
           });
@@ -245,6 +251,7 @@ app.post("/api/chat/stream", async (c) => {
               domains: supervisor.domains || [{ domain: supervisor.domain, score: 1.0 }],
               emotion: supervisor.emotion,
               tone_instruction: supervisor.tone_instruction,
+              routingMode: "auto",
               is_mock: supervisor.is_mock,
             }),
           });
@@ -259,14 +266,15 @@ app.post("/api/chat/stream", async (c) => {
         let leadConfidenceHistory: number[] = [];
         let criticFlagged = false;
 
-        if (!manualTeam && qualifyingDomains.length >= 2) {
-          // Multi-Team Parallel Execution
+        if (qualifyingDomains.length >= 2) {
+          // Multi-Team Parallel Execution (Handles both 2+ auto-detected domains and 2+ manualAgents)
           await stream.writeSSE({
             event: "thinking",
             data: JSON.stringify({
               stage: "multi_team_start",
-              message: `Detected multi-domain query. Spawning ${qualifyingDomains.length} parallel specialized teams: ${qualifyingDomains.map(d => d.domain).join(", ")}...`,
+              message: `Running ${qualifyingDomains.length} parallel specialized teams: ${qualifyingDomains.map(d => d.domain).join(", ")}...`,
               domains: qualifyingDomains,
+              routingMode,
               is_mock: isMockMode(),
             }),
           });
@@ -274,6 +282,7 @@ app.post("/api/chat/stream", async (c) => {
           const teamResults = await Promise.all(
             qualifyingDomains.map(async (d) => {
               const domainTone = `${toneInstruction} (Focus explicitly on the ${d.domain} domain facet)`;
+              const teamModel = d.model || (GROQ_MODELS as any)[d.domain] || GROQ_MODELS.lead;
               const res = await runDebateLoop(
                 query, 
                 domainTone, 
@@ -284,6 +293,7 @@ app.post("/api/chat/stream", async (c) => {
                   });
                 },
                 {
+                  leadModel: teamModel,
                   maxRounds: requestedMaxRounds,
                   userGroqKey,
                 }
@@ -324,12 +334,16 @@ app.post("/api/chat/stream", async (c) => {
 
           finalRawDraft = await mergeTeamOutputs(query, teamResults, userGroqKey);
         } else {
-          // Single Team Execution (Default or Manual Team)
+          // Single Team Execution (Auto single domain or 1 manual agent)
+          const singleDomainObj = qualifyingDomains[0];
+          const singleLeadModel = singleDomainObj?.model || (GROQ_MODELS as any)[singleDomainObj?.domain] || GROQ_MODELS.lead;
+
           await stream.writeSSE({
             event: "thinking",
             data: JSON.stringify({
               stage: "debate_start",
-              message: "Starting Lead, Reviewer, and Critic deliberation loop...",
+              message: `Starting Lead (${singleDomainObj?.domain || "general"}), Reviewer, and Critic deliberation loop...`,
+              routingMode,
               is_mock: isMockMode(),
             }),
           });
@@ -344,8 +358,7 @@ app.post("/api/chat/stream", async (c) => {
               });
             },
             {
-              leadModel: customLeadModel,
-              reviewerModel: customReviewerModel,
+              leadModel: singleLeadModel,
               maxRounds: requestedMaxRounds,
               userGroqKey,
             }
@@ -416,12 +429,13 @@ app.post("/api/chat/stream", async (c) => {
             totalRounds,
             stopReason,
             criticFlagged,
+            routingMode,
             isMock: isMockExecution,
           },
           [
             {
               role: "lead",
-              modelUsed: customLeadModel || "openai/gpt-oss-120b",
+              modelUsed: qualifyingDomains[0]?.model || "openai/gpt-oss-120b",
               roundNumber: totalRounds,
               confidence: leadConfidenceHistory[leadConfidenceHistory.length - 1] || 1.0,
               durationMs,
@@ -441,6 +455,7 @@ app.post("/api/chat/stream", async (c) => {
             domain: supervisorPrimaryDomain,
             domains: qualifyingDomains,
             emotion: supervisorEmotion,
+            routingMode,
             critic_flagged: criticFlagged,
             safety: { is_safe: safety.is_safe, category: safety.category },
             is_mock: isMockExecution,

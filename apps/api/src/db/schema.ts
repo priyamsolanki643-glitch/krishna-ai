@@ -10,6 +10,7 @@ export const queries = pgTable("queries", {
   totalRounds: integer("total_rounds").notNull(),
   stopReason: text("stop_reason"),
   criticFlagged: boolean("critic_flagged").default(false),
+  routingMode: text("routing_mode").default("auto"),
   isMock: boolean("is_mock").default(false),
 });
 
