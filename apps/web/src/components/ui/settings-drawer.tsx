@@ -249,7 +249,7 @@ export function SettingsDrawer({
                   className="w-full flex items-center justify-between font-semibold text-xs tracking-wider uppercase pb-2 mb-3 border-b border-white/5 text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
-                    <Key className="size-3.5 text-purple-400" />
+                    <Key className="size-3.5 text-zinc-400" />
                     <span>1. API Keys & Model Providers</span>
                   </div>
                   <ChevronDown className={cn("size-3.5 transition-transform duration-200 text-zinc-400", openSections.apiKeys && "rotate-180")} />
@@ -265,8 +265,8 @@ export function SettingsDrawer({
                           className={cn(
                             "text-[10px] px-1.5 py-0.2 rounded font-mono font-medium",
                             groqStatus === "saved"
-                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                              : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                              ? "bg-white/15 text-white border border-white/20"
+                              : "bg-zinc-800 text-zinc-400 border border-zinc-700"
                           )}
                         >
                           {groqStatus === "saved" ? "Saved" : "Not set"}
@@ -317,8 +317,8 @@ export function SettingsDrawer({
                           className={cn(
                             "text-[10px] px-1.5 py-0.2 rounded font-mono font-medium",
                             anthropicStatus === "saved"
-                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                              : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                              ? "bg-white/15 text-white border border-white/20"
+                              : "bg-zinc-800 text-zinc-400 border border-zinc-700"
                           )}
                         >
                           {anthropicStatus === "saved" ? "Saved" : "Not set"}
@@ -369,8 +369,8 @@ export function SettingsDrawer({
                           className={cn(
                             "text-[10px] px-1.5 py-0.2 rounded font-mono font-medium",
                             openaiStatus === "saved"
-                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                              : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                              ? "bg-white/15 text-white border border-white/20"
+                              : "bg-zinc-800 text-zinc-400 border border-zinc-700"
                           )}
                         >
                           {openaiStatus === "saved" ? "Saved" : "Not set"}
@@ -415,7 +415,7 @@ export function SettingsDrawer({
 
                     {/* Security Notice */}
                     <div className="flex items-start gap-2 pt-1 text-[10.5px] text-zinc-400 leading-relaxed">
-                      <ShieldCheck className="size-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                      <ShieldCheck className="size-3.5 text-zinc-400 shrink-0 mt-0.5" />
                       <span>Your key is used only for your own requests and never leaves your account.</span>
                     </div>
                   </div>
@@ -430,7 +430,7 @@ export function SettingsDrawer({
                   className="w-full flex items-center justify-between font-semibold text-xs tracking-wider uppercase pb-2 mb-3 border-b border-white/5 text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
-                    <Cpu className="size-3.5 text-blue-400" />
+                    <Cpu className="size-3.5 text-zinc-400" />
                     <span>2. Consensus & Debate Controls</span>
                   </div>
                   <ChevronDown className={cn("size-3.5 transition-transform duration-200 text-zinc-400", openSections.consensus && "rotate-180")} />
@@ -448,11 +448,11 @@ export function SettingsDrawer({
                           className={cn(
                             "py-1.5 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5",
                             debateMode === "fast"
-                              ? isLight ? "bg-white text-zinc-950 shadow-sm" : "bg-white/20 text-white shadow-sm"
+                              ? isLight ? "bg-white text-zinc-950 shadow-sm font-semibold" : "bg-white/20 text-white shadow-sm font-semibold"
                               : "text-zinc-400 hover:text-white"
                           )}
                         >
-                          <Zap className="size-3 text-amber-400" />
+                          <Zap className="size-3" />
                           <span>Fast (single turn)</span>
                         </button>
 
@@ -462,11 +462,11 @@ export function SettingsDrawer({
                           className={cn(
                             "py-1.5 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5",
                             debateMode === "deep"
-                              ? isLight ? "bg-white text-zinc-950 shadow-sm" : "bg-white/20 text-white shadow-sm"
+                              ? isLight ? "bg-white text-zinc-950 shadow-sm font-semibold" : "bg-white/20 text-white shadow-sm font-semibold"
                               : "text-zinc-400 hover:text-white"
                           )}
                         >
-                          <Sparkles className="size-3 text-purple-400" />
+                          <Sparkles className="size-3" />
                           <span>Deep (multi-turn)</span>
                         </button>
                       </div>
@@ -481,7 +481,7 @@ export function SettingsDrawer({
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-[11px] font-medium text-zinc-300">Max Rounds</label>
-                        <span className="font-mono text-xs font-bold text-purple-400">{maxRounds} rounds</span>
+                        <span className="font-mono text-xs font-bold text-white">{maxRounds} rounds</span>
                       </div>
                       <input
                         type="range"
@@ -490,7 +490,7 @@ export function SettingsDrawer({
                         step={1}
                         value={maxRounds}
                         onChange={(e) => handleRoundsChange(Number(e.target.value))}
-                        className="w-full accent-purple-500 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"
+                        className="w-full accent-white cursor-pointer h-1.5 bg-zinc-800 rounded-lg"
                       />
                       <p className="text-[10px] text-zinc-400 leading-relaxed">
                         Maximum debate iterations between challenger models before consensus verdict.
@@ -508,7 +508,7 @@ export function SettingsDrawer({
                   className="w-full flex items-center justify-between font-semibold text-xs tracking-wider uppercase pb-2 mb-3 border-b border-white/5 text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
-                    <FolderArchive className="size-3.5 text-emerald-400" />
+                    <FolderArchive className="size-3.5 text-zinc-400" />
                     <span>3. Workspace & Export</span>
                   </div>
                   <ChevronDown className={cn("size-3.5 transition-transform duration-200 text-zinc-400", openSections.workspace && "rotate-180")} />
@@ -527,12 +527,12 @@ export function SettingsDrawer({
                         onClick={handleAutoSaveToggle}
                         className={cn(
                           "w-10 h-5 rounded-full transition-colors relative cursor-pointer",
-                          autoSaveCode ? "bg-emerald-500" : "bg-zinc-700"
+                          autoSaveCode ? "bg-zinc-300" : "bg-zinc-700"
                         )}
                       >
                         <span
                           className={cn(
-                            "size-3.5 rounded-full bg-white absolute top-0.5 transition-transform",
+                            "size-3.5 rounded-full bg-zinc-950 absolute top-0.5 transition-transform",
                             autoSaveCode ? "left-5.5" : "left-1"
                           )}
                         />
@@ -599,7 +599,7 @@ export function SettingsDrawer({
                   className="w-full flex items-center justify-between font-semibold text-xs tracking-wider uppercase pb-2 mb-3 border-b border-white/5 text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
-                    <User className="size-3.5 text-amber-400" />
+                    <User className="size-3.5 text-zinc-400" />
                     <span>4. Account & Plan</span>
                   </div>
                   <ChevronDown className={cn("size-3.5 transition-transform duration-200 text-zinc-400", openSections.account && "rotate-180")} />
@@ -612,7 +612,7 @@ export function SettingsDrawer({
                         <div className="font-semibold text-sm text-zinc-100">{userName}</div>
                         <div className="text-[11px] text-zinc-400">{userEmail}</div>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full font-mono text-[10px] font-bold bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/40 text-purple-300">
+                      <span className="px-2 py-0.5 rounded-full font-mono text-[10px] font-bold bg-white/10 border border-white/20 text-zinc-200">
                         {userPlan}
                       </span>
                     </div>
@@ -629,7 +629,7 @@ export function SettingsDrawer({
                         <CreditCard className="size-3.5 text-zinc-400" />
                         <span>Manage subscription</span>
                       </div>
-                      <span className="text-[10px] text-purple-400 font-medium">Billing Portal →</span>
+                      <span className="text-[10px] text-zinc-400 font-medium">Billing Portal →</span>
                     </button>
                   </div>
                 )}
@@ -643,11 +643,12 @@ export function SettingsDrawer({
                   className="w-full flex items-center justify-between font-semibold text-xs tracking-wider uppercase pb-2 mb-3 border-b border-white/5 text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
-                    <Command className="size-3.5 text-cyan-400" />
+                    <Command className="size-3.5 text-zinc-400" />
                     <span>5. Shortcuts & Preferences</span>
                   </div>
                   <ChevronDown className={cn("size-3.5 transition-transform duration-200 text-zinc-400", openSections.shortcuts && "rotate-180")} />
                 </button>
+
 
                 {openSections.shortcuts && (
                   <div className="space-y-2.5 pt-1">

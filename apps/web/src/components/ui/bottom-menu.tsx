@@ -17,19 +17,19 @@ import { SettingsDrawer } from "./settings-drawer";
 import { supabase } from "@/utils/supabase/client";
 
 // Main Navigation Config: 5 Pro Modules
-// Left 1: Home/Plus (+), Left 2: Folders Search, Center 3: File Tree (FolderTree), Right 2: Profile, Right 1: Settings
+// Left 1: Home/Plus (+), Left 2: Folders Search, Center 3: File Tree (FolderTree), Right 2: Theme (Sun/Moon), Right 1: Settings
 const MAIN_NAV = [
   { icon: Plus, name: "home" as const, label: "Actions" },
   { icon: Folder, name: "folders" as const, label: "Search Folders" },
   { icon: FolderTree, name: "tree" as const, label: "File Tree Explorer" },
-  { icon: User, name: "profile" as const, label: "Profile" },
+  { icon: Sun, name: "theme" as const, label: "Theme" },
   { icon: Settings, name: "settings" as const, label: "Settings" },
 ];
 
-const NOTIFICATION_TYPES = ["Messages", "System Alerts", "Council Insights"];
-
-const PROFILE_LINKS = ["My Account", "Settings", "Subscription / Billing"];
-
+const THEME_OPTIONS = [
+  { key: "dark" as const, icon: Moon, text: "Dark" },
+  { key: "light" as const, icon: Sun, text: "Light" },
+];
 
 interface TopNavMenuProps {
   theme?: "dark" | "light";
@@ -57,7 +57,7 @@ export default function TopNavMenu({
   className 
 }: TopNavMenuProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<"default" | "home" | "folders" | "tree" | "notifications" | "profile" | "theme">("default");
+  const [view, setView] = useState<"default" | "home" | "folders" | "tree" | "theme">("default");
   const [isFilterSubmenuOpen, setIsFilterSubmenuOpen] = useState(false);
   const [searchFolderQuery, setSearchFolderQuery] = useState("");
   const [activeViewerFile, setActiveViewerFile] = useState<FileNode | null>(null);
@@ -66,8 +66,9 @@ export default function TopNavMenu({
   const isLight = theme === "light";
 
   const sharedHover = isLight
-    ? "px-3 py-2 text-[14px] w-full text-left rounded-[12px] transition-colors hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 flex items-center justify-between cursor-pointer"
-    : "px-3 py-2 text-[14px] w-full text-left rounded-[12px] transition-colors hover:bg-white/10 text-zinc-300 hover:text-white flex items-center justify-between cursor-pointer";
+    ? "px-3 py-2 text-[13.5px] w-full text-left rounded-[12px] transition-colors hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 flex items-center justify-between cursor-pointer"
+    : "px-3 py-2 text-[13.5px] w-full text-left rounded-[12px] transition-colors hover:bg-white/10 text-zinc-300 hover:text-white flex items-center justify-between cursor-pointer";
+
 
 
   useEffect(() => {
@@ -140,7 +141,7 @@ export default function TopNavMenu({
     switch (view) {
       case "home":
         return (
-          <div className="space-y-1 min-w-[240px] p-1.5">
+          <div className="space-y-1 min-w-[220px] p-1.5">
             {!isInitialGreeting && (
               <button 
                 type="button" 
@@ -148,7 +149,7 @@ export default function TopNavMenu({
                 className={sharedHover}
               >
                 <div className="flex items-center gap-2.5">
-                  <MessageSquarePlus className="w-4 h-4 text-purple-400" />
+                  <MessageSquarePlus className={cn("w-4 h-4", isLight ? "text-zinc-600" : "text-zinc-400")} />
                   <span>New chat</span>
                 </div>
               </button>
@@ -160,7 +161,7 @@ export default function TopNavMenu({
               className={sharedHover}
             >
               <div className="flex items-center gap-2.5">
-                <FolderPlus className="w-4 h-4 text-blue-400" />
+                <FolderPlus className={cn("w-4 h-4", isLight ? "text-zinc-600" : "text-zinc-400")} />
                 <span>Add new folder</span>
               </div>
             </button>
@@ -172,7 +173,7 @@ export default function TopNavMenu({
                 className={sharedHover}
               >
                 <div className="flex items-center gap-2.5">
-                  <Swords className="w-4 h-4 text-amber-400" />
+                  <Swords className={cn("w-4 h-4", isLight ? "text-zinc-600" : "text-zinc-400")} />
                   <span>Argue the model</span>
                 </div>
               </button>
@@ -211,7 +212,7 @@ export default function TopNavMenu({
                 )}
               >
                 <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-purple-400" />
+                  <SlidersHorizontal className={cn("w-3.5 h-3.5", isLight ? "text-zinc-600" : "text-zinc-400")} />
                   <span>Sort & Filters</span>
                 </div>
                 <ChevronRight className={cn("w-3.5 h-3.5 transition-transform", isFilterSubmenuOpen && "rotate-90")} />
@@ -236,7 +237,7 @@ export default function TopNavMenu({
                         isLight ? "hover:bg-zinc-200/70 text-zinc-700 hover:text-zinc-950" : "hover:bg-white/10 text-zinc-300 hover:text-white"
                       }`}
                     >
-                      <ArrowDownAZ className="w-4 h-4 text-purple-400" />
+                      <ArrowDownAZ className={cn("w-4 h-4", isLight ? "text-zinc-600" : "text-zinc-400")} />
                       <span>Alphabetical</span>
                     </button>
                     <button
@@ -246,7 +247,7 @@ export default function TopNavMenu({
                         isLight ? "hover:bg-zinc-200/70 text-zinc-700 hover:text-zinc-950" : "hover:bg-white/10 text-zinc-300 hover:text-white"
                       }`}
                     >
-                      <Clock className="w-4 h-4 text-blue-400" />
+                      <Clock className={cn("w-4 h-4", isLight ? "text-zinc-600" : "text-zinc-400")} />
                       <span>Recently Used</span>
                     </button>
                   </motion.div>
@@ -261,7 +262,7 @@ export default function TopNavMenu({
           <div className="space-y-2 min-w-[280px] max-w-[320px] p-2.5">
             <div className="flex items-center justify-between px-1 pb-2 border-b border-white/10 text-xs">
               <div className="flex items-center gap-2">
-                <FolderTree className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
+                <FolderTree className={cn("w-4 h-4", isLight ? "text-zinc-700" : "text-zinc-300")} />
                 <span className="font-semibold tracking-tight">Project File Tree</span>
               </div>
               <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${isLight ? "bg-zinc-100 text-zinc-600" : "bg-white/10 text-zinc-400"}`}>
@@ -282,61 +283,39 @@ export default function TopNavMenu({
           </div>
         );
 
-      case "profile":
+      case "theme":
         return (
-          <div className="space-y-1 min-w-[230px] p-1.5">
-            <button 
-              type="button" 
-              onClick={() => { setView("default"); setIsSettingsOpen(true); }} 
-              className={sharedHover}
-            >
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-purple-400" />
-                <span>My Account</span>
-              </div>
-            </button>
-
-            <button 
-              type="button" 
-              onClick={() => { setView("default"); setIsSettingsOpen(true); }} 
-              className={sharedHover}
-            >
-              <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-blue-400" />
-                <span>Settings</span>
-              </div>
-            </button>
-
-            <button 
-              type="button" 
-              onClick={() => { setView("default"); setIsSettingsOpen(true); }} 
-              className={sharedHover}
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Subscription / Billing</span>
-              </div>
-            </button>
-
-            <div className={`border-t my-1 ${isLight ? "border-zinc-200" : "border-white/10"}`} />
-            
-            <button 
-              type="button"
-              onClick={handleSignOut}
-              className={`px-3 py-2 text-[14px] w-full text-left rounded-[12px] transition-colors flex items-center gap-2 cursor-pointer ${
-                isLight ? "text-red-600 hover:bg-red-50 hover:text-red-700" : "text-red-400 hover:bg-red-500/10 hover:text-red-300"
-              }`}
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
+          <div className="flex items-center justify-between gap-1.5 min-w-[220px] p-1.5">
+            {THEME_OPTIONS.map(({ key, icon: Icon, text }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  if (onThemeChange) onThemeChange(key);
+                  setView("default");
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 rounded-[12px] px-4 py-2.5 text-xs font-medium transition-all duration-150 cursor-pointer ${
+                  theme === key
+                    ? (isLight 
+                        ? "bg-zinc-950 text-white shadow-md font-semibold" 
+                        : "bg-white text-zinc-950 font-bold shadow-md")
+                    : (isLight 
+                        ? "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950" 
+                        : "text-zinc-400 hover:bg-white/10 hover:text-white")
+                }`}
+              >
+                <Icon className="w-4 h-4 transition-colors" />
+                <span>{text}</span>
+              </button>
+            ))}
           </div>
         );
 
       default:
         return null;
     }
-  }, [view, theme, isLight, isInitialGreeting, onNewChat, onAddFolder, onArgueModel, sharedHover, isFilterSubmenuOpen, searchFolderQuery]);
+  }, [view, theme, isLight, isInitialGreeting, onNewChat, onAddFolder, onArgueModel, onThemeChange, sharedHover, isFilterSubmenuOpen, searchFolderQuery]);
+
 
   return (
     <>
@@ -349,29 +328,34 @@ export default function TopNavMenu({
             ? "bg-white/85 backdrop-blur-2xl border border-zinc-200 shadow-[0_12px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,1)]"
             : "bg-zinc-950/80 backdrop-blur-2xl border border-white/15 shadow-[0_12px_40px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.15)]"
         }`}>
-          {MAIN_NAV.map(({ icon: Icon, name, label }) => (
-            <button
-              key={name}
-              type="button"
-              className={`p-2.5 sm:p-3 rounded-[14px] transition-all cursor-pointer ${
-                (view === name || (name === "settings" && isSettingsOpen))
-                  ? (isLight ? "bg-zinc-950 text-white shadow-sm" : "bg-white/20 text-white shadow-sm")
-                  : (isLight ? "text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100" : "text-zinc-400 hover:text-white hover:bg-white/10")
-              }`}
-              onClick={() => {
-                if (name === "settings") {
-                  setIsSettingsOpen(true);
-                  setView("default");
-                } else {
-                  setView(view === name ? "default" : name);
-                  if (view !== name) setIsFilterSubmenuOpen(false);
-                }
-              }}
-              title={label}
-            >
-              <Icon className="w-4 h-4 sm:w-5 sm:h-5 transition-transform active:scale-90" />
-            </button>
-          ))}
+          {MAIN_NAV.map(({ icon: DefaultIcon, name, label }) => {
+            const Icon = name === "theme" ? (isLight ? Sun : Moon) : DefaultIcon;
+
+            return (
+              <button
+                key={name}
+                type="button"
+                className={`p-2.5 sm:p-3 rounded-[14px] transition-all cursor-pointer ${
+                  (view === name || (name === "settings" && isSettingsOpen))
+                    ? (isLight ? "bg-zinc-950 text-white shadow-sm" : "bg-white/20 text-white shadow-sm")
+                    : (isLight ? "text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100" : "text-zinc-400 hover:text-white hover:bg-white/10")
+                }`}
+                onClick={() => {
+                  if (name === "settings") {
+                    setIsSettingsOpen(true);
+                    setView("default");
+                  } else {
+                    setView(view === name ? "default" : name);
+                    if (view !== name) setIsFilterSubmenuOpen(false);
+                  }
+                }}
+                title={label}
+              >
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5 transition-transform active:scale-90" />
+              </button>
+            );
+          })}
+
         </div>
 
         <AnimatePresence mode="wait">

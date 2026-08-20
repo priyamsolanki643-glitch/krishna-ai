@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
@@ -38,44 +38,45 @@ export const COUNCIL_AGENTS: AgentModelOption[] = [
     name: "Reasoning agent",
     category: "Deep logical deduction & chain-of-thought",
     icon: Brain,
-    color: "text-purple-400",
+    color: "text-zinc-300",
   },
   {
     id: "coding-agent",
     name: "Coding agent",
     category: "AST synthesis & full-stack architecture",
     icon: Code2,
-    color: "text-blue-400",
+    color: "text-zinc-300",
   },
   {
     id: "math-agent",
     name: "Mathematics agent",
     category: "Formal theorems, discrete math & proofs",
     icon: Calculator,
-    color: "text-emerald-400",
+    color: "text-zinc-300",
   },
   {
     id: "research-agent",
     name: "Research & Knowledge agent",
     category: "Real-time citations & academic papers",
     icon: Search,
-    color: "text-amber-400",
+    color: "text-zinc-300",
   },
   {
     id: "creative-agent",
     name: "Creative & Language agent",
     category: "Rhetoric, high-impact prose & translation",
     icon: Sparkles,
-    color: "text-pink-400",
+    color: "text-zinc-300",
   },
   {
     id: "planning-agent",
     name: "Planning & Strategy agent",
     category: "Roadmap planning & risk decomposition",
     icon: Compass,
-    color: "text-cyan-400",
+    color: "text-zinc-300",
   },
 ];
+
 
 interface AIChatInputProps {
   value?: string;
@@ -471,20 +472,20 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                     "flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all text-xs font-medium cursor-pointer",
                     isModelsMenuOpen || activeAgents.length > 0
                       ? isLight
-                        ? "bg-purple-50 text-purple-900 border border-purple-200 shadow-sm"
-                        : "bg-purple-500/15 text-purple-200 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]"
+                        ? "bg-zinc-200 text-zinc-950 border border-zinc-300 shadow-sm"
+                        : "bg-white/15 text-white border border-white/20 shadow-sm"
                       : isLight
                       ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
                       : "bg-white/5 text-zinc-300 hover:bg-white/10"
                   )}
                   title="Configure Council Model Agents Team"
                 >
-                  <Bot className="size-3.5 text-purple-400" />
+                  <Bot className="size-3.5" />
                   <span>Models</span>
                   <span
                     className={cn(
                       "text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold",
-                      isLight ? "bg-purple-200 text-purple-950" : "bg-purple-500/30 text-purple-200"
+                      isLight ? "bg-zinc-300 text-zinc-950" : "bg-white/20 text-white"
                     )}
                   >
                     {activeAgents.length}
@@ -526,7 +527,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                               else setInternalSelectedAgents(all);
                             }
                           }}
-                          className="text-[10px] underline text-purple-400 hover:text-purple-300 cursor-pointer"
+                          className="text-[10px] underline text-zinc-400 hover:text-white cursor-pointer"
                         >
                           {activeAgents.length === COUNCIL_AGENTS.length ? "Reset default" : "Select all"}
                         </button>
@@ -550,7 +551,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                                 "w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer group",
                                 isChecked
                                   ? isLight
-                                    ? "bg-purple-50/80 text-zinc-950"
+                                    ? "bg-zinc-100 text-zinc-950"
                                     : "bg-white/10 text-white"
                                   : isLight
                                   ? "hover:bg-zinc-100 text-zinc-600 hover:text-zinc-950"
@@ -558,7 +559,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                               )}
                             >
                               <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                                <div className={cn("p-1.5 rounded-lg bg-white/5", agent.color)}>
+                                <div className="p-1.5 rounded-lg bg-white/5 text-zinc-300">
                                   <Icon className="size-4" />
                                 </div>
                                 <div className="truncate">
@@ -572,7 +573,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                                 className={cn(
                                   "size-4 rounded-md border flex items-center justify-center transition-all shrink-0",
                                   isChecked
-                                    ? "bg-purple-600 border-purple-500 text-white shadow-sm"
+                                    ? "bg-white text-black border-white shadow-sm"
                                     : isLight
                                     ? "border-zinc-300 bg-white"
                                     : "border-white/20 bg-white/5 group-hover:border-white/40"
@@ -600,8 +601,8 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                   "flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all text-xs font-medium whitespace-nowrap overflow-hidden justify-start cursor-pointer",
                   deepSearchActive
                     ? isLight
-                      ? "bg-blue-600/15 outline outline-blue-600/60 text-blue-900 shadow-sm"
-                      : "bg-blue-500/20 outline outline-blue-400/60 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                      ? "bg-zinc-900 text-white shadow-sm"
+                      : "bg-white/20 text-white border border-white/20 shadow-sm"
                     : isLight
                     ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
                     : "bg-white/5 text-zinc-300 hover:bg-white/10"
@@ -627,6 +628,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                   Deep Search
                 </motion.span>
               </motion.button>
+
             </div>
           </motion.div>
         </div>
