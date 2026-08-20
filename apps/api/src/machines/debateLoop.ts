@@ -2,6 +2,7 @@ import { setup, assign, fromPromise } from "xstate";
 import { runLead } from "../pipeline/draft.js";
 import { runReviewer } from "../pipeline/review.js";
 import { runHelper } from "../pipeline/helper.js";
+import { runCritic } from "../pipeline/critic.js";
 import { validateSpawnRequest } from "../lib/planValidator.js";
 import type { DebateResult, DebateProgressCallback } from "../pipeline/loop.js";
 
@@ -9,6 +10,8 @@ interface DebateContext {
   query: string;
   toneInstruction?: string;
   onProgress?: DebateProgressCallback;
+  leadModel?: string;
+  reviewerModel?: string;
   
   round: number;
   leadConfidenceHistory: number[];
@@ -21,6 +24,11 @@ interface DebateContext {
   spawnsCount: number;
   currentHelpQuery: string;
   helperContext: string;
+
+  // Critic pushback context
+  criticFlagged: boolean;
+  criticRetries: number;
+  criticObjection: string;
 }
 
 const MAX_ROUNDS = 5;
@@ -29,20 +37,26 @@ const CONVERGENCE_EPSILON = 0.05;
 export const debateMachine = setup({
   types: {
     context: {} as DebateContext,
-    input: {} as { query: string; toneInstruction?: string; onProgress?: DebateProgressCallback },
+    input: {} as { 
+      query: string; 
+      toneInstruction?: string; 
+      onProgress?: DebateProgressCallback;
+      leadModel?: string;
+      reviewerModel?: string;
+    },
   },
   actors: {
     invokeLead: fromPromise(
-      async ({ input }: { input: { query: string; previousCritiqueSummary: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number } }) => {
+      async ({ input }: { input: { query: string; previousCritiqueSummary: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; helperContext?: string; modelOverride?: string } }) => {
         if (input.onProgress) {
           await input.onProgress({ stage: "lead_drafting", round: input.round });
         }
-        const draft = await runLead(input.query, input.previousCritiqueSummary, input.toneInstruction);
+        const draft = await runLead(input.query, input.previousCritiqueSummary, input.toneInstruction, input.helperContext, input.modelOverride);
         return draft;
       }
     ),
     invokeReviewer: fromPromise(
-      async ({ input }: { input: { query: string; draftContent: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; draftConfidence: number } }) => {
+      async ({ input }: { input: { query: string; draftContent: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; draftConfidence: number; modelOverride?: string } }) => {
         if (input.onProgress) {
           await input.onProgress({
             stage: "reviewer_critiquing",
@@ -50,7 +64,7 @@ export const debateMachine = setup({
             data: { leadDraftConfidence: input.draftConfidence },
           });
         }
-        const critique = await runReviewer(input.query, input.draftContent, input.toneInstruction);
+        const critique = await runReviewer(input.query, input.draftContent, input.toneInstruction, input.modelOverride);
         if (input.onProgress) {
           await input.onProgress({
             stage: "round_complete",
@@ -78,6 +92,32 @@ export const debateMachine = setup({
         return helperResult;
       }
     ),
+    invokeCritic: fromPromise(
+      async ({ input }: { input: { query: string; finalDraft: string; onProgress?: DebateProgressCallback; round: number } }) => {
+        if (input.onProgress) {
+          await input.onProgress({
+            stage: "critic_reviewing",
+            round: input.round,
+          } as any);
+        }
+        const criticResult = await runCritic(input.query, input.finalDraft);
+        return criticResult;
+      }
+    ),
+    invokeCriticRevisionLead: fromPromise(
+      async ({ input }: { input: { query: string; objection: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; modelOverride?: string } }) => {
+        if (input.onProgress) {
+          await input.onProgress({
+            stage: "critic_revising",
+            round: input.round,
+            data: { objection: input.objection }
+          } as any);
+        }
+        const critiqueFeedback = `ADVERSARIAL CRITIC OBJECTION (Address this flaw directly):\n${input.objection}`;
+        const draft = await runLead(input.query, critiqueFeedback, input.toneInstruction, undefined, input.modelOverride);
+        return draft;
+      }
+    )
   },
   guards: {
     isApproved: ({ event }) => (event as any).output.verdict === "approve",
@@ -93,6 +133,8 @@ export const debateMachine = setup({
     reviewerCircuitBroken: ({ context }) => context.reviewerFailures >= 1,
     needsHelp: ({ event }) => (event as any).output.needs_help === true,
     isSpawnAllowed: ({ context }) => validateSpawnRequest(context.spawnsCount).allowed,
+    isCriticApproved: ({ event }) => (event as any).output.verdict === "approve",
+    canRetryCritic: ({ context }) => context.criticRetries < 1,
   }
 }).createMachine({
   id: "debateLoop",
@@ -101,6 +143,8 @@ export const debateMachine = setup({
     query: input.query,
     toneInstruction: input.toneInstruction,
     onProgress: input.onProgress,
+    leadModel: input.leadModel,
+    reviewerModel: input.reviewerModel,
     round: 1,
     leadConfidenceHistory: [],
     currentDraftContent: "",
@@ -112,6 +156,9 @@ export const debateMachine = setup({
     spawnsCount: 0,
     currentHelpQuery: "",
     helperContext: "",
+    criticFlagged: false,
+    criticRetries: 0,
+    criticObjection: "",
   }),
   states: {
     drafting: {
@@ -124,6 +171,7 @@ export const debateMachine = setup({
           onProgress: context.onProgress,
           round: context.round,
           helperContext: context.helperContext,
+          modelOverride: context.leadModel,
         }),
         onDone: [
           {
@@ -172,7 +220,7 @@ export const debateMachine = setup({
           target: "spawning_helper"
         },
         {
-          target: "reviewing" // If denied, proceed to review with whatever draft we got
+          target: "reviewing"
         }
       ]
     },
@@ -182,7 +230,7 @@ export const debateMachine = setup({
         src: "invokeHelper",
         input: ({ context }) => ({
           helpQuery: context.currentHelpQuery,
-          domain: "coding", // Defaulting for now, can be extracted from Supervisor later
+          domain: "coding",
           onProgress: context.onProgress,
           round: context.round,
         }),
@@ -194,7 +242,7 @@ export const debateMachine = setup({
           })
         },
         onError: {
-          target: "drafting", // On error, just go back to drafting, don't break the whole loop
+          target: "drafting",
         }
       }
     },
@@ -208,11 +256,12 @@ export const debateMachine = setup({
           onProgress: context.onProgress,
           round: context.round,
           draftConfidence: context.leadConfidenceHistory[context.round - 1],
+          modelOverride: context.reviewerModel,
         }),
         onDone: [
           {
             guard: "isApproved",
-            target: "done",
+            target: "critic_review",
             actions: assign({
               isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
               stopReason: "approved",
@@ -221,7 +270,7 @@ export const debateMachine = setup({
           },
           {
             guard: "hasConverged",
-            target: "done",
+            target: "critic_review",
             actions: assign({
               isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
               stopReason: "converged",
@@ -230,7 +279,7 @@ export const debateMachine = setup({
           },
           {
             guard: "isMaxRoundsHit",
-            target: "done",
+            target: "critic_review",
             actions: assign({
               isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
               stopReason: "max_rounds_hit",
@@ -263,6 +312,73 @@ export const debateMachine = setup({
             })
           }
         ]
+      }
+    },
+    critic_review: {
+      invoke: {
+        src: "invokeCritic",
+        input: ({ context }) => ({
+          query: context.query,
+          finalDraft: context.currentDraftContent,
+          onProgress: context.onProgress,
+          round: context.round,
+        }),
+        onDone: [
+          {
+            guard: "isCriticApproved",
+            target: "done",
+            actions: assign({
+              isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
+            })
+          },
+          {
+            guard: "canRetryCritic",
+            target: "critic_revision",
+            actions: assign({
+              isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
+              criticFlagged: true,
+              criticObjection: ({ event }) => event.output.objection,
+              criticRetries: ({ context }) => context.criticRetries + 1,
+            })
+          },
+          {
+            target: "done",
+            actions: assign({
+              isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
+              criticFlagged: true,
+            })
+          }
+        ],
+        onError: {
+          target: "done",
+        }
+      }
+    },
+    critic_revision: {
+      invoke: {
+        src: "invokeCriticRevisionLead",
+        input: ({ context }) => ({
+          query: context.query,
+          objection: context.criticObjection,
+          toneInstruction: context.toneInstruction,
+          onProgress: context.onProgress,
+          round: context.round,
+          modelOverride: context.leadModel,
+        }),
+        onDone: {
+          target: "done",
+          actions: assign({
+            currentDraftContent: ({ event }) => event.output.content,
+            isMockExecution: ({ context, event }) => context.isMockExecution || event.output.is_mock,
+            criticFlagged: true,
+          })
+        },
+        onError: {
+          target: "done",
+          actions: assign({
+            criticFlagged: true,
+          })
+        }
       }
     },
     aborted: {

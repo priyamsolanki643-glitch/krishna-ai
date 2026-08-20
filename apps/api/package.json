@@ -15,14 +15,18 @@
     "@opentelemetry/sdk-node": "^0.221.0",
     "@opentelemetry/sdk-trace-base": "^2.10.0",
     "@opentelemetry/sdk-trace-node": "^2.10.0",
-    "dotenv": "^16.4.7",
+    "@types/pg": "^8.23.1",
+    "dotenv": "^16.6.1",
+    "drizzle-orm": "^0.45.2",
     "groq-sdk": "^0.15.0",
     "hono": "^4.13.2",
+    "pg": "^8.23.0",
     "xstate": "^5.32.5",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
+    "drizzle-kit": "^0.31.10",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }

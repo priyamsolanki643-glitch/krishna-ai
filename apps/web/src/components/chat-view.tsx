@@ -393,19 +393,8 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous }: ChatViewPr
   return (
     <div className="flex-1 flex flex-col h-full bg-[#000000] relative overflow-hidden font-sans">
 
-      {/* ── Top Aesthetic Rectangle Bar with Bright White Borders & Minimal Rounded Corners ── */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-30 w-[92%] max-w-4xl h-11 rounded-xl bg-zinc-950/75 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.85),0_0_15px_rgba(255,255,255,0.18)] flex items-center justify-between px-4 transition-all pointer-events-auto">
-        <div className="flex items-center gap-2">
-          <span className="size-1.5 rounded-full bg-white animate-pulse" />
-          <span className="text-[11px] font-mono font-medium text-zinc-200 tracking-wider uppercase">THE COUNCIL</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] font-mono text-zinc-400">Consensus Engine Active</span>
-        </div>
-      </div>
-
       <TeamSelectorModal
+
         isOpen={isTeamSelectorOpen}
         onClose={() => setIsTeamSelectorOpen(false)}
         isAutoMode={isAutoTeam}

@@ -17,13 +17,23 @@ function getGroqClient(): Groq | null {
 }
 
 // Fallback test scenario state for stress-testing when no key is present
-export type MockScenario = "default" | "reject_then_approve" | "convergence_test" | "max_rounds_test" | "circuit_breaker_test" | "helper_spawn_test" | "helper_spawn_denied_test";
+export type MockScenario = 
+  | "default" 
+  | "reject_then_approve" 
+  | "convergence_test" 
+  | "max_rounds_test" 
+  | "circuit_breaker_test" 
+  | "helper_spawn_test" 
+  | "helper_spawn_denied_test"
+  | "critic_reject_test"
+  | "multi_domain_test";
+
 let currentMockScenario: MockScenario = "default";
-let mockCallCounter = { lead: 0, reviewer: 0 };
+let mockCallCounter = { lead: 0, reviewer: 0, critic: 0 };
 
 export function setMockScenario(scenario: MockScenario) {
   currentMockScenario = scenario;
-  mockCallCounter = { lead: 0, reviewer: 0 };
+  mockCallCounter = { lead: 0, reviewer: 0, critic: 0 };
 }
 
 export async function callGroq(
@@ -62,6 +72,44 @@ export async function callGroq(
 
   // Explicit, tagged fallback simulation when GROQ_API_KEY is not set
   console.warn("⚠️ MOCK MODE — no GROQ_API_KEY set (serving simulated agent response with is_mock: true)");
+
+  if (systemPrompt.includes("final adversarial Critic Agent") || systemPrompt.includes("CriticOutputSchema")) {
+    mockCallCounter.critic++;
+    if (currentMockScenario === "critic_reject_test") {
+      return JSON.stringify({
+        verdict: "reject",
+        objection: "The proof fails to account for duplicate keys leading to partition degradation.",
+        confidence: 0.95,
+        is_mock: true,
+      });
+    }
+    return JSON.stringify({
+      verdict: "approve",
+      objection: "",
+      confidence: 0.98,
+      is_mock: true,
+    });
+  }
+
+  if (systemPrompt.includes("Response Architect")) {
+    if (userPrompt.toLowerCase().includes("frustrated") || userPrompt.toLowerCase().includes("de-escalate")) {
+      return `[Frustrated Tone Rewritten]: Look, here is the exact breakdown straight to the point: ${userPrompt.split("Draft to Refine:")[1]?.trim() || userPrompt}`;
+    }
+    return `[Architect Formatted Response]: ${userPrompt.split("Draft to Refine:")[1]?.trim() || userPrompt}`;
+  }
+
+  if (systemPrompt.includes("Compiler Agent")) {
+    return `# Synthesized Multi-Domain Analysis\n\nCombined synthesis from all specialized agents:\n${userPrompt}`;
+  }
+
+  if (systemPrompt.includes("Safety Guardrail Agent")) {
+    return JSON.stringify({
+      is_safe: true,
+      category: "benign",
+      confidence: 0.99,
+      is_mock: true
+    });
+  }
 
   if (systemPrompt.includes("Reviewer Agent") || systemPrompt.includes("verdict") || systemPrompt.includes("CritiqueOutputSchema")) {
     mockCallCounter.reviewer++;
@@ -118,9 +166,36 @@ export async function callGroq(
     });
   }
 
-  if (systemPrompt.includes("Supervisor") || systemPrompt.includes("domain") || systemPrompt.includes("SupervisorOutputSchema")) {
+  if (systemPrompt.includes("acting as an impartial judge") || systemPrompt.includes("Argument Ruling")) {
+    if (userPrompt.toLowerCase().includes("dual-pivot") || userPrompt.toLowerCase().includes("yaroslavskiy")) {
+      return JSON.stringify({
+        verdict: "argument_accepted",
+        explanation: "The user is correct. Vladimir Yaroslavskiy's dual-pivot Quicksort was adopted in Java 7 because it offers fewer cache misses and superior practical performance over classical single-pivot partitioning.",
+        updatedAnswer: "Java's Arrays.sort utilizes Dual-Pivot Quicksort by Vladimir Yaroslavskiy, which partitions the array into three segments using two pivots, significantly reducing memory cache misses compared to traditional Hoare or Lomuto partitioning."
+      });
+    }
+    return JSON.stringify({
+      verdict: "argument_rejected",
+      explanation: "The user's objection confuses worst-case asymptotic upper bounds O(n^2) with randomized expected runtime O(n log n). The original stance correctly adheres to standard Big-O definitions."
+    });
+  }
+
+  if (systemPrompt.includes("Supervisor") || systemPrompt.includes("SupervisorOutputSchema")) {
+    if (currentMockScenario === "multi_domain_test" || userPrompt.includes("Python") || userPrompt.includes("compound interest")) {
+      return JSON.stringify({
+        domain: "coding",
+        domains: [
+          { domain: "coding", score: 0.9 },
+          { domain: "math", score: 0.85 }
+        ],
+        emotion: "neutral",
+        tone_instruction: "Provide clear code and mathematical derivation.",
+        is_mock: true,
+      });
+    }
     return JSON.stringify({
       domain: "coding",
+      domains: [{ domain: "coding", score: 0.95 }],
       emotion: "neutral",
       tone_instruction: "Provide a direct, technical, and mathematically precise answer.",
       is_mock: true,
@@ -188,6 +263,21 @@ export async function callGroq(
       return JSON.stringify({
         content: `Draft round 3: Proceeding anyway.`,
         confidence: 0.95,
+        is_mock: true,
+      });
+    }
+
+    if (currentMockScenario === "critic_reject_test") {
+      if (mockCallCounter.lead === 1) {
+        return JSON.stringify({
+          content: "Initial draft on QuickSort partitioning.",
+          confidence: 0.90,
+          is_mock: true,
+        });
+      }
+      return JSON.stringify({
+        content: "Revised draft addressing duplicate keys with 3-way Dijkstra partitioning (Dutch National Flag).",
+        confidence: 0.98,
         is_mock: true,
       });
     }

@@ -21,8 +21,21 @@ export const CritiqueOutputSchema = z.object({
 
 export type CritiqueOutput = z.infer<typeof CritiqueOutputSchema>;
 
+export const CriticOutputSchema = z.object({
+  verdict: z.enum(["approve", "reject"]),
+  objection: z.string(),
+  confidence: z.number().min(0).max(1),
+  is_mock: z.boolean().default(false),
+});
+
+export type CriticOutput = z.infer<typeof CriticOutputSchema>;
+
 export const SupervisorOutputSchema = z.object({
   domain: z.enum(["coding", "math", "research", "general"]),
+  domains: z.array(z.object({
+    domain: z.enum(["coding", "math", "research", "general"]),
+    score: z.number().min(0).max(1),
+  })).optional(),
   emotion: z.enum(["neutral", "frustrated", "excited", "confused"]),
   tone_instruction: z.string(),
   is_mock: z.boolean().default(false),

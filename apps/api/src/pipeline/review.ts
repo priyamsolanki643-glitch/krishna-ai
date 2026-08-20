@@ -2,13 +2,17 @@ import { callGroq } from "../lib/groq.js";
 import { extractJSON } from "../lib/json.js";
 import { CritiqueOutputSchema, CritiqueOutput } from "../schemas/agent.js";
 import { withSpan } from "../lib/telemetry.js";
+import { GROQ_MODELS } from "../config/models.js";
 
 export async function runReviewer(
   query: string,
   draft: string,
-  toneInstruction?: string
+  toneInstruction?: string,
+  modelOverride?: string
 ): Promise<CritiqueOutput> {
-  return withSpan("runReviewer", { role: "reviewer" }, async () => {
+  const activeModel = modelOverride || GROQ_MODELS.reviewer;
+
+  return withSpan("runReviewer", { role: "reviewer", model: activeModel }, async () => {
     const tone = toneInstruction ? `Review style: ${toneInstruction}` : "";
 
     const systemPrompt = `You are the Reviewer Agent in a multi-agent council.
@@ -25,17 +29,17 @@ You MUST return ONLY a valid JSON object strictly matching this schema:
 }
 Return raw JSON only.`;
 
-  const userPrompt = `Original Query: ${query}\n\nCurrent Draft to Review:\n${draft}`;
+    const userPrompt = `Original Query: ${query}\n\nCurrent Draft to Review:\n${draft}`;
 
-    const rawResponse = await callGroq(systemPrompt, userPrompt, "openai/gpt-oss-20b");
+    const rawResponse = await callGroq(systemPrompt, userPrompt, activeModel);
 
-  try {
-    const parsed = extractJSON(rawResponse);
-    return CritiqueOutputSchema.parse(parsed);
-  } catch (error: any) {
-    throw new Error(
-      `Reviewer Agent failed to return valid CritiqueOutputSchema: ${error.message}. Raw output: ${rawResponse}`
-    );
-  }
+    try {
+      const parsed = extractJSON(rawResponse);
+      return CritiqueOutputSchema.parse(parsed);
+    } catch (error: any) {
+      throw new Error(
+        `Reviewer Agent failed to return valid CritiqueOutputSchema: ${error.message}. Raw output: ${rawResponse}`
+      );
+    }
   });
 }
