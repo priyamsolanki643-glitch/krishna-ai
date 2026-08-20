@@ -17,6 +17,7 @@ import { FileTreeSlidePanel, DEFAULT_PROJECT_FILES, ProjectFile } from "./FileTr
 import { ShowYourWorkView, ShowYourWorkMode, AgentStageData } from "./ShowYourWorkView";
 import BottomMenu from "./ui/bottom-menu";
 import { AIChatInput } from "./ui/ai-chat-input";
+import { SpaceStarBackground } from "./ui/space-star-background";
 
 
 interface Message {
@@ -46,6 +47,9 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editText, setEditText] = useState<string>("");
+
   
   // Section 1 & 2: Show Your Work Mode
   const [showYourWorkMode, setShowYourWorkMode] = useState<ShowYourWorkMode>("council");
@@ -503,9 +507,12 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96, y: -20, filter: "blur(6px)" }}
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="flex-1 flex flex-col items-center justify-center -mt-12 select-none text-center px-4"
+                className="flex-1 flex flex-col items-center justify-center -mt-12 select-none text-center px-4 relative overflow-hidden"
               >
-                <div className="reveal-chat-item relative flex flex-col items-center justify-center w-full isolate text-center space-y-3 max-w-3xl px-4">
+                {/* Dynamic Space Star Background drifting in space */}
+                <SpaceStarBackground starCount={200} speed={0.25} className="z-0" />
+
+                <div className="reveal-chat-item relative z-10 flex flex-col items-center justify-center w-full isolate text-center space-y-3 max-w-3xl px-4">
                   <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-['Instrument_Serif',serif] font-normal tracking-tight leading-none mb-2 ${
                     isLight ? "text-zinc-950" : "text-white drop-shadow-[0_4px_30px_rgba(255,255,255,0.18)]"
                   }`}>
@@ -569,11 +576,73 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                     <div key={m.id} className="animate-message-reveal flex flex-col space-y-2">
                       <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
                         {isUser ? (
-                          <div className="bg-[#18181b] border border-white/10 text-white px-5 py-3 rounded-[22px] max-w-[85%] text-[14.5px] leading-relaxed shadow-lg">
-                            {m.text}
-                          </div>
+                          editingMessageId === m.id ? (
+                            <div className="w-full max-w-2xl bg-[#121215] border border-white/20 p-3.5 rounded-2xl space-y-3 shadow-2xl">
+                              <textarea
+                                value={editText}
+                                onChange={(e) => setEditText(e.target.value)}
+                                className="w-full bg-black/50 border border-white/10 text-white rounded-xl p-3 text-sm outline-none resize-none focus:border-white/30"
+                                rows={3}
+                                autoFocus
+                              />
+                              <div className="flex justify-end gap-2 text-xs font-medium">
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingMessageId(null)}
+                                  className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (editText.trim()) {
+                                      setEditingMessageId(null);
+                                      handleSend(editText.trim());
+                                    }
+                                  }}
+                                  disabled={!editText.trim()}
+                                  className="px-4 py-1.5 rounded-xl bg-white text-black font-semibold hover:bg-zinc-200 transition-all cursor-pointer shadow-[0_0_12px_rgba(255,255,255,0.3)] disabled:opacity-50"
+                                >
+                                  Save & Submit
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-end group max-w-[85%]">
+                              <div className="bg-[#18181b] border border-white/10 text-white px-5 py-3 rounded-[22px] text-[14.5px] leading-relaxed shadow-lg">
+                                {m.text}
+                              </div>
+                              {/* User Actions Toolbar (Edit, Copy) */}
+                              <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingMessageId(m.id);
+                                    setEditText(m.text.replace(/^\[Argue with .*?\]:\s*/, ""));
+                                  }}
+                                  className="p-1 rounded-md text-zinc-500 hover:text-zinc-200 hover:bg-white/10 transition-colors cursor-pointer"
+                                  title="Edit message"
+                                >
+                                  <Edit className="size-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(m.text);
+                                    setCopiedId(m.id);
+                                    setTimeout(() => setCopiedId(null), 2000);
+                                  }}
+                                  className="p-1 rounded-md text-zinc-500 hover:text-zinc-200 hover:bg-white/10 transition-colors cursor-pointer"
+                                  title="Copy text"
+                                >
+                                  {copiedId === m.id ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+                          )
                         ) : (
-                          <div className="w-full space-y-2">
+                          <div className="w-full space-y-2 group">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <GyroLogo size={18} />
@@ -582,16 +651,32 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                                 </span>
                               </div>
 
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(m.text);
-                                  setCopiedId(m.id);
-                                  setTimeout(() => setCopiedId(null), 2000);
-                                }}
-                                className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
-                              >
-                                {copiedId === m.id ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
-                              </button>
+                              {/* Council Action Toolbar (Retry, Copy) */}
+                              <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const prevUserMsg = [...messages].reverse().find((msg) => msg.role === "user");
+                                    if (prevUserMsg) handleSend(prevUserMsg.text.replace(/^\[Argue with .*?\]:\s*/, ""));
+                                  }}
+                                  className="p-1.5 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                  title="Regenerate / Retry response"
+                                >
+                                  <RefreshCw className="size-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(m.text);
+                                    setCopiedId(m.id);
+                                    setTimeout(() => setCopiedId(null), 2000);
+                                  }}
+                                  className="p-1.5 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                  title="Copy response"
+                                >
+                                  {copiedId === m.id ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                                </button>
+                              </div>
                             </div>
 
                             {/* Show Your Work View & Replay */}
@@ -616,6 +701,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                 })}
               </motion.div>
             )}
+
           </AnimatePresence>
 
           {/* Section 7: Routing Visualization Pulse */}

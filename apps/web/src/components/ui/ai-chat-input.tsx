@@ -387,35 +387,44 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
               className={cn(
                 "relative p-2.5 sm:p-3 rounded-full transition-all cursor-pointer shrink-0 active:scale-95 flex items-center justify-center",
                 isRecording
-                  ? "bg-red-500/20 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.5)] border border-red-500/40"
+                  ? "bg-red-500/20 text-red-400 shadow-[0_0_25px_rgba(239,68,68,0.7)] border border-red-500/50"
                   : isLight
                   ? "hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950"
                   : "hover:bg-white/10 text-zinc-400 hover:text-white"
               )}
-              title={isRecording ? "Stop listening" : "Voice input"}
+              title={isRecording ? "Stop voice input" : "Voice input"}
             >
+              {isRecording && (
+                <span className="absolute inset-0 rounded-full border border-red-500/60 animate-ping opacity-75 pointer-events-none" />
+              )}
               {isRecording ? (
-                <div className="flex items-center gap-0.5 h-4 px-0.5">
+                <div className="flex items-center gap-[2.5px] h-4 px-0.5 relative z-10">
                   <motion.span
-                    className="w-1 bg-red-400 rounded-full"
+                    className="w-[2.5px] bg-red-400 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
                     animate={{ height: ["4px", "14px", "4px"] }}
-                    transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut" }}
+                    transition={{ repeat: Infinity, duration: 0.55, ease: "easeInOut" }}
                   />
                   <motion.span
-                    className="w-1 bg-red-400 rounded-full"
+                    className="w-[2.5px] bg-red-400 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
                     animate={{ height: ["12px", "4px", "12px"] }}
-                    transition={{ repeat: Infinity, duration: 0.7, ease: "easeInOut", delay: 0.1 }}
+                    transition={{ repeat: Infinity, duration: 0.65, ease: "easeInOut", delay: 0.1 }}
                   />
                   <motion.span
-                    className="w-1 bg-red-400 rounded-full"
+                    className="w-[2.5px] bg-red-400 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
                     animate={{ height: ["6px", "16px", "6px"] }}
                     transition={{ repeat: Infinity, duration: 0.5, ease: "easeInOut", delay: 0.2 }}
+                  />
+                  <motion.span
+                    className="w-[2.5px] bg-red-400 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
+                    animate={{ height: ["8px", "13px", "4px"] }}
+                    transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.15 }}
                   />
                 </div>
               ) : (
                 <Mic size={19} />
               )}
             </button>
+
 
             {/* Send Button: Clean Arrow Icon */}
             <button
