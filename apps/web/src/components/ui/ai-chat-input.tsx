@@ -496,31 +496,31 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                   <ChevronUp className={cn("size-3.5 transition-transform duration-200", isModelsMenuOpen && "rotate-180")} />
                 </button>
 
-                {/* Models Upward Dropdown: v-switch-12 Card Structure */}
+                {/* Models Upward Dropdown: Compact v-switch-12 Card Structure */}
                 <AnimatePresence>
                   {isModelsMenuOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                      exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                      transition={{ duration: 0.16, ease: "easeOut" }}
                       style={{ transformOrigin: "bottom left" }}
                       className={cn(
-                        "absolute bottom-full left-0 mb-3 w-full min-w-[320px] sm:min-w-[360px] overflow-hidden rounded-xl border shadow-2xl backdrop-blur-2xl z-50",
+                        "absolute bottom-full left-0 mb-2.5 w-full min-w-[270px] sm:min-w-[295px] max-w-[315px] overflow-hidden rounded-xl border shadow-2xl backdrop-blur-2xl z-50",
                         isLight
-                          ? "bg-white/95 border-zinc-200 text-zinc-950 shadow-[0_20px_50px_rgba(0,0,0,0.12)]"
-                          : "bg-[#09090b]/95 border-white/10 text-white shadow-[0_20px_50px_rgba(0,0,0,0.95)]"
+                          ? "bg-white/95 border-zinc-200 text-zinc-950 shadow-[0_16px_40px_rgba(0,0,0,0.12)]"
+                          : "bg-[#09090b]/95 border-white/10 text-white shadow-[0_16px_40px_rgba(0,0,0,0.95)]"
                       )}
                     >
-                      {/* v-switch-12 Header */}
+                      {/* v-switch-12 Compact Header */}
                       <div className={cn(
-                        "border-b px-4 py-3 flex items-center justify-between",
+                        "border-b px-3.5 py-2 flex items-center justify-between",
                         isLight ? "border-zinc-200 bg-zinc-50/50" : "border-white/10 bg-white/[0.02]"
                       )}>
                         <div>
-                          <p className="font-semibold text-sm">Council Models</p>
-                          <p className={cn("text-[11px]", isLight ? "text-zinc-500" : "text-zinc-400")}>
-                            Select active agents for debate quorum
+                          <p className="font-semibold text-xs text-white">Council Models</p>
+                          <p className={cn("text-[10px]", isLight ? "text-zinc-500" : "text-zinc-400")}>
+                            Active quorum agents
                           </p>
                         </div>
                         <button
@@ -540,30 +540,30 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                             isLight ? "text-zinc-600 hover:text-zinc-950" : "text-zinc-400 hover:text-white"
                           )}
                         >
-                          {activeAgents.length === COUNCIL_AGENTS.length ? "Reset default" : "Select all"}
+                          {activeAgents.length === COUNCIL_AGENTS.length ? "Reset" : "Select all"}
                         </button>
                       </div>
 
-                      {/* v-switch-12 Divide-y Items List */}
-                      <div className={cn("divide-y max-h-[340px] overflow-y-auto no-scrollbar", isLight ? "divide-zinc-200" : "divide-white/10")}>
+                      {/* v-switch-12 Compact Divide-y Items List */}
+                      <div className={cn("divide-y max-h-[250px] overflow-y-auto no-scrollbar", isLight ? "divide-zinc-200" : "divide-white/10")}>
                         {COUNCIL_AGENTS.map(({ id, name, category, icon: Icon }, i) => {
                           const isChecked = activeAgents.includes(id);
 
                           return (
                             <div key={id}>
-                              <div className="flex items-center gap-3 px-4 py-3">
+                              <div className="flex items-center gap-2.5 px-3.5 py-2">
                                 <div className={cn(
-                                  "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                                  "flex size-6 shrink-0 items-center justify-center rounded-md",
                                   isLight ? "bg-zinc-100 text-zinc-700" : "bg-white/5 text-zinc-300"
                                 )}>
                                   <Icon
                                     aria-hidden="true"
-                                    className="size-4"
+                                    className="size-3.5"
                                   />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm">{name}</p>
-                                  <p className={cn("text-xs truncate", isLight ? "text-zinc-500" : "text-zinc-400")}>
+                                  <p className="font-medium text-xs truncate">{name}</p>
+                                  <p className={cn("text-[9.5px] truncate", isLight ? "text-zinc-500" : "text-zinc-400")}>
                                     {category}
                                   </p>
                                 </div>
@@ -583,8 +583,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                 </AnimatePresence>
               </div>
 
-
-              {/* Deep Search Toggle */}
+              {/* Deep Search / Web Search Toggle - Pitch Black with Crisp White Border Glow */}
               <motion.button
                 type="button"
                 onClick={(e) => {
@@ -592,28 +591,28 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                   setDeepSearchActive((a) => !a);
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all text-xs font-medium whitespace-nowrap overflow-hidden justify-start cursor-pointer",
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-xs font-medium whitespace-nowrap overflow-hidden justify-start cursor-pointer bg-black",
                   deepSearchActive
                     ? isLight
-                      ? "bg-zinc-900 text-white shadow-sm"
-                      : "bg-white/20 text-white border border-white/20 shadow-sm"
+                      ? "border border-zinc-950 text-zinc-950 shadow-sm bg-white"
+                      : "border border-white text-white shadow-[0_0_12px_rgba(255,255,255,0.45)] bg-black"
                     : isLight
-                    ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
-                    : "bg-white/5 text-zinc-300 hover:bg-white/10"
+                    ? "border border-transparent text-zinc-600 hover:text-zinc-950 bg-transparent"
+                    : "border border-transparent text-zinc-400 hover:text-white bg-black/50"
                 )}
-                title="Toggle Deep Search Web Grounding"
+                title="Toggle Deep Web Search"
                 initial={false}
                 animate={{
-                  width: deepSearchActive ? 120 : 34,
-                  paddingLeft: deepSearchActive ? 10 : 8,
-                  paddingRight: deepSearchActive ? 10 : 8,
+                  width: deepSearchActive ? 116 : 32,
+                  paddingLeft: deepSearchActive ? 9 : 7,
+                  paddingRight: deepSearchActive ? 9 : 7,
                 }}
               >
                 <div className="shrink-0">
-                  <Globe size={15} />
+                  <Globe size={14} className={deepSearchActive ? "text-white" : "text-zinc-400"} />
                 </div>
                 <motion.span
-                  className="truncate"
+                  className="truncate text-xs font-medium"
                   initial={false}
                   animate={{
                     opacity: deepSearchActive ? 1 : 0,
@@ -622,6 +621,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                   Deep Search
                 </motion.span>
               </motion.button>
+
 
             </div>
           </motion.div>

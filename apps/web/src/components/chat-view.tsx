@@ -667,22 +667,6 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
           )}
         </AnimatePresence>
 
-        {/* Manual Council Active Badge */}
-        {!isAutoTeam && (
-          <div className="mb-2 px-3 py-1 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[11px] flex items-center justify-between w-fit">
-            <span className="flex items-center gap-1.5">
-              <LayoutGrid className="size-3 text-blue-400" />
-              Manual Council: {selectedModelIds.length} models active
-            </span>
-            <button
-              onClick={() => setIsAutoTeam(true)}
-              className="text-[10px] underline ml-2 text-zinc-400 hover:text-white"
-            >
-              Reset to Auto
-            </button>
-          </div>
-        )}
-
         {/* Modern Interactive AIChatInput Console */}
         <AIChatInput
           value={input}
@@ -701,11 +685,11 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
           onSelectedAgentsChange={(ids) => {
             setSelectedModelIds(ids);
             setIsAutoTeam(false);
-            showToast(`Council Agent Team Active: ${ids.length} agents selected`);
           }}
           theme={theme}
           disabled={isThinking}
         />
+
 
 
         <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple className="hidden" />
