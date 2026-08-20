@@ -406,11 +406,20 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
           <BottomMenu
             theme={theme}
             onThemeChange={onThemeChange}
+            isInitialGreeting={isInitial}
             onNewChat={handleNewThread}
+            onAddFolder={() => setIsFileTreeOpen(true)}
+            onArgueModel={() => {
+              setShowYourWorkMode("council");
+              setInput("I disagree with the consensus on: ");
+              inputRef.current?.focus();
+              showToast("Council Debate / Argue Mode Active");
+            }}
             onOpenSidebar={onOpenSidebar}
             onOpenFiles={() => setIsFileTreeOpen(true)}
             onOpenTeam={() => setIsTeamSelectorOpen(true)}
           />
+
 
         </div>
       </div>

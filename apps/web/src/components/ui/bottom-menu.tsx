@@ -4,7 +4,8 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { 
   Plus, Folder, Bell, User, Sun, Moon, 
-  PenSquare, Mic, Camera, SlidersHorizontal, Sparkles, LogOut,
+  FolderPlus, MessageSquarePlus, Swords,
+  SlidersHorizontal, Sparkles, LogOut,
   ArrowDownAZ, Clock, Search, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,12 +17,6 @@ const MAIN_NAV = [
   { icon: Bell, name: "notifications" as const },
   { icon: User, name: "profile" as const },
   { icon: Sun, name: "theme" as const },
-];
-
-const HOME_ITEMS = [
-  { icon: PenSquare, text: "Note" },
-  { icon: Mic, text: "Voice" },
-  { icon: Camera, text: "Screenshot" },
 ];
 
 const NOTIFICATION_TYPES = ["Messages", "System Alerts", "Council Insights"];
@@ -36,7 +31,10 @@ const THEME_OPTIONS = [
 interface TopNavMenuProps {
   theme?: "dark" | "light";
   onThemeChange?: (t: "dark" | "light") => void;
+  isInitialGreeting?: boolean;
   onNewChat?: () => void;
+  onAddFolder?: () => void;
+  onArgueModel?: () => void;
   onOpenSidebar?: () => void;
   onOpenFiles?: () => void;
   onOpenTeam?: () => void;
@@ -46,7 +44,10 @@ interface TopNavMenuProps {
 export default function TopNavMenu({ 
   theme = "dark", 
   onThemeChange, 
+  isInitialGreeting = true,
   onNewChat, 
+  onAddFolder,
+  onArgueModel,
   onOpenSidebar,
   onOpenFiles, 
   onOpenTeam, 
@@ -103,8 +104,8 @@ export default function TopNavMenu({
   };
 
   const sharedHover = isLight
-    ? "group transition-all duration-150 px-3 py-2 text-[14px] text-zinc-600 w-full text-left rounded-[12px] hover:bg-zinc-100 hover:text-zinc-950 cursor-pointer"
-    : "group transition-all duration-150 px-3 py-2 text-[14px] text-zinc-400 w-full text-left rounded-[12px] hover:bg-white/10 hover:text-white cursor-pointer";
+    ? "group transition-all duration-150 px-3 py-2.5 text-[13.5px] text-zinc-600 w-full text-left rounded-[12px] hover:bg-zinc-100 hover:text-zinc-950 cursor-pointer flex items-center gap-3"
+    : "group transition-all duration-150 px-3 py-2.5 text-[13.5px] text-zinc-400 w-full text-left rounded-[12px] hover:bg-white/10 hover:text-white cursor-pointer flex items-center gap-3";
 
   const content = useMemo(() => {
     switch (view) {
@@ -112,21 +113,50 @@ export default function TopNavMenu({
         return null;
 
       case "home":
+        // Condition: On Greeting screen -> only 1 option "Add new folder"
+        // On Active Chat screen -> 3 options "New chat", "Add new folder", "Argue the model"
         return (
           <div className="space-y-1 min-w-[210px] p-1.5">
-            {HOME_ITEMS.map(({ icon: Icon, text }) => (
+            {!isInitialGreeting && (
               <button
-                key={text}
+                type="button"
                 onClick={() => {
                   if (onNewChat) onNewChat();
                   setView("default");
                 }}
-                className={`${sharedHover} flex items-center gap-3`}
+                className={sharedHover}
               >
-                <Icon className={`w-4 h-4 ${isLight ? "text-zinc-500 group-hover:text-zinc-950" : "text-zinc-400 group-hover:text-white"} transition-colors`} />
-                <span className="transition-colors">{text}</span>
+                <MessageSquarePlus className={`w-4 h-4 ${isLight ? "text-zinc-500 group-hover:text-zinc-950" : "text-zinc-400 group-hover:text-white"} transition-colors`} />
+                <span className="font-medium transition-colors">New chat</span>
               </button>
-            ))}
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                if (onAddFolder) onAddFolder();
+                else if (onOpenFiles) onOpenFiles();
+                setView("default");
+              }}
+              className={sharedHover}
+            >
+              <FolderPlus className={`w-4 h-4 ${isLight ? "text-zinc-500 group-hover:text-zinc-950" : "text-zinc-400 group-hover:text-white"} transition-colors`} />
+              <span className="font-medium transition-colors">Add new folder</span>
+            </button>
+
+            {!isInitialGreeting && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onArgueModel) onArgueModel();
+                  setView("default");
+                }}
+                className={sharedHover}
+              >
+                <Swords className={`w-4 h-4 ${isLight ? "text-amber-600 group-hover:text-amber-700" : "text-amber-400 group-hover:text-amber-300"} transition-colors`} />
+                <span className="font-medium transition-colors">Argue the model</span>
+              </button>
+            )}
           </div>
         );
 
@@ -289,7 +319,7 @@ export default function TopNavMenu({
       default:
         return null;
     }
-  }, [view, theme, isLight, onNewChat, onThemeChange, sharedHover, isFilterSubmenuOpen, searchFolderQuery]);
+  }, [view, theme, isLight, isInitialGreeting, onNewChat, onAddFolder, onArgueModel, onThemeChange, sharedHover, isFilterSubmenuOpen, searchFolderQuery]);
 
   return (
     <div
