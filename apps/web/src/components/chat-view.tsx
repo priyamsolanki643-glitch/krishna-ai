@@ -688,19 +688,25 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
           value={input}
           onChange={setInput}
           onSend={(text, options) => {
-            if (options?.think) {
-              setShowYourWorkMode("council");
-            }
             handleSend();
           }}
           isRecording={isRecording}
           onToggleRecording={toggleRecording}
-          onAttachClick={() => fileInputRef.current?.click()}
+          onCameraClick={() => cameraInputRef.current?.click()}
+          onPhotosClick={() => photosInputRef.current?.click()}
+          onFilesClick={() => fileInputRef.current?.click()}
           selectedFiles={selectedFiles}
           onRemoveFile={removeSelectedFile}
+          selectedAgentIds={selectedModelIds}
+          onSelectedAgentsChange={(ids) => {
+            setSelectedModelIds(ids);
+            setIsAutoTeam(false);
+            showToast(`Council Agent Team Active: ${ids.length} agents selected`);
+          }}
           theme={theme}
           disabled={isThinking}
         />
+
 
         <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple className="hidden" />
         <input type="file" accept="image/*,video/*" ref={photosInputRef} onChange={handleFileChange} multiple className="hidden" />
