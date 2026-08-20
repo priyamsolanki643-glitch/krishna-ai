@@ -1,9 +1,11 @@
 import { callGroq } from "../lib/groq.js";
 import { extractJSON } from "../lib/json.js";
 import { SupervisorOutputSchema, SupervisorOutput } from "../schemas/agent.js";
+import { withSpan } from "../lib/telemetry.js";
 
 export async function runSupervisor(query: string): Promise<SupervisorOutput> {
-  const systemPrompt = `You are the Supervisor of The Council.
+  return withSpan("runSupervisor", { role: "supervisor" }, async () => {
+    const systemPrompt = `You are the Supervisor of The Council.
 Your role is to analyze the user's query and classify:
 1. Domain: MUST be exactly one of: ["coding", "math", "research", "general"]
 2. Emotion: MUST be exactly one of: ["neutral", "frustrated", "excited", "confused"]
@@ -24,7 +26,8 @@ Return raw JSON only.`;
     return SupervisorOutputSchema.parse(parsed);
   } catch (error: any) {
     throw new Error(
-      `Supervisor failed to return valid SupervisorOutputSchema: ${error.message}. Raw output: ${rawResponse}`
+      `Supervisor Agent failed to return valid SupervisorOutputSchema: ${error.message}. Raw output: ${rawResponse}`
     );
   }
+  });
 }

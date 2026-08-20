@@ -1,15 +1,17 @@
 import { callGroq } from "../lib/groq.js";
 import { extractJSON } from "../lib/json.js";
 import { CritiqueOutputSchema, CritiqueOutput } from "../schemas/agent.js";
+import { withSpan } from "../lib/telemetry.js";
 
 export async function runReviewer(
   query: string,
   draft: string,
   toneInstruction?: string
 ): Promise<CritiqueOutput> {
-  const tone = toneInstruction ? `Review style: ${toneInstruction}` : "";
+  return withSpan("runReviewer", { role: "reviewer" }, async () => {
+    const tone = toneInstruction ? `Review style: ${toneInstruction}` : "";
 
-  const systemPrompt = `You are the Reviewer Agent in a multi-agent council.
+    const systemPrompt = `You are the Reviewer Agent in a multi-agent council.
 Your job is to critically analyze the draft against the original user query for factual correctness, hallucinations, logic bugs, or omissions.
 ${tone}
 
@@ -35,4 +37,5 @@ Return raw JSON only.`;
       `Reviewer Agent failed to return valid CritiqueOutputSchema: ${error.message}. Raw output: ${rawResponse}`
     );
   }
+  });
 }
