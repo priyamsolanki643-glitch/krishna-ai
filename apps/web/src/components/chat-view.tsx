@@ -17,7 +17,7 @@ import { FileTreeSlidePanel, DEFAULT_PROJECT_FILES, ProjectFile } from "./FileTr
 import { ShowYourWorkView, ShowYourWorkMode, AgentStageData } from "./ShowYourWorkView";
 import BottomMenu from "./ui/bottom-menu";
 import { AIChatInput } from "./ui/ai-chat-input";
-import { SpaceStarBackground } from "./ui/space-star-background";
+import { DeepSpaceBackground } from "./ui/deep-space-background";
 
 
 interface Message {
@@ -509,8 +509,9 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 className="flex-1 flex flex-col items-center justify-center -mt-12 select-none text-center px-4 relative overflow-hidden"
               >
-                {/* Dynamic Space Star Background drifting in space */}
-                <SpaceStarBackground starCount={200} speed={0.25} className="z-0" />
+                {/* High-Performance Cosmic Warp / Deep Space Canvas with Parallax */}
+                <DeepSpaceBackground particleCount={800} speed={0.4} starColor="#ffffff" />
+
 
                 <div className="reveal-chat-item relative z-10 flex flex-col items-center justify-center w-full isolate text-center space-y-3 max-w-3xl px-4">
                   <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-['Instrument_Serif',serif] font-normal tracking-tight leading-none mb-2 ${
