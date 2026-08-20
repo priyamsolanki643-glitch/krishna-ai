@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+
 import { useRouter } from "next/navigation";
-import { Plus, Search, Archive, LogOut, MoreVertical, Trash2, Atom, Target, Clock, Menu } from "lucide-react";
+import { Plus, Search, Archive, LogOut, MoreVertical, Trash2, Atom, Target, Clock, Menu, ArrowDownAZ } from "lucide-react";
 
 import { supabase } from "@/utils/supabase/client";
 import { SidebarHistorySkeleton } from "./ui/skeleton";
@@ -37,12 +38,32 @@ export function Sidebar({ onOpenVault, onSignOut, isOpen, setIsOpen, isAnonymous
   const [touchStart, setTouchStart] = useState(0);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<"recent" | "alpha">("recent");
   const [isSignOutOpen, setIsSignOutOpen] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [historyData, setHistoryData] = useState<HistoryGroup[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [activeChatMenu, setActiveChatMenu] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("Operator");
+
+  // Listen to sidebar-filter event from Top Navbar
+  useEffect(() => {
+    const handleSidebarFilter = (e: Event) => {
+      const customEvent = e as CustomEvent<{ sort?: "alpha" | "recent"; query?: string }>;
+      setIsOpen(true);
+      if (customEvent.detail?.query !== undefined) {
+        setSearchQuery(customEvent.detail.query);
+        setIsSearchActive(true);
+        fetchThreads(customEvent.detail.query);
+      }
+      if (customEvent.detail?.sort) {
+        setSortOrder(customEvent.detail.sort);
+      }
+    };
+    window.addEventListener('sidebar-filter', handleSidebarFilter);
+    return () => window.removeEventListener('sidebar-filter', handleSidebarFilter);
+  }, [setIsOpen]);
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -332,16 +353,25 @@ const { data: { session } } = await supabase.auth.getSession();
               {isLoadingHistory ? (
                 <SidebarHistorySkeleton />
               ) : (() => {
-                // Only show Today, Yesterday, Previous 7 Days — NOT "Older"
-                const RECENT_GROUPS = ["Today", "Yesterday", "Previous 7 Days"];
-                const filteredHistory = historyData
-                  .filter(g => RECENT_GROUPS.includes(g.group))
-                  .map(g => ({
-                    ...g,
-                    chats: g.chats.filter((c: ChatThread) => c?.title?.toLowerCase().includes(searchQuery.toLowerCase()))
-                  })).filter(g => g.chats.length > 0);
+                let finalHistory: HistoryGroup[] = [];
+                if (sortOrder === "alpha") {
+                  const allChats: ChatThread[] = [];
+                  historyData.forEach(g => {
+                    allChats.push(...g.chats.filter((c: ChatThread) => (c?.title || "").toLowerCase().includes(searchQuery.toLowerCase())));
+                  });
+                  allChats.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+                  finalHistory = [{ group: "Alphabetical (A - Z)", chats: allChats }].filter(g => g.chats.length > 0);
+                } else {
+                  const RECENT_GROUPS = ["Today", "Yesterday", "Previous 7 Days"];
+                  finalHistory = historyData
+                    .filter(g => RECENT_GROUPS.includes(g.group))
+                    .map(g => ({
+                      ...g,
+                      chats: g.chats.filter((c: ChatThread) => (c?.title || "").toLowerCase().includes(searchQuery.toLowerCase()))
+                    })).filter(g => g.chats.length > 0);
+                }
 
-                if (filteredHistory.length === 0) {
+                if (finalHistory.length === 0) {
                   return (
                     <div className="px-3 py-4 text-center text-[#666666] text-[13px]">
                       No recent chats.
@@ -349,7 +379,8 @@ const { data: { session } } = await supabase.auth.getSession();
                   );
                 }
 
-                return filteredHistory.map((group, i) => (
+                return finalHistory.map((group, i) => (
+
                   <div key={i} className="space-y-1">
                     <div className="text-[10px] font-semibold text-[#666666] tracking-wider uppercase px-3 mb-1">
                       {group.group}

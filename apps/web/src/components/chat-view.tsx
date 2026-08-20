@@ -407,9 +407,11 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
             theme={theme}
             onThemeChange={onThemeChange}
             onNewChat={handleNewThread}
+            onOpenSidebar={onOpenSidebar}
             onOpenFiles={() => setIsFileTreeOpen(true)}
             onOpenTeam={() => setIsTeamSelectorOpen(true)}
           />
+
         </div>
       </div>
 
