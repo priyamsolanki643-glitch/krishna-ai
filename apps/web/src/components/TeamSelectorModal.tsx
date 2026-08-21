@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Check, X, Cpu, Sparkles, Shield, Zap, Brain, Layers, RotateCcw, LayoutGrid
@@ -15,44 +15,44 @@ export interface ModelOption {
 
 export const AVAILABLE_MODELS: ModelOption[] = [
   {
-    id: "claude-3-7-sonnet",
-    name: "Claude 3.7 Sonnet",
-    provider: "Anthropic",
-    role: "Lead Strategist & Architect",
-    color: "#d97706",
-    tag: "High Reasoning"
-  },
-  {
-    id: "gpt-4o",
-    name: "GPT-4o",
-    provider: "OpenAI",
-    role: "Synthesizer & Code Specialist",
-    color: "#10b981",
-    tag: "Versatile"
-  },
-  {
-    id: "deepseek-r1",
-    name: "DeepSeek R1",
-    provider: "DeepSeek",
-    role: "Adversarial Critic & Logic Auditor",
+    id: "reasoning",
+    name: "openai/gpt-oss-120b",
+    provider: "OpenAI on Groq",
+    role: "Lead Reasoning & Logic",
     color: "#6366f1",
-    tag: "Hard Logic"
+    tag: "120B Reasoning"
   },
   {
-    id: "llama-3-3-70b",
-    name: "Llama 3.3 70B",
-    provider: "Groq LPU",
-    role: "High-Speed Verifier",
+    id: "coding",
+    name: "qwen/qwen3.6-27b",
+    provider: "Qwen on Groq",
+    role: "Full-Stack & AST Synthesis",
+    color: "#10b981",
+    tag: "Coding Specialist"
+  },
+  {
+    id: "math",
+    name: "openai/gpt-oss-120b",
+    provider: "OpenAI on Groq",
+    role: "Mathematical Derivations",
     color: "#ec4899",
-    tag: "Ultra Fast"
+    tag: "Math Engine"
   },
   {
-    id: "gemini-2-0-pro",
-    name: "Gemini 2.0 Pro",
-    provider: "Google DeepMind",
-    role: "Multimodal & Research Lead",
+    id: "research",
+    name: "meta-llama/llama-3.3-70b-versatile",
+    provider: "Meta on Groq",
+    role: "Grounded Web Research",
     color: "#3b82f6",
-    tag: "Massive Context"
+    tag: "70B Live Retrieval"
+  },
+  {
+    id: "critic",
+    name: "meta-llama/llama-3.3-70b-versatile",
+    provider: "Meta on Groq",
+    role: "Adversarial Critic & Logic Auditor",
+    color: "#f59e0b",
+    tag: "Adversarial Clash"
   }
 ];
 

@@ -175,7 +175,7 @@ export function Sidebar({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         className={cn(
-          "fixed lg:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-screen transition-all duration-300 overflow-hidden font-sans border-0 border-none",
+          "fixed lg:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-screen transition-all duration-150 overflow-hidden font-sans border-0 border-none",
           isLight 
             ? "bg-white text-zinc-900" 
             : "bg-[#000000] text-white",

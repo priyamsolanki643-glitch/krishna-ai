@@ -21,7 +21,7 @@ interface Star {
 export function SpaceStarBackground({
   className = "",
   starCount = 180,
-  speed = 0.25,
+  speed = 0.5,
 }: SpaceStarBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -62,7 +62,7 @@ export function SpaceStarBackground({
 
       const cx = width / 2;
       const cy = height / 2;
-      time += 0.02;
+      time += 0.04;
 
       for (let i = 0; i < stars.length; i++) {
         const star = stars[i];

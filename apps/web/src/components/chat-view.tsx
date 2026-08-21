@@ -57,7 +57,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
   // Section 5: Team / Model Selector
   const [isTeamSelectorOpen, setIsTeamSelectorOpen] = useState(false);
   const [isAutoTeam, setIsAutoTeam] = useState(true);
-  const [selectedModelIds, setSelectedModelIds] = useState<string[]>(["claude-3-7-sonnet", "deepseek-r1"]);
+  const [selectedModelIds, setSelectedModelIds] = useState<string[]>(["reasoning-agent", "coding-agent"]);
 
   // Section 6: File Tree Slide Panel
   const [isFileTreeOpen, setIsFileTreeOpen] = useState(false);
@@ -81,7 +81,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % MORPH_WORDS.length);
-    }, 2400);
+    }, 1400);
     return () => clearInterval(interval);
   }, []);
 
@@ -318,7 +318,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
       setIsRecording(false);
     }
   };
-  const handleSend = async (customText?: string) => {
+  const handleSend = async (customText?: string, sendOptions?: { selectedAgents?: string[]; debateMode?: string; maxRounds?: number }) => {
     const textToSend = customText || input;
     if ((!textToSend.trim() && selectedFiles.length === 0) || isThinking) return;
 
@@ -340,68 +340,298 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
     setIsThinking(true);
     setIsRoutingPulse(true);
 
+    // Initial placeholder council message to stream stageData and content into
+    const councilMsgId = String(Date.now() + 1);
+    const initialCouncilMsg: Message = {
+      id: councilMsgId,
+      role: "council",
+      text: "",
+      createdAt: new Date().toISOString(),
+      hasDisagreement: false,
+      stageData: undefined
+    };
+
+    setMessages((prev) => [...prev, initialCouncilMsg]);
+
     try {
       let userGroqKey = "";
       let userOpenaiKey = "";
       let userAnthropicKey = "";
-      let debateMode = "deep";
-      let maxRounds = 2;
+      let debateMode = sendOptions?.debateMode || (isSkipDebateMode ? "fast" : "deep");
+      let maxRounds = sendOptions?.maxRounds || (isSkipDebateMode ? 1 : 2);
 
       if (typeof window !== "undefined") {
         userGroqKey = localStorage.getItem("council_key_groq") || "";
         userOpenaiKey = localStorage.getItem("council_key_openai") || "";
         userAnthropicKey = localStorage.getItem("council_key_anthropic") || "";
-        debateMode = localStorage.getItem("council_debate_mode") || "deep";
-        const storedRounds = localStorage.getItem("council_max_rounds");
-        if (storedRounds) maxRounds = Number(storedRounds);
+        if (!sendOptions?.debateMode) {
+          const storedMode = localStorage.getItem("council_debate_mode");
+          if (storedMode === "fast" || storedMode === "deep") debateMode = storedMode;
+        }
+        if (!sendOptions?.maxRounds) {
+          const storedRounds = localStorage.getItem("council_max_rounds");
+          if (storedRounds) maxRounds = Number(storedRounds);
+        }
       }
 
-      const res = await fetch("/api/chat", {
+      const activeAgents = sendOptions?.selectedAgents || (isAutoTeam ? [] : selectedModelIds);
+
+      // Handle Argue Flow directly via backend argue endpoint
+      if (currentArguing) {
+        const baseUrl = process.env.NEXT_PUBLIC_COUNCIL_API_URL || "https://the-council-api-1083682147747.us-central1.run.app";
+        const argueRes = await fetch(`${baseUrl}/api/chat/argue`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(userGroqKey ? { "x-user-groq-key": userGroqKey } : {})
+          },
+          body: JSON.stringify({
+            originalQueryId: (currentArguing as any).queryId || "session-query",
+            targetAgent: currentArguing.agent?.toLowerCase().includes("critic") ? "critic" : "lead",
+            userArgument: userMessageText
+          })
+        });
+
+        setIsRoutingPulse(false);
+
+        if (!argueRes.ok) {
+          const errData = await argueRes.json().catch(() => ({}));
+          throw new Error(errData.error || `Argue pipeline failed (${argueRes.status})`);
+        }
+
+        const argueData = await argueRes.json();
+        const ruling = argueData.ruling || {};
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === councilMsgId
+              ? {
+                  ...msg,
+                  text: ruling.updatedAnswer || `${ruling.verdict === "argument_accepted" ? "✅ **Argument Accepted**" : "❌ **Original Stance Maintained**"}\n\n${ruling.explanation}`,
+                  hasDisagreement: ruling.verdict === "argument_accepted",
+                  stageData: {
+                    supervisor: {
+                      domain: "Supervisor Arbitration",
+                      confidence: 0.99,
+                      assignedLead: "Supervisor Arbiter",
+                      assignedCritic: "Adversarial Reviewer",
+                      intent: "Evaluate user counter-argument"
+                    },
+                    leadDraft: {
+                      agent: "Supervisor Adjudicator",
+                      content: ruling.explanation
+                    },
+                    critique: {
+                      agent: "Council Arbiter",
+                      identifiedFlaws: ruling.verdict === "argument_accepted" ? ["Previous consensus adjusted based on user feedback."] : [],
+                      critiqueContent: ruling.explanation,
+                      rating: ruling.verdict
+                    },
+                    convergence: {
+                      rounds: 1,
+                      consensusScore: 0.99
+                    }
+                  }
+                }
+              : msg
+          )
+        );
+        return;
+      }
+
+      // Main Live SSE Deliberation Stream
+      const baseUrl = process.env.NEXT_PUBLIC_COUNCIL_API_URL || "https://the-council-api-1083682147747.us-central1.run.app";
+      const res = await fetch(`${baseUrl}/api/chat/stream`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-groq-key": userGroqKey,
-          "x-user-openai-key": userOpenaiKey,
-          "x-user-anthropic-key": userAnthropicKey,
+          ...(userGroqKey ? { "x-user-groq-key": userGroqKey } : {})
         },
         body: JSON.stringify({
           query: userMessageText,
-          selectedAgents: selectedModelIds,
-          debateMode: isSkipDebateMode ? "fast" : debateMode,
-          maxRounds: isSkipDebateMode ? 1 : maxRounds,
-          arguingWith: currentArguing
+          manualAgents: activeAgents.map((a: string) => a.replace("-agent", "")),
+          debateMode,
+          maxRounds
         })
       });
 
-      const data = await res.json();
-      setIsRoutingPulse(false);
-
-      if (data.stageData?.supervisor?.domain) {
-        setRoutingDomain(data.stageData.supervisor.domain);
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(errJson?.error || `Council pipeline error (${res.status})`);
       }
 
-      const councilMsg: Message = {
-        id: String(Date.now() + 1),
-        role: "council",
-        text: data.text || "No response generated.",
-        createdAt: new Date().toISOString(),
-        hasDisagreement: Boolean(data.hasDisagreement),
-        stageData: data.stageData
-      };
+      if (!res.body) {
+        throw new Error("No response body received from stream.");
+      }
 
-      setMessages((prev) => [...prev, councilMsg]);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      let currentSupervisor: any = undefined;
+      let currentLeadDraft: any = undefined;
+      let currentCritique: any = undefined;
+      let currentConvergence: any = undefined;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const blocks = buffer.split("\n\n");
+        buffer = blocks.pop() || "";
+
+        for (const block of blocks) {
+          if (!block.trim()) continue;
+          let eventName = "message";
+          let dataStr = "";
+
+          for (const line of block.split("\n")) {
+            if (line.startsWith("event: ")) {
+              eventName = line.replace("event: ", "").trim();
+            } else if (line.startsWith("data: ")) {
+              dataStr = line.replace("data: ", "").trim();
+            }
+          }
+
+          if (!dataStr) continue;
+
+          try {
+            const data = JSON.parse(dataStr);
+
+            if (eventName === "error") {
+              throw new Error(data.message || data.error || "Deliberation error occurred.");
+            }
+
+            if (eventName === "thinking") {
+              setIsRoutingPulse(false);
+              const stage = data.stage;
+
+              if (stage === "supervisor" || stage === "supervisor_complete" || stage === "manual_agent_selection") {
+                const domainName = data.domain || (data.manualAgents ? data.manualAgents.join(", ") : "general");
+                setRoutingDomain(domainName);
+                currentSupervisor = {
+                  domain: domainName,
+                  confidence: data.confidence || 0.98,
+                  assignedLead: data.assignedLead || "openai/gpt-oss-120b",
+                  assignedCritic: data.assignedCritic || "meta-llama/llama-3.3-70b-versatile",
+                  intent: data.tone_instruction || data.message || `Routing Mode: ${data.routingMode || "auto"}`
+                };
+              } else if (stage === "researching" || stage === "research_complete") {
+                currentLeadDraft = {
+                  agent: `Web Research (${(data.provider || "tavily").toUpperCase()})`,
+                  content: data.message || "Grounded live web research conducted."
+                };
+              } else if (stage === "lead_drafting" || stage === "fast_mode_direct_answer") {
+                currentLeadDraft = {
+                  agent: data.data?.model || (data.team_domain ? `Lead (${data.team_domain})` : "Lead Agent (openai/gpt-oss-120b)"),
+                  content: data.data?.content || data.message || "Synthesizing deep structured proposal..."
+                };
+              } else if (stage === "round_complete" || stage === "reviewer_critiquing" || stage === "critic_revising" || stage === "critic_reviewing") {
+                const criticObjection = data.data?.objection || data.data?.issue || data.objection;
+                const criticContent = criticObjection 
+                  ? `Critique: ${criticObjection}` 
+                  : (data.data?.suggested_fix ? `Audited: ${data.data.suggested_fix}` : (data.message || "Audited logical flaws and edge cases."));
+                currentCritique = {
+                  agent: data.data?.model || "Adversarial Critic (meta-llama/llama-3.3-70b-versatile)",
+                  identifiedFlaws: criticObjection ? [criticObjection] : [],
+                  critiqueContent: criticContent,
+                  rating: data.data?.verdict || "Approved"
+                };
+              }
+
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === councilMsgId
+                    ? {
+                        ...msg,
+                        stageData: {
+                          supervisor: currentSupervisor,
+                          leadDraft: currentLeadDraft,
+                          critique: currentCritique,
+                          convergence: currentConvergence
+                        }
+                      }
+                    : msg
+                )
+              );
+            } else if (eventName === "message") {
+              setIsRoutingPulse(false);
+              setIsThinking(false);
+
+              currentConvergence = {
+                rounds: data.rounds || 1,
+                consensusScore: 0.98
+              };
+
+              // Sanitize final text: Strip any raw <think> tags or JSON artefacts
+              let cleanText = data.content || "";
+              cleanText = cleanText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === councilMsgId
+                    ? {
+                        ...msg,
+                        text: cleanText,
+                        hasDisagreement: Boolean(data.critic_flagged),
+                        stageData: {
+                          supervisor: currentSupervisor || {
+                            domain: data.domain || "Multi-Agent Deliberation",
+                            confidence: 0.98,
+                            assignedLead: "openai/gpt-oss-120b",
+                            assignedCritic: "meta-llama/llama-3.3-70b-versatile",
+                            intent: `Consensus verified (${data.routingMode || "auto"} mode)`
+                          },
+                          leadDraft: currentLeadDraft || {
+                            agent: "Lead Agent (openai/gpt-oss-120b)",
+                            content: `Proposal refined across ${data.rounds || 1} round(s).`
+                          },
+                          critique: currentCritique || {
+                            agent: "Adversarial Critic",
+                            identifiedFlaws: [],
+                            critiqueContent: data.critic_flagged ? "Identified and refined edge cases." : "Verified without critical objections.",
+                            rating: data.critic_flagged ? "Critique Applied" : "Approved"
+                          },
+                          convergence: currentConvergence,
+                          sources: data.sources || []
+                        }
+                      }
+                    : msg
+                )
+              );
+            }
+          } catch (parseErr: any) {
+            console.warn("SSE Event parse error:", parseErr);
+          }
+        }
+      }
     } catch (err: any) {
       console.error("Failed to generate council response:", err);
       setIsRoutingPulse(false);
-      const errorMsg: Message = {
-        id: String(Date.now() + 1),
-        role: "council",
-        text: `**Council Notice**: Failed to connect to consensus pipeline: ${err.message || "Network error"}. Please ensure your API Key is saved in Settings.`,
-        createdAt: new Date().toISOString()
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      setIsThinking(false);
+
+      const friendlyError = err.message?.includes("exceeds maximum")
+        ? `⚠️ **Input Validation Error**: Query exceeds maximum allowed length of 4,000 characters.`
+        : err.message?.includes("Invalid Groq API key")
+        ? `⚠️ **API Key Error**: Your custom Groq API key was rejected by the provider. Please update it in Settings.`
+        : err.message?.includes("Too Many Requests")
+        ? `⚠️ **Rate Limit Exceeded**: Too many requests. Please throttle your prompts.`
+        : `**Council Notice**: Connection interrupted: ${err.message || "Network error"}. Please check your connection or retry.`;
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === councilMsgId
+            ? {
+                ...msg,
+                text: friendlyError
+              }
+            : msg
+        )
+      );
     } finally {
       setIsThinking(false);
+      setIsRoutingPulse(false);
     }
   };
 
@@ -416,8 +646,8 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
   const isInitial = messages.length === 0 && !isLoadingThread;
 
   return (
-    <div className={`flex-1 flex flex-col h-full relative overflow-hidden font-sans transition-colors duration-300 ${
-      isLight ? "bg-[#ffffff] text-zinc-950" : "bg-[#000000] text-white"
+    <div className={`flex-1 flex flex-col h-full relative overflow-hidden font-sans transition-colors duration-150 ${
+      isLight ? "bg-[#ffffff] text-zinc-950" : "bg-transparent text-white"
     }`}>
 
       {/* ── Top Floating Minimal Menu Dock with Downward Expanding Submenus ── */}
@@ -506,12 +736,10 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                 initial={{ opacity: 1, scale: 1 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96, y: -20, filter: "blur(6px)" }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 className="flex-1 flex flex-col items-center justify-center -mt-12 select-none text-center px-4 relative overflow-hidden"
               >
-                {/* High-Performance Cosmic Warp / Deep Space Canvas with Parallax */}
-                <DeepSpaceBackground particleCount={800} speed={0.4} starColor="#ffffff" />
-
+                {/* StarBackground handles stars at page level now */}
 
                 <div className="reveal-chat-item relative z-10 flex flex-col items-center justify-center w-full isolate text-center space-y-3 max-w-3xl px-4">
                   <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-['Instrument_Serif',serif] font-normal tracking-tight leading-none mb-2 ${
@@ -531,7 +759,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                           initial={{ y: 20, opacity: 0, filter: "blur(5px)" }}
                           animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
                           exit={{ y: -20, opacity: 0, filter: "blur(5px)" }}
-                          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                          transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                           className={`absolute inset-0 flex items-center justify-center font-['Instrument_Serif',serif] font-normal text-4xl sm:text-5xl md:text-6xl lg:text-7xl italic ${
                             isLight ? "text-zinc-950" : "text-white"
                           }`}
@@ -568,7 +796,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                 key="active-messages"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.1, ease: [0.16, 1, 0.3, 1] }}
                 className="py-4 space-y-6"
               >
                 {messages.map((m) => {
@@ -774,7 +1002,10 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
           value={input}
           onChange={setInput}
           onSend={(text, options) => {
-            handleSend();
+            handleSend(text, {
+              selectedAgents: options?.selectedAgents || selectedModelIds,
+              debateMode: options?.debateMode,
+            });
           }}
           isRecording={isRecording}
           onToggleRecording={toggleRecording}

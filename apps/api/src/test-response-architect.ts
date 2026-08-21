@@ -12,14 +12,30 @@ async function testResponseArchitect() {
   const toneNeutral = "Provide a neutral, objective, and structured explanation.";
   const toneFrustrated = "Provide a direct, empathetic, and concise explanation to de-escalate frustration.";
 
-  const outNeutral = await runResponseArchitect(baseDraft, toneNeutral);
-  const outFrustrated = await runResponseArchitect(baseDraft, toneFrustrated);
+  const outNeutral = await runResponseArchitect({
+    finalDraft: baseDraft,
+    query: "Explain quicksort time complexity",
+    toneInstruction: toneNeutral,
+    rounds: 1,
+    criticFlagged: false,
+  });
 
-  console.log("\n--- [TONE VARIANT 1: NEUTRAL] ---");
-  console.log(outNeutral);
+  const outFrustrated = await runResponseArchitect({
+    finalDraft: baseDraft,
+    query: "Explain quicksort time complexity",
+    toneInstruction: toneFrustrated,
+    rounds: 2,
+    criticFlagged: true,
+    criticObjection: "Initial draft lacked worst-case recursion stack explanation.",
+  });
 
-  console.log("\n--- [TONE VARIANT 2: FRUSTRATED] ---");
-  console.log(outFrustrated);
+  console.log("\n--- [TONE VARIANT 1: NEUTRAL (Clean Consensus)] ---");
+  console.log(outNeutral.formattedContent);
+  console.log("Disagreement Info:", outNeutral.disagreement);
+
+  console.log("\n--- [TONE VARIANT 2: FRUSTRATED (Contested Debate)] ---");
+  console.log(outFrustrated.formattedContent);
+  console.log("Disagreement Info:", outFrustrated.disagreement);
 
   console.log("\n🎉 Step 3 Checkpoint Verified: Response Architect formats and adapts tones noticeably!");
 }

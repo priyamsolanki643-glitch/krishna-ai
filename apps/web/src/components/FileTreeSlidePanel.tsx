@@ -103,6 +103,31 @@ export function FileTreeSlidePanel({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  onClick={async () => {
+                    try {
+                      const baseUrl = process.env.NEXT_PUBLIC_COUNCIL_API_URL || "https://the-council-api-1083682147747.us-central1.run.app";
+                      const res = await fetch(`${baseUrl}/api/project/proj-default/export`);
+                      if (!res.ok) throw new Error(`Export failed (${res.status})`);
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `council-project-${Date.now()}.zip`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    } catch (err: any) {
+                      console.error("Failed to export zip:", err);
+                      alert(`Export failed: ${err.message || "Network error"}`);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-medium text-white transition-colors cursor-pointer border border-white/10"
+                  title="Download full project as .zip"
+                >
+                  <Download className="size-3.5" />
+                  <span>Export .zip</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setIsAddingFile(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-medium text-white transition-colors cursor-pointer border border-white/10"
                 >
@@ -112,7 +137,7 @@ export function FileTreeSlidePanel({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="size-8 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+                  className="size-8 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>

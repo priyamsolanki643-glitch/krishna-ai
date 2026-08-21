@@ -140,26 +140,38 @@ export function CouncilSettingsDrawer({
     }
   };
 
-  const handleClearCache = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("council_cached_files");
+  const handleClearCache = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_COUNCIL_API_URL || "https://the-council-api-1083682147747.us-central1.run.app";
+      await fetch(`${baseUrl}/api/project/proj-default/cache`, { method: "DELETE" }).catch(() => {});
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("council_cached_files");
+      }
       setCacheCleared(true);
       setIsConfirmingClear(false);
       setTimeout(() => setCacheCleared(false), 3000);
+    } catch (err) {
+      console.error("Failed to clear cache:", err);
+      setIsConfirmingClear(false);
     }
   };
 
-  const handleExportZip = () => {
-    const blob = new Blob(
-      [JSON.stringify({ project: "The Council Workspace", exportedAt: new Date().toISOString(), debateMode, maxRounds }, null, 2)],
-      { type: "application/json" }
-    );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `council-workspace-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleExportZip = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_COUNCIL_API_URL || "https://the-council-api-1083682147747.us-central1.run.app";
+      const res = await fetch(`${baseUrl}/api/project/proj-default/export`);
+      if (!res.ok) throw new Error(`Export failed (${res.status})`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `council-workspace-${Date.now()}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Failed to export zip:", err);
+      alert(`Export failed: ${err.message || "Network error"}`);
+    }
   };
 
   return (

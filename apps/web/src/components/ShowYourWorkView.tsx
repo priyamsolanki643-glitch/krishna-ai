@@ -33,6 +33,10 @@ export interface AgentStageData {
       reasonOverruled: string;
     };
   };
+  sources?: {
+    title: string;
+    url: string;
+  }[];
 }
 
 export type ShowYourWorkMode = "off" | "status" | "council";
@@ -249,6 +253,30 @@ export function ShowYourWorkView({
                     Score: {Math.round((data.convergence?.consensusScore || 0.96) * 100)}%
                   </span>
                 </div>
+
+                {/* 5. Cited Live Web Research Sources */}
+                {data.sources && data.sources.length > 0 && (
+                  <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 space-y-2">
+                    <span className="text-[11px] font-semibold text-blue-300 flex items-center gap-1.5">
+                      <Target className="size-3.5" />
+                      GROUNDED WEB CITATIONS ({data.sources.length})
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                      {data.sources.map((src, i) => (
+                        <a
+                          key={i}
+                          href={src.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-between p-2 rounded-lg bg-black/40 hover:bg-black/60 border border-white/5 text-[11px] text-zinc-300 hover:text-white transition-colors cursor-pointer group"
+                        >
+                          <span className="truncate pr-2">{src.title}</span>
+                          <ArrowRight className="size-3 text-zinc-500 group-hover:text-blue-400 shrink-0" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
               </motion.div>
             )}

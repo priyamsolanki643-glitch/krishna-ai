@@ -3,6 +3,7 @@
 import React, { useState, useRef } from "react";
 import { Sidebar } from "../../components/sidebar";
 import { ChatView } from "../../components/chat-view";
+import { SpaceStarBackground } from "../../components/ui/space-star-background";
 import { useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 import { motion } from "framer-motion";
@@ -74,9 +75,11 @@ export default function AppWorkspacePage() {
           if (isSidebarOpen) setIsSidebarOpen(false);
         }}
         className={`flex-1 flex flex-col h-full min-w-0 relative overflow-hidden transition-colors duration-300 ${
-          isLight ? "bg-[#ffffff]" : "bg-[#000000]"
+          isLight ? "bg-[#ffffff]" : "bg-transparent"
         }`}
       >
+        {!isLight && <SpaceStarBackground />}
+        
         <ChatView
           theme={theme}
           onThemeChange={setTheme}

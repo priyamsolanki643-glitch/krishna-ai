@@ -1,8 +1,11 @@
 import { isMockMode } from "./groq.js";
 
 function cleanJsonString(str: string): string {
+  // Strip <think> reasoning blocks
+  let text = str.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
   // Remove markdown codeblock wrapper if present
-  let text = str.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+  text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
   
   // Find outermost JSON object bounds if there is surrounding commentary
   const firstBrace = text.indexOf("{");

@@ -46,27 +46,29 @@ export const debateMachine = setup({
       reviewerModel?: string;
       maxRounds?: number;
       userGroqKey?: string;
+      helperContext?: string;
     },
   },
   actors: {
     invokeLead: fromPromise(
       async ({ input }: { input: { query: string; previousCritiqueSummary: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; helperContext?: string; modelOverride?: string; userGroqKey?: string } }) => {
-        if (input.onProgress) {
-          await input.onProgress({ stage: "lead_drafting", round: input.round });
-        }
         const draft = await runLead(input.query, input.previousCritiqueSummary, input.toneInstruction, input.helperContext, input.modelOverride, input.userGroqKey);
+        if (input.onProgress) {
+          await input.onProgress({ 
+            stage: "lead_drafting", 
+            round: input.round,
+            data: {
+              content: draft.content,
+              confidence: draft.confidence,
+              model: input.modelOverride || "openai/gpt-oss-120b"
+            }
+          });
+        }
         return draft;
       }
     ),
     invokeReviewer: fromPromise(
       async ({ input }: { input: { query: string; draftContent: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; draftConfidence: number; modelOverride?: string; userGroqKey?: string } }) => {
-        if (input.onProgress) {
-          await input.onProgress({
-            stage: "reviewer_critiquing",
-            round: input.round,
-            data: { leadDraftConfidence: input.draftConfidence },
-          });
-        }
         const critique = await runReviewer(input.query, input.draftContent, input.toneInstruction, input.modelOverride, input.userGroqKey);
         if (input.onProgress) {
           await input.onProgress({
@@ -74,6 +76,8 @@ export const debateMachine = setup({
             round: input.round,
             data: {
               verdict: critique.verdict,
+              issue: critique.issue,
+              suggested_fix: critique.suggested_fix,
               reviewerCertainty: critique.confidence,
               leadDraftConfidence: input.draftConfidence,
             },
@@ -97,27 +101,37 @@ export const debateMachine = setup({
     ),
     invokeCritic: fromPromise(
       async ({ input }: { input: { query: string; finalDraft: string; onProgress?: DebateProgressCallback; round: number; userGroqKey?: string } }) => {
+        const criticResult = await runCritic(input.query, input.finalDraft, input.userGroqKey);
         if (input.onProgress) {
           await input.onProgress({
             stage: "critic_reviewing",
             round: input.round,
+            data: {
+              verdict: criticResult.verdict,
+              objection: criticResult.objection,
+              confidence: criticResult.confidence,
+              model: "meta-llama/llama-3.3-70b-versatile"
+            }
           } as any);
         }
-        const criticResult = await runCritic(input.query, input.finalDraft, input.userGroqKey);
         return criticResult;
       }
     ),
     invokeCriticRevisionLead: fromPromise(
       async ({ input }: { input: { query: string; objection: string; toneInstruction?: string; onProgress?: DebateProgressCallback; round: number; modelOverride?: string; userGroqKey?: string } }) => {
+        const critiqueFeedback = `ADVERSARIAL CRITIC OBJECTION (Address this flaw directly):\n${input.objection}`;
+        const draft = await runLead(input.query, critiqueFeedback, input.toneInstruction, undefined, input.modelOverride, input.userGroqKey);
         if (input.onProgress) {
           await input.onProgress({
             stage: "critic_revising",
             round: input.round,
-            data: { objection: input.objection }
+            data: { 
+              objection: input.objection,
+              content: draft.content,
+              confidence: draft.confidence
+            }
           } as any);
         }
-        const critiqueFeedback = `ADVERSARIAL CRITIC OBJECTION (Address this flaw directly):\n${input.objection}`;
-        const draft = await runLead(input.query, critiqueFeedback, input.toneInstruction, undefined, input.modelOverride, input.userGroqKey);
         return draft;
       }
     )
@@ -160,7 +174,7 @@ export const debateMachine = setup({
     reviewerFailures: 0,
     spawnsCount: 0,
     currentHelpQuery: "",
-    helperContext: "",
+    helperContext: input.helperContext || "",
     criticFlagged: false,
     criticRetries: 0,
     criticObjection: "",

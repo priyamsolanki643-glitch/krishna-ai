@@ -1,32 +1,127 @@
 import { callGroq } from "../lib/groq.js";
+import { extractJSON } from "../lib/json.js";
 import { withSpan } from "../lib/telemetry.js";
 import { GROQ_MODELS } from "../config/models.js";
 
+export interface ResponseArchitectInput {
+  finalDraft: string;
+  query: string;
+  toneInstruction?: string;
+  hasLiveSources?: boolean;
+  criticFlagged?: boolean;
+  rounds?: number;
+  criticObjection?: string;
+  critiqueSummary?: string;
+  confidenceScore?: number;
+  userGroqKey?: string;
+}
+
+export interface ResponseArchitectOutput {
+  formattedContent: string;
+  disagreement: {
+    occurred: boolean;
+    summary: string | null;
+  };
+  hasLiveSource: boolean;
+}
+
 export async function runResponseArchitect(
-  finalDraft: string,
-  toneInstruction?: string,
-  userGroqKey?: string
-): Promise<string> {
+  input: ResponseArchitectInput
+): Promise<ResponseArchitectOutput> {
   return withSpan("runResponseArchitect", { role: "responseArchitect" }, async () => {
-    const tone = toneInstruction ? `Style & Tone Requirements: ${toneInstruction}` : "Deliver a clean, structured, and helpful response.";
+    const isContested = Boolean(input.criticFlagged || (input.rounds && input.rounds >= 2));
+    const confidence = input.confidenceScore !== undefined ? input.confidenceScore : (isContested ? 0.8 : 0.98);
+    const hasLiveSource = Boolean(input.hasLiveSources);
+
+    const disputeDetails = isContested
+      ? `INTERNAL COUNCIL DISPUTE CONTEXT (Contested Answer):
+- Critic Flagged / Objection: ${input.criticObjection || "Critic requested revision on edge cases/logic"}
+- Reviewer Critique: ${input.critiqueSummary || "Draft underwent iterative revision"}
+- Rounds: ${input.rounds || 2}
+- Confidence: ${confidence}`
+      : `INTERNAL COUNCIL CONTEXT: Clean unanimous approval in round 1. No disputes.`;
 
     const systemPrompt = `You are the Response Architect in The Council.
-Your role is to perform the final editorial polish and structural rewrite of the synthesized draft.
-Ensure perfect clarity, structure, bulleting, and formatting.
-Adapt the phrasing precisely to the user's emotional state and tone instructions.
-${tone}
+You govern how every final answer is written and formatted according to these strict rules:
 
-Do NOT output JSON. Return the final, polished response directly in Markdown.`;
+1. LEAD WITH THE ANSWER:
+The very first sentence MUST contain real substantive information.
+ABSOLUTELY NO "Great question!", no repeating or restating the prompt back, no throat-clearing before substance.
 
-    const userPrompt = `Tone Context: ${toneInstruction || "neutral"}\nDraft to Refine:\n${finalDraft}`;
+2. HONEST CONFIDENCE CALIBRATION:
+Never be uniformly upbeat. If the Council confidence is moderate/low or the debate was contested, use appropriate hedging language ("This is likely...", "The Council noted ambiguity regarding...", "Current evidence suggests..."). Do not state uncertain conclusions with flat certainty.
 
-    const formattedResponse = await callGroq(
+3. CLAIM-SPECIFIC CITATIONS:
+When research citations exist, weave attribution directly into the exact sentence making that claim. Do NOT just dump a disconnected link list at the bottom.
+
+4. MATCH DEPTH TO THE QUESTION:
+A straightforward factual question deserves a direct answer with concise support. Do not force artificial headers or unnecessary bullet lists if not needed. Only genuinely complex questions warrant deep multi-section structure.
+
+5. NEVER STATE INFERENCE AS FACT & SOURCE ATTRIBUTION:
+- When HAS LIVE SOURCES is true: Weave the source attribution (name/URL) directly into the sentence asserting the claim.
+- When HAS LIVE SOURCES is false: Explicitly state "Based on general knowledge, not a live source," or include that disclaimer when presenting the facts rather than claiming real-time verified certainty.
+
+6. SURFACE REAL INTERNAL DISAGREEMENT (THE CENTERPIECE RULE):
+- If genuine disagreement or pushback occurred (isContested = true), summarize it honestly in the "disagreement" field in 1-2 sentences: what was contested and why the final position was adopted.
+- If no disagreement occurred (isContested = false), set "disagreement.occurred" to false and "disagreement.summary" to null. Never fabricate drama when consensus was clean.
+
+YOU MUST RETURN A VALID JSON OBJECT WITH EXACTLY THIS SCHEMA:
+{
+  "content": "The complete, polished final answer in Markdown directly answering the user query",
+  "disagreement": {
+    "occurred": boolean,
+    "summary": "1-2 sentence honest summary of the internal debate/objection, or null if clean"
+  }
+}`;
+
+    const userPrompt = `USER QUERY: ${input.query}
+${disputeDetails}
+HAS LIVE SOURCES: ${hasLiveSource}
+TONE REQUIREMENT: ${input.toneInstruction || "neutral"}
+
+RAW SYNTHESIZED DRAFT TO REFINE:
+${input.finalDraft}`;
+
+    const rawResponse = await callGroq(
       systemPrompt,
       userPrompt,
       GROQ_MODELS.responseArchitect,
-      userGroqKey
+      input.userGroqKey
     );
 
-    return formattedResponse;
+    try {
+      const parsed = extractJSON(rawResponse);
+      let content = typeof parsed.content === "string" ? parsed.content : rawResponse;
+      content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+      const occurred = Boolean(parsed.disagreement?.occurred ?? isContested);
+      let summary = parsed.disagreement?.summary ?? null;
+
+      if (!occurred) {
+        summary = null;
+      } else if (occurred && !summary) {
+        summary = input.criticObjection || input.critiqueSummary || "Council debated edge case assumptions before reaching final consensus.";
+      }
+
+      return {
+        formattedContent: content,
+        disagreement: {
+          occurred,
+          summary,
+        },
+        hasLiveSource,
+      };
+    } catch (err) {
+      console.warn("Response Architect JSON parse error. Falling back to clean sanitized markdown:", err);
+      const cleanContent = rawResponse.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+      return {
+        formattedContent: cleanContent,
+        disagreement: {
+          occurred: isContested,
+          summary: isContested ? (input.criticObjection || "The Council debated edge cases before finalizing this position.") : null,
+        },
+        hasLiveSource,
+      };
+    }
   });
 }

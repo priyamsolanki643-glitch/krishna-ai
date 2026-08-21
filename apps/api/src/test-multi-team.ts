@@ -47,12 +47,17 @@ async function testMultiTeamExecution() {
   console.log(mergedDraft);
 
   // 4. Response Architect
-  const finalResponse = await runResponseArchitect(mergedDraft, supervisor.tone_instruction);
-  console.log("\n✨ Polished Final Response:");
-  console.log(finalResponse);
+  const archOutput = await runResponseArchitect({
+    finalDraft: mergedDraft,
+    query,
+    toneInstruction: "Be clear, concise, and structured.",
+    rounds: 2,
+    criticFlagged: false,
+  });
+  console.log(archOutput.formattedContent);
 
-  // 5. Safety Check
-  const safety = await runSafetyCheck(finalResponse);
+  console.log("\n[4] Running Safety Check on Final Formatted Response...");
+  const safety = await runSafetyCheck(archOutput.formattedContent);
   console.log("\n🛡️ Safety Guardrail Check:");
   console.log(JSON.stringify(safety, null, 2));
 

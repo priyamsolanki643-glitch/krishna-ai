@@ -85,7 +85,7 @@ export const COUNCIL_AGENTS: AgentModelOption[] = [
 interface AIChatInputProps {
   value?: string;
   onChange?: (val: string) => void;
-  onSend?: (text: string, options?: { selectedAgents?: string[]; deepSearch?: boolean }) => void;
+  onSend?: (text: string, options?: { selectedAgents?: string[]; deepSearch?: boolean; debateMode?: "fast" | "deep" }) => void;
   isRecording?: boolean;
   onToggleRecording?: () => void;
   onCameraClick?: () => void;
@@ -157,6 +157,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sendLongPressTimer = useRef<any>(null);
   const isLight = theme === "light";
 
   // Close menus & input on outside click
@@ -208,7 +209,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
       boxShadow: isLight
         ? "0 4px 20px 0 rgba(0,0,0,0.06)"
         : "0 0 22px 0 rgba(255,255,255,0.25), 0 8px 30px 0 rgba(0,0,0,0.9), inset 0 1px 0 0 rgba(255,255,255,0.3)",
-      transition: { type: "spring" as const, stiffness: 160, damping: 22 },
+      transition: { type: "spring" as const, stiffness: 350, damping: 28 },
     },
     expanded: {
       height: selectedFiles.length > 0 ? 164 : 132,
@@ -216,7 +217,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
       boxShadow: isLight
         ? "0 12px 40px 0 rgba(0,0,0,0.12)"
         : "0 0 28px 0 rgba(255,255,255,0.3), 0 16px 50px 0 rgba(0,0,0,0.95), inset 0 1px 0 0 rgba(255,255,255,0.35)",
-      transition: { type: "spring" as const, stiffness: 160, damping: 22 },
+      transition: { type: "spring" as const, stiffness: 350, damping: 28 },
     },
   };
 
@@ -225,7 +226,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
       <motion.div
         ref={wrapperRef}
         className={cn(
-          "w-full max-w-3xl border transition-all duration-300 relative",
+          "w-full max-w-3xl border transition-all duration-150 relative",
           isLight
             ? "bg-white border-zinc-300 text-zinc-950 shadow-md"
             : "bg-[#000000] border-white/60 text-white backdrop-blur-2xl"
@@ -288,7 +289,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                 )}
                 title="Attach media or documents"
               >
-                <Paperclip size={19} className={cn("transition-transform duration-200", isPinMenuOpen && "rotate-45")} />
+                <Paperclip size={19} className={cn("transition-transform duration-100", isPinMenuOpen && "rotate-45")} />
               </button>
 
               {/* Pin Upward Dropdown: Camera, Photos, Files */}
@@ -298,7 +299,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                     initial={{ opacity: 0, y: 10, scale: 0.94 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.94 }}
-                    transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.1, ease: [0.16, 1, 0.3, 1] }}
                     style={{ transformOrigin: "bottom left" }}
                     className={cn(
                       "absolute bottom-full left-0 mb-3 rounded-2xl p-1.5 flex flex-col min-w-[160px] z-50 shadow-2xl border backdrop-blur-2xl",
@@ -383,7 +384,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                     <motion.span
                       className="w-[3px] bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"
                       animate={{ height: ["11px", "5px", "11px"] }}
-                      transition={{ repeat: Infinity, duration: 0.65, ease: "easeInOut", delay: 0.15 }}
+                      transition={{ repeat: Infinity, duration: 0.65, ease: "easeInOut", delay: 0.02 }}
                     />
                   </div>
                   <span className="animate-pulse font-mono tracking-wider text-xs uppercase text-red-300">
@@ -434,7 +435,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
 
 
 
-            {/* Send Button: Clean Arrow Icon */}
+            {/* Send Button: Clean Arrow Icon with Long-press Fast Mode */}
             <button
               type="button"
               tabIndex={-1}
@@ -442,6 +443,39 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
                 handleSend();
+              }}
+              onMouseDown={() => {
+                sendLongPressTimer.current = setTimeout(() => {
+                  if ((inputValue.trim() || selectedFiles.length > 0) && !disabled) {
+                    if (onSend) {
+                      onSend(inputValue, { selectedAgents: activeAgents, deepSearch: deepSearchActive, debateMode: "fast" });
+                    }
+                    setInputValue("");
+                    setIsPinMenuOpen(false);
+                    setIsModelsMenuOpen(false);
+                  }
+                }, 600);
+              }}
+              onMouseUp={() => {
+                if (sendLongPressTimer.current) clearTimeout(sendLongPressTimer.current);
+              }}
+              onMouseLeave={() => {
+                if (sendLongPressTimer.current) clearTimeout(sendLongPressTimer.current);
+              }}
+              onTouchStart={() => {
+                sendLongPressTimer.current = setTimeout(() => {
+                  if ((inputValue.trim() || selectedFiles.length > 0) && !disabled) {
+                    if (onSend) {
+                      onSend(inputValue, { selectedAgents: activeAgents, deepSearch: deepSearchActive, debateMode: "fast" });
+                    }
+                    setInputValue("");
+                    setIsPinMenuOpen(false);
+                    setIsModelsMenuOpen(false);
+                  }
+                }, 600);
+              }}
+              onTouchEnd={() => {
+                if (sendLongPressTimer.current) clearTimeout(sendLongPressTimer.current);
               }}
               className={cn(
                 "flex items-center justify-center p-2.5 sm:p-3 rounded-full transition-all cursor-pointer shrink-0 active:scale-95",
@@ -453,7 +487,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                   ? "bg-zinc-950 hover:bg-zinc-800 text-white shadow-md hover:scale-105"
                   : "bg-white hover:bg-zinc-200 text-black font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105"
               )}
-              title="Send to Council"
+              title="Send to Council (Hold for Fast Mode)"
             >
               <ArrowUp size={18} className="stroke-[2.5]" />
             </button>
@@ -467,13 +501,13 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                 opacity: 0,
                 y: 10,
                 pointerEvents: "none" as const,
-                transition: { duration: 0.18 },
+                transition: { duration: 0.1 },
               },
               visible: {
                 opacity: 1,
                 y: 0,
                 pointerEvents: "auto" as const,
-                transition: { duration: 0.25, delay: 0.05 },
+                transition: { duration: 0.12, delay: 0.02 },
               },
             }}
             initial="hidden"
@@ -512,7 +546,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                   >
                     {activeAgents.length}
                   </span>
-                  <ChevronUp className={cn("size-3.5 transition-transform duration-200", isModelsMenuOpen && "rotate-180")} />
+                  <ChevronUp className={cn("size-3.5 transition-transform duration-100", isModelsMenuOpen && "rotate-180")} />
                 </button>
 
                 {/* Models Upward Dropdown: Compact v-switch-12 Card Structure */}
@@ -522,7 +556,7 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                       initial={{ opacity: 0, y: 8, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                      transition={{ duration: 0.16, ease: "easeOut" }}
+                      transition={{ duration: 0.08, ease: "easeOut" }}
                       style={{ transformOrigin: "bottom left" }}
                       className={cn(
                         "absolute bottom-full left-0 mb-2.5 w-full min-w-[270px] sm:min-w-[295px] max-w-[315px] overflow-hidden rounded-xl border shadow-2xl backdrop-blur-2xl z-50",

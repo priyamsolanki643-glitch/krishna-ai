@@ -11,6 +11,7 @@ export const queries = pgTable("queries", {
   stopReason: text("stop_reason"),
   criticFlagged: boolean("critic_flagged").default(false),
   routingMode: text("routing_mode").default("auto"),
+  researchProvider: text("research_provider"),
   isMock: boolean("is_mock").default(false),
 });
 

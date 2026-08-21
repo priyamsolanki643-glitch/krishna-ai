@@ -53,11 +53,17 @@ async function testRealMultiDomain() {
   console.log(`\n-------------------------------------------------------------`);
   console.log("✨ 4. Final Polish with Response Architect...");
   console.log(`-------------------------------------------------------------`);
-  const finalResponse = await runResponseArchitect(mergedDraft, supervisor.tone_instruction);
-  console.log(finalResponse);
+  const finalResponse = await runResponseArchitect({
+    finalDraft: mergedDraft,
+    query,
+    toneInstruction: supervisor.tone_instruction,
+    rounds: 2,
+    criticFlagged: false,
+  });
+  console.log(finalResponse.formattedContent);
 
   // 5. Safety Guardrail
-  const safety = await runSafetyCheck(finalResponse);
+  const safety = await runSafetyCheck(finalResponse.formattedContent);
   console.log(`\n🛡️ Safety Guardrail Check:`, JSON.stringify(safety));
 
   const { shutdownTelemetry } = await import("./lib/telemetry.js");

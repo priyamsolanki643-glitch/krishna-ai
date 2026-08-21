@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { isMockMode } from "./lib/groq.js";
 import { GROQ_MODELS } from "./config/models.js";
@@ -11,6 +12,7 @@ import { runResponseArchitect } from "./pipeline/responseArchitect.js";
 import { runSafetyCheck } from "./pipeline/safety.js";
 import { runArgumentRuling } from "./pipeline/argue.js";
 import { saveQuerySession, getQuerySession } from "./lib/queryStore.js";
+import { performResearch } from "./lib/research.js";
 import { initDb } from "./db/index.js";
 import { logQueryTelemetry, getPersistedQuery } from "./db/telemetryRepo.js";
 import { randomUUID } from "node:crypto";
@@ -43,6 +45,17 @@ verifyEnvironment();
 initDb().catch((err) => console.error("Database connection initialization failed:", err.message));
 
 const app = new Hono();
+
+app.use(
+  "*",
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "x-user-groq-key", "x-user-openai-key", "x-user-anthropic-key"],
+    exposeHeaders: ["Content-Length", "Content-Type"],
+    maxAge: 86400,
+  })
+);
 
 // -------------------------------------------------------------
 // Basic IP-based Token Bucket Rate Limiting Middleware
@@ -88,7 +101,17 @@ interface ProjectWorkspace {
 
 export const projectStore = new Map<string, ProjectWorkspace>();
 
-// Initialize default mock project for testing
+// Initialize default mock projects
+projectStore.set("proj-default", {
+  id: "proj-default",
+  name: "Council Workspace",
+  files: [
+    { filename: "workspace.ts", content: "// The Council Workspace Artifacts\nexport const version = '1.0.0';\n" },
+    { filename: "README.md", content: "# The Council Project\nMulti-agent cognitive consensus workspace.\n" }
+  ],
+  cache: new Map<string, any>([["transient_token", "temp_val_9942"], ["ast_index", { tree: "cached" }]])
+});
+
 projectStore.set("proj-123", {
   id: "proj-123",
   name: "Algorithms Research",
@@ -183,14 +206,23 @@ app.post("/api/chat/stream", async (c) => {
             }),
           });
 
-          const formattedOutput = await runResponseArchitect(leadDraft.content, toneInstruction, userGroqKey);
-          const safety = await runSafetyCheck(formattedOutput, userGroqKey);
+          const archResult = await runResponseArchitect({
+            finalDraft: leadDraft.content,
+            query,
+            toneInstruction,
+            hasLiveSources: false,
+            criticFlagged: false,
+            rounds: 1,
+            confidenceScore: leadDraft.confidence,
+            userGroqKey,
+          });
+          const safety = await runSafetyCheck(archResult.formattedContent, userGroqKey);
 
           await stream.writeSSE({
             event: "message",
             data: JSON.stringify({
               queryId,
-              content: formattedOutput,
+              content: archResult.formattedContent,
               rounds: 1,
               stopReason: "fast_mode_direct",
               leadConfidenceHistory: [leadDraft.confidence],
@@ -198,6 +230,8 @@ app.post("/api/chat/stream", async (c) => {
               domains: [{ domain: "general", score: 1.0 }],
               emotion: "neutral",
               routingMode,
+              disagreement: archResult.disagreement,
+              hasLiveSource: archResult.hasLiveSource,
               critic_flagged: false,
               safety: { is_safe: safety.is_safe, category: safety.category },
               is_mock: isMockExecution,
@@ -266,6 +300,46 @@ app.post("/api/chat/stream", async (c) => {
         let leadConfidenceHistory: number[] = [];
         let criticFlagged = false;
 
+        let researchContext = "";
+        let researchSources: { title: string; url: string }[] = [];
+        let detectedResearchProvider: "tavily" | "gemini" | undefined = undefined;
+
+        // STEP 5: Live Web Research Phase for Research Domain
+        const hasResearchDomain = qualifyingDomains.some((d) => d.domain === "research");
+        if (hasResearchDomain) {
+          await stream.writeSSE({
+            event: "thinking",
+            data: JSON.stringify({
+              stage: "researching",
+              message: "Initiating live grounded web research across authoritative sources...",
+              is_mock: isMockMode(),
+            }),
+          });
+
+          const researchRes = await performResearch(query);
+          detectedResearchProvider = researchRes.provider;
+
+          if (researchRes.success && researchRes.results.length > 0) {
+            researchSources = researchRes.results.map((r) => ({ title: r.title, url: r.url }));
+            researchContext = `\n--- GROUNDED LIVE WEB RESEARCH RESULTS (Provider: ${researchRes.provider.toUpperCase()}) ---\n` +
+              researchRes.results.map((r, i) => `[${i + 1}] ${r.title} (${r.url}):\n${r.content}`).join("\n\n");
+
+            await stream.writeSSE({
+              event: "thinking",
+              data: JSON.stringify({
+                stage: "research_complete",
+                message: `Grounded web research completed successfully via ${researchRes.provider.toUpperCase()}. Extracted ${researchRes.results.length} sources.`,
+                provider: researchRes.provider,
+                sources: researchSources,
+                is_mock: isMockMode(),
+              }),
+            });
+          }
+        }
+
+        let disputeObjection = "";
+        let disputeCritique = "";
+
         if (qualifyingDomains.length >= 2) {
           // Multi-Team Parallel Execution (Handles both 2+ auto-detected domains and 2+ manualAgents)
           await stream.writeSSE({
@@ -283,6 +357,7 @@ app.post("/api/chat/stream", async (c) => {
             qualifyingDomains.map(async (d) => {
               const domainTone = `${toneInstruction} (Focus explicitly on the ${d.domain} domain facet)`;
               const teamModel = d.model || (GROQ_MODELS as any)[d.domain] || GROQ_MODELS.lead;
+              const teamHelperContext = d.domain === "research" ? researchContext : undefined;
               const res = await runDebateLoop(
                 query, 
                 domainTone, 
@@ -296,6 +371,7 @@ app.post("/api/chat/stream", async (c) => {
                   leadModel: teamModel,
                   maxRounds: requestedMaxRounds,
                   userGroqKey,
+                  helperContext: teamHelperContext,
                 }
               );
               return { domain: d.domain, result: res };
@@ -309,6 +385,8 @@ app.post("/api/chat/stream", async (c) => {
           leadConfidenceHistory = teamResults[0].result.leadConfidenceHistory;
           criticFlagged = teamResults.some(t => t.result.critic_flagged);
           isMockExecution = isMockExecution || teamResults.some(t => t.result.is_mock);
+          disputeObjection = teamResults.map(t => t.result.criticObjection).filter(Boolean).join(" | ");
+          disputeCritique = teamResults.map(t => t.result.previousCritiqueSummary).filter(Boolean).join(" | ");
 
           if (stopReason === "agent_failure_circuit_breaker") {
             await stream.writeSSE({
@@ -361,6 +439,7 @@ app.post("/api/chat/stream", async (c) => {
               leadModel: singleLeadModel,
               maxRounds: requestedMaxRounds,
               userGroqKey,
+              helperContext: singleDomainObj?.domain === "research" ? researchContext : undefined,
             }
           );
 
@@ -381,6 +460,8 @@ app.post("/api/chat/stream", async (c) => {
           stopReason = debate.stopReason;
           leadConfidenceHistory = debate.leadConfidenceHistory;
           criticFlagged = debate.critic_flagged;
+          disputeObjection = debate.criticObjection || "";
+          disputeCritique = debate.previousCritiqueSummary || "";
           isMockExecution = isMockExecution || debate.is_mock;
         }
 
@@ -394,7 +475,20 @@ app.post("/api/chat/stream", async (c) => {
           }),
         });
 
-        const formattedOutput = await runResponseArchitect(finalRawDraft, toneInstruction, userGroqKey);
+        const archResult = await runResponseArchitect({
+          finalDraft: finalRawDraft,
+          query,
+          toneInstruction,
+          hasLiveSources: researchSources.length > 0,
+          criticFlagged,
+          rounds: totalRounds,
+          criticObjection: disputeObjection,
+          critiqueSummary: disputeCritique,
+          confidenceScore: leadConfidenceHistory[leadConfidenceHistory.length - 1],
+          userGroqKey,
+        });
+
+        const formattedOutput = archResult.formattedContent;
 
         // Safety Guardrail Pass
         await stream.writeSSE({
@@ -430,6 +524,7 @@ app.post("/api/chat/stream", async (c) => {
             stopReason,
             criticFlagged,
             routingMode,
+            researchProvider: detectedResearchProvider || null,
             isMock: isMockExecution,
           },
           [
@@ -456,6 +551,10 @@ app.post("/api/chat/stream", async (c) => {
             domains: qualifyingDomains,
             emotion: supervisorEmotion,
             routingMode,
+            disagreement: archResult.disagreement,
+            hasLiveSource: archResult.hasLiveSource,
+            researchProvider: detectedResearchProvider || null,
+            sources: researchSources,
             critic_flagged: criticFlagged,
             safety: { is_safe: safety.is_safe, category: safety.category },
             is_mock: isMockExecution,
@@ -578,12 +677,9 @@ app.get("/api/project/:projectId/export", async (c) => {
     archive.finalize();
   });
 
-  return new Response(zipBuffer, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${project.name.toLowerCase().replace(/\s+/g, "_")}_export.zip"`,
-    },
+  return c.body(new Uint8Array(zipBuffer), 200, {
+    "Content-Type": "application/zip",
+    "Content-Disposition": `attachment; filename="${project.name.toLowerCase().replace(/\s+/g, "_")}_export.zip"`,
   });
 });
 

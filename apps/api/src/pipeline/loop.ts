@@ -14,6 +14,8 @@ export interface DebateResult {
   stopReason: "approved" | "converged" | "max_rounds_hit" | "agent_failure_circuit_breaker" | null;
   leadConfidenceHistory: number[];
   critic_flagged: boolean;
+  criticObjection?: string;
+  previousCritiqueSummary?: string;
   is_mock: boolean;
 }
 
@@ -22,6 +24,7 @@ export interface DebateLoopOptions {
   reviewerModel?: string;
   maxRounds?: number;
   userGroqKey?: string;
+  helperContext?: string;
 }
 
 export async function runDebateLoop(
@@ -40,6 +43,7 @@ export async function runDebateLoop(
         reviewerModel: options?.reviewerModel,
         maxRounds: options?.maxRounds,
         userGroqKey: options?.userGroqKey,
+        helperContext: options?.helperContext,
       }
     });
     
@@ -61,6 +65,8 @@ export async function runDebateLoop(
       stopReason: finalState.context.stopReason as any,
       leadConfidenceHistory: finalState.context.leadConfidenceHistory,
       critic_flagged: finalState.context.criticFlagged,
+      criticObjection: finalState.context.criticObjection,
+      previousCritiqueSummary: finalState.context.previousCritiqueSummary,
       is_mock: finalState.context.isMockExecution,
     };
   });
