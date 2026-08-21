@@ -20,6 +20,7 @@ import { AIChatInput } from "./ui/ai-chat-input";
 import { InteractiveStarfield } from "./ui/interactive-starfield";
 import { SettingsDrawer, ApiKeyHalfSheet } from "./ui/settings-drawer";
 import { AuthModal } from "./AuthModal";
+import { ProcessPipelineBox, ProcessStepItem } from "./ui/process-pipeline-box";
 
 
 interface Message {
@@ -29,6 +30,7 @@ interface Message {
   createdAt: string;
   stageData?: AgentStageData;
   hasDisagreement?: boolean;
+  pipelineSteps?: ProcessStepItem[];
 }
 
 interface ChatViewProps {
@@ -384,7 +386,10 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
       text: "",
       createdAt: new Date().toISOString(),
       hasDisagreement: false,
-      stageData: undefined
+      stageData: undefined,
+      pipelineSteps: [
+        { id: "hearing", label: "Hearing you out", iconName: "hearing", status: "active" }
+      ]
     };
 
     setMessages((prev) => [...prev, initialCouncilMsg]);
@@ -503,6 +508,9 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
       let currentLeadDraft: any = undefined;
       let currentCritique: any = undefined;
       let currentConvergence: any = undefined;
+      let currentPipelineSteps: ProcessStepItem[] = [
+        { id: "hearing", label: "Hearing you out", iconName: "hearing", status: "active" }
+      ];
 
       while (true) {
         const { value, done } = await reader.read();
@@ -538,8 +546,14 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
               setIsRoutingPulse(false);
               const stage = data.stage;
 
-              if (stage === "supervisor" || stage === "supervisor_complete" || stage === "manual_agent_selection") {
-                const domainName = data.domain || (data.manualAgents ? data.manualAgents.join(", ") : "general");
+              if (stage === "supervisor") {
+                currentPipelineSteps = [
+                  { id: "hearing", label: "Hearing you out", iconName: "hearing", status: "completed" },
+                  { id: "supervisor", label: "Convening the right minds", iconName: "supervisor", status: "active" }
+                ];
+              } else if (stage === "supervisor_complete" || stage === "manual_agent_selection") {
+                const domainName = data.domain || (data.manualAgents ? data.manualAgents[0] : "general");
+                const domainLabel = `${domainName.charAt(0).toUpperCase() + domainName.slice(1)} Agent steps up`;
                 setRoutingDomain(domainName);
                 currentSupervisor = {
                   domain: domainName,
@@ -548,17 +562,35 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                   assignedCritic: data.assignedCritic || "meta-llama/llama-3.3-70b-versatile",
                   intent: data.tone_instruction || data.message || `Routing Mode: ${data.routingMode || "auto"}`
                 };
+                currentPipelineSteps = [
+                  { id: "hearing", label: "Hearing you out", iconName: "hearing", status: "completed" },
+                  { id: "supervisor", label: "Convening the right minds", iconName: "supervisor", status: "completed" },
+                  { id: "domain", label: domainLabel, iconName: "domain", domain: domainName, status: "active" }
+                ];
               } else if (stage === "researching" || stage === "research_complete") {
                 currentLeadDraft = {
                   agent: `Web Research (${(data.provider || "tavily").toUpperCase()})`,
                   content: data.message || "Grounded live web research conducted."
                 };
-              } else if (stage === "lead_drafting" || stage === "fast_mode_direct_answer") {
+              } else if (stage === "lead_drafting" || stage === "fast_mode_direct_answer" || stage === "round_start" || stage === "debate_start") {
                 currentLeadDraft = {
                   agent: data.data?.model || (data.team_domain ? `Lead (${data.team_domain})` : "Lead Agent (openai/gpt-oss-120b)"),
                   content: data.data?.content || data.message || "Synthesizing deep structured proposal..."
                 };
-              } else if (stage === "round_complete" || stage === "reviewer_critiquing" || stage === "critic_revising" || stage === "critic_reviewing") {
+                currentPipelineSteps = currentPipelineSteps.map((s) => ({ ...s, status: "completed" as const }));
+                if (!currentPipelineSteps.some((s) => s.id === "lead")) {
+                  currentPipelineSteps.push({ id: "lead", label: "Drafting the first take", iconName: "lead", status: "active" });
+                } else {
+                  currentPipelineSteps = currentPipelineSteps.map((s) => s.id === "lead" ? { ...s, status: "active" as const } : s);
+                }
+              } else if (stage === "reviewer_critiquing" || stage === "reviewer_reviewing") {
+                currentPipelineSteps = currentPipelineSteps.map((s) => ({ ...s, status: "completed" as const }));
+                if (!currentPipelineSteps.some((s) => s.id === "reviewer")) {
+                  currentPipelineSteps.push({ id: "reviewer", label: "A second opinion weighs in", iconName: "reviewer", status: "active" });
+                } else {
+                  currentPipelineSteps = currentPipelineSteps.map((s) => s.id === "reviewer" ? { ...s, status: "active" as const } : s);
+                }
+              } else if (stage === "round_complete" || stage === "critic_revising" || stage === "critic_reviewing") {
                 const criticObjection = data.data?.objection || data.data?.issue || data.objection;
                 const criticContent = criticObjection 
                   ? `Critique: ${criticObjection}` 
@@ -569,6 +601,19 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                   critiqueContent: criticContent,
                   rating: data.data?.verdict || "Approved"
                 };
+                currentPipelineSteps = currentPipelineSteps.map((s) => ({ ...s, status: "completed" as const }));
+                if (!currentPipelineSteps.some((s) => s.id === "critic")) {
+                  currentPipelineSteps.push({ id: "critic", label: "Stress-testing the answer", iconName: "critic", status: "active" });
+                } else {
+                  currentPipelineSteps = currentPipelineSteps.map((s) => s.id === "critic" ? { ...s, status: "active" as const } : s);
+                }
+              } else if (stage === "response_architect" || stage === "compiler_synthesis") {
+                currentPipelineSteps = currentPipelineSteps.map((s) => ({ ...s, status: "completed" as const }));
+                if (!currentPipelineSteps.some((s) => s.id === "architect")) {
+                  currentPipelineSteps.push({ id: "architect", label: "Polishing the response", iconName: "architect", status: "active" });
+                } else {
+                  currentPipelineSteps = currentPipelineSteps.map((s) => s.id === "architect" ? { ...s, status: "active" as const } : s);
+                }
               }
 
               setMessages((prev) =>
@@ -576,6 +621,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                   msg.id === councilMsgId
                     ? {
                         ...msg,
+                        pipelineSteps: [...currentPipelineSteps],
                         stageData: {
                           supervisor: currentSupervisor,
                           leadDraft: currentLeadDraft,
@@ -595,6 +641,8 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                 consensusScore: 0.98
               };
 
+              currentPipelineSteps = currentPipelineSteps.map((s) => ({ ...s, status: "completed" as const }));
+
               // Sanitize final text: Strip any raw <think> tags or JSON artefacts
               let cleanText = data.content || "";
               cleanText = cleanText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
@@ -606,6 +654,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                         ...msg,
                         text: cleanText,
                         hasDisagreement: Boolean(data.critic_flagged),
+                        pipelineSteps: [...currentPipelineSteps],
                         stageData: {
                           supervisor: currentSupervisor || {
                             domain: data.domain || "Multi-Agent Deliberation",
@@ -933,6 +982,15 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                               </div>
                             </div>
 
+                            {/* Real-time SSE Driven Collapsible Process-Step Box */}
+                            {m.pipelineSteps && m.pipelineSteps.length > 0 && (
+                              <ProcessPipelineBox
+                                steps={m.pipelineSteps}
+                                isStreaming={isThinking && idx === messages.length - 1}
+                                theme={theme}
+                              />
+                            )}
+
                             {/* Show Your Work View & Replay */}
                             <ShowYourWorkView
                               mode={showYourWorkMode}
@@ -945,9 +1003,11 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                               }}
                             />
 
-                            <div className="text-zinc-100 text-[14.5px] leading-relaxed bg-[#0a0a0c]/60 p-4 rounded-2xl border border-white/5">
-                              <MarkdownRenderer content={m.text} />
-                            </div>
+                            {(m.text || (!isThinking || idx !== messages.length - 1)) && (
+                              <div className="text-zinc-100 text-[14.5px] leading-relaxed bg-[#0a0a0c]/60 p-4 rounded-2xl border border-white/5">
+                                <MarkdownRenderer content={m.text} />
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
