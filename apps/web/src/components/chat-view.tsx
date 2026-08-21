@@ -17,7 +17,7 @@ import { FileTreeSlidePanel, DEFAULT_PROJECT_FILES, ProjectFile } from "./FileTr
 import { ShowYourWorkView, ShowYourWorkMode, AgentStageData } from "./ShowYourWorkView";
 import BottomMenu from "./ui/bottom-menu";
 import { AIChatInput } from "./ui/ai-chat-input";
-import { DeepSpaceBackground } from "./ui/deep-space-background";
+import { InteractiveStarfield } from "./ui/interactive-starfield";
 
 
 interface Message {
@@ -647,10 +647,14 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
 
   return (
     <div className={`flex-1 flex flex-col h-full relative overflow-hidden font-sans transition-colors duration-150 ${
-      isLight ? "bg-[#ffffff] text-zinc-950" : "bg-transparent text-white"
+      isLight ? "bg-[#ffffff] text-zinc-950" : "bg-[#000000] text-white"
     }`}>
 
+      {/* Dynamic Twitter/X Interactive Starfield with 600ms Fade-to-Pitch-Black when chat starts */}
+      <InteractiveStarfield active={isInitial} particleCount={650} speed={0.35} />
+
       {/* ── Top Floating Minimal Menu Dock with Downward Expanding Submenus ── */}
+
       <div className="fixed top-4 inset-x-0 z-40 flex justify-center pointer-events-none px-4">
         <div className="pointer-events-auto">
           <BottomMenu
