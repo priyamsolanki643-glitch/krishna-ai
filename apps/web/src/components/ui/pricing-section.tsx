@@ -10,7 +10,10 @@ export const PricingSection = () => {
   const router = useRouter();
 
   const handleSelectPlan = (planName: string) => {
-    localStorage.setItem("userPlan", planName);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("userPlan", planName);
+      localStorage.setItem("userAuth", "true");
+    }
     router.push("/app");
   };
 

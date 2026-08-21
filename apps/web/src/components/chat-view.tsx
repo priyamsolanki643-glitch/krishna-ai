@@ -18,7 +18,8 @@ import { FileTreeSlidePanel, DEFAULT_PROJECT_FILES, ProjectFile } from "./FileTr
 import { ShowYourWorkView, ShowYourWorkMode, AgentStageData } from "./ShowYourWorkView";
 import { AIChatInput } from "./ui/ai-chat-input";
 import { InteractiveStarfield } from "./ui/interactive-starfield";
-import { SettingsDrawer } from "./ui/settings-drawer";
+import { SettingsDrawer, ApiKeyHalfSheet } from "./ui/settings-drawer";
+import { AuthModal } from "./AuthModal";
 
 
 interface Message {
@@ -60,11 +61,19 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
   const [isAutoTeam, setIsAutoTeam] = useState(true);
   const [selectedModelIds, setSelectedModelIds] = useState<string[]>(["reasoning", "coding"]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isApiKeySheetOpen, setIsApiKeySheetOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMessage, setAuthModalMessage] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const handleOpenSettings = () => setIsSettingsOpen(true);
+    const handleOpenApiKeys = () => setIsApiKeySheetOpen(true);
     window.addEventListener("open-settings", handleOpenSettings);
-    return () => window.removeEventListener("open-settings", handleOpenSettings);
+    window.addEventListener("open-api-keys", handleOpenApiKeys);
+    return () => {
+      window.removeEventListener("open-settings", handleOpenSettings);
+      window.removeEventListener("open-api-keys", handleOpenApiKeys);
+    };
   }, []);
 
   // Section 6: File Tree Slide Panel
@@ -334,6 +343,20 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
   const handleSend = async (customText?: string, sendOptions?: { selectedAgents?: string[]; debateMode?: string; maxRounds?: number }) => {
     const textToSend = customText || input;
     if ((!textToSend.trim() && selectedFiles.length === 0) || isThinking) return;
+
+    // Check Guest 3-message Trial Limit
+    if (typeof window !== "undefined") {
+      const isAuth = localStorage.getItem("userAuth") === "true";
+      if (!isAuth) {
+        const guestCount = Number(sessionStorage.getItem("guest_chat_count") || "0");
+        if (guestCount >= 3) {
+          setAuthModalMessage("You have completed your 3 free guest deliberations. Sign up to unlock unlimited multi-agent consensus.");
+          setIsAuthModalOpen(true);
+          return;
+        }
+        sessionStorage.setItem("guest_chat_count", String(guestCount + 1));
+      }
+    }
 
     const userMessageText = textToSend.trim();
     const currentArguing = arguingWith;
@@ -681,6 +704,19 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         theme={theme}
+      />
+
+      <ApiKeyHalfSheet
+        isOpen={isApiKeySheetOpen}
+        onClose={() => setIsApiKeySheetOpen(false)}
+        theme={theme}
+      />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        defaultMode="signup"
+        customMessage={authModalMessage}
       />
 
       {/* Section 6: File Tree Top-Down Shade & Code Viewer */}

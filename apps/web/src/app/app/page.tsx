@@ -65,6 +65,7 @@ export default function AppWorkspacePage() {
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
         theme={theme}
+        onThemeChange={setTheme}
         onOpenVault={() => setIsVaultOpen(true)}
         onSignOut={() => router.push("/")}
       />

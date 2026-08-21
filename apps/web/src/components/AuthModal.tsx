@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowRight, ArrowLeft, Eye, EyeOff, Phone } from "lucide-react";
+import { X, ArrowRight, ArrowLeft, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const GithubIcon = () => (
@@ -24,44 +24,132 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultMode?: "signup" | "login";
+  customMessage?: string;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultMode = "signup" }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  defaultMode = "signup",
+  customMessage
+}) => {
   const router = useRouter();
   const [mode, setMode] = useState<"signup" | "login">(defaultMode);
-  const [authMethod, setAuthMethod] = useState<"select" | "email" | "otp">("select");
+  const [step, setStep] = useState<"select" | "email_form" | "otp_verify" | "name_onboarding">("select");
+  
+  // Form State
+  const [emailOrPhone, setEmailOrPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resendTimer, setResendTimer] = useState(45);
+  
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
       setMode(defaultMode);
-      setAuthMethod("select");
+      setStep("select");
+      setEmailOrPhone("");
+      setPassword("");
+      setFullName("");
+      setOtpDigits(["", "", "", "", "", ""]);
       setIsSubmitting(false);
+      setResendTimer(45);
     }
   }, [isOpen, defaultMode]);
 
+  // Resend OTP countdown
+  useEffect(() => {
+    let interval: any;
+    if (step === "otp_verify" && resendTimer > 0) {
+      interval = setInterval(() => setResendTimer((t) => t - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [step, resendTimer]);
+
   const toggleMode = () => {
     setMode(mode === "signup" ? "login" : "signup");
-    setAuthMethod("select");
+    setStep("select");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleOtpChange = (index: number, val: string) => {
+    if (!/^\d*$/.test(val)) return;
+    const next = [...otpDigits];
+    next[index] = val.slice(-1);
+    setOtpDigits(next);
+
+    // Auto-focus next input
+    if (val && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otpDigits[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const finalizeAuthentication = (userNameVal?: string) => {
+    setIsSubmitting(true);
+    setTimeout(() => {
+      const finalName = userNameVal || fullName || (emailOrPhone ? emailOrPhone.split("@")[0] : "Operator");
+      if (typeof window !== "undefined") {
+        localStorage.setItem("userAuth", "true");
+        localStorage.setItem("userName", finalName);
+        localStorage.setItem("userEmail", emailOrPhone || "user@omni-nexus.ai");
+      }
+      setIsSubmitting(false);
+      onClose();
+      
+      // If Signup -> Redirect to Pricing (/pricing)
+      // If Login -> Redirect to Chat Interface (/app)
+      if (mode === "signup") {
+        router.push("/pricing");
+      } else {
+        router.push("/app");
+      }
+    }, 850);
+  };
+
+  const handleSelectProvider = (providerName: string) => {
+    setIsSubmitting(true);
+    setTimeout(() => {
+      finalizeAuthentication(`Council Operator (${providerName})`);
+    }, 700);
+  };
+
+  const handleEmailPasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setTimeout(() => {
-      onClose();
-      router.push("/app");
-    }, 800);
+    if (!emailOrPhone.trim()) return;
+
+    if (mode === "signup") {
+      setStep("otp_verify");
+      setResendTimer(45);
+    } else {
+      finalizeAuthentication();
+    }
   };
 
-  const handleDirectAuth = () => {
-    setIsSubmitting(true);
-    setTimeout(() => {
-      onClose();
-      router.push("/app");
-    }, 800);
+  const handleOtpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const otpCode = otpDigits.join("");
+    if (otpCode.length < 6) return;
+
+    if (mode === "signup" && !fullName) {
+      setStep("name_onboarding");
+    } else {
+      finalizeAuthentication();
+    }
+  };
+
+  const handleNameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    finalizeAuthentication(fullName.trim());
   };
 
   return (
@@ -74,184 +162,298 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultMo
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md"
             onClick={onClose}
           />
           
-          {/* Modal Container - Bottom Sheet Style */}
-          <div className="fixed inset-0 z-[101] flex flex-col justify-end pointer-events-none sm:justify-center sm:items-center">
+          {/* Modal Container */}
+          <div className="fixed inset-0 z-[101] flex flex-col justify-end sm:justify-center sm:items-center pointer-events-none p-0 sm:p-4">
             <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="w-full sm:max-w-[400px] bg-zinc-950 border border-white/10 rounded-t-[32px] sm:rounded-[32px] p-6 pb-12 sm:pb-8 shadow-[0_-20px_60px_rgba(0,0,0,0.8)] pointer-events-auto relative overflow-hidden"
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 28, stiffness: 320 }}
+              className="w-full sm:max-w-[420px] bg-[#09090b] border border-white/15 rounded-t-[32px] sm:rounded-[28px] p-6 sm:p-7 shadow-[0_-20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(255,255,255,0.05)] pointer-events-auto relative overflow-hidden"
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
 
-              
               {/* Close Button */}
               <button 
+                type="button"
                 onClick={onClose}
-                className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors z-20"
+                className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors z-20 cursor-pointer"
+                title="Close"
               >
                 <X className="w-4 h-4" />
               </button>
 
-              <div className="w-full text-center mb-8 relative z-10 pt-2">
-                <h2 className="text-2xl font-['Instrument_Serif',serif] font-light text-white tracking-tight">
-                  {mode === "signup" ? "Create an account" : "Welcome back"}
+              {/* Header Title */}
+              <div className="w-full text-center mb-6 relative z-10 pt-1">
+                <h2 className="text-3xl font-['Instrument_Serif',serif] font-normal text-white tracking-tight">
+                  {step === "otp_verify" 
+                    ? "Verify code" 
+                    : step === "name_onboarding"
+                    ? "Welcome to Council"
+                    : mode === "signup" 
+                    ? "Create an account" 
+                    : "Welcome back"}
                 </h2>
-                <p className="text-[13px] text-zinc-400 mt-1.5">
-                  Autonomous multi-agent consensus.
+                <p className="text-xs text-zinc-400 mt-1.5 px-4 leading-relaxed">
+                  {customMessage || (
+                    step === "otp_verify"
+                      ? `Enter the 6-digit verification code sent to ${emailOrPhone}`
+                      : step === "name_onboarding"
+                      ? "Tell us how your fellow agents should address you"
+                      : "Autonomous multi-agent consensus intelligence."
+                  )}
                 </p>
               </div>
 
-              <div className="relative w-full min-h-[300px] flex flex-col">
+              <div className="relative w-full min-h-[280px] flex flex-col justify-between">
                 <AnimatePresence mode="wait">
                   
-                  {/* STAGE 1: Selection */}
-                  {authMethod === "select" && (
+                  {/* ── STAGE 1: Fast Social / Method Selector ── */}
+                  {step === "select" && (
                     <motion.div
                       key="select"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
                       className="w-full flex flex-col flex-1"
                     >
-                      <div className="space-y-3">
-                        <button onClick={handleDirectAuth} className="w-full py-3.5 px-4 rounded-2xl bg-white text-black font-semibold text-[13px] flex items-center justify-center gap-3 hover:bg-zinc-200 transition-all shadow-md">
+                      <div className="space-y-2.5">
+                        <button 
+                          type="button"
+                          onClick={() => handleSelectProvider("Google")} 
+                          className="w-full py-3 px-4 rounded-xl bg-white text-black font-semibold text-xs flex items-center justify-center gap-3 hover:bg-zinc-200 active:scale-[0.98] transition-all shadow-md cursor-pointer"
+                        >
                           <GoogleIcon />
-                          Continue with Google
+                          <span>Continue with Google</span>
                         </button>
-                        <button onClick={handleDirectAuth} className="w-full py-3.5 px-4 rounded-2xl bg-zinc-900 border border-white/10 hover:border-white/20 text-white font-medium text-[13px] flex items-center justify-center gap-3 transition-all">
+
+                        <button 
+                          type="button"
+                          onClick={() => handleSelectProvider("GitHub")} 
+                          className="w-full py-3 px-4 rounded-xl bg-white/[0.06] border border-white/10 hover:bg-white/[0.1] hover:border-white/20 active:scale-[0.98] text-white font-medium text-xs flex items-center justify-center gap-3 transition-all cursor-pointer"
+                        >
                           <GithubIcon />
-                          Continue with GitHub
+                          <span>Continue with GitHub</span>
                         </button>
                       </div>
 
-                      <div className="flex items-center gap-3 my-5">
-                        <div className="flex-1 h-px bg-white/5"></div>
-                        <span className="text-[11px] text-zinc-600 font-medium uppercase tracking-wider">OR</span>
-                        <div className="flex-1 h-px bg-white/5"></div>
+                      <div className="flex items-center gap-3 my-4">
+                        <div className="flex-1 h-px bg-white/10" />
+                        <span className="text-[10px] text-zinc-500 font-mono font-medium uppercase tracking-wider">OR</span>
+                        <div className="flex-1 h-px bg-white/10" />
                       </div>
 
-                      <div className="space-y-3">
+                      <div className="space-y-2.5">
                         <button 
-                          onClick={() => setAuthMethod("email")}
-                          className="w-full py-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium text-[13px] transition-all"
+                          type="button"
+                          onClick={() => setStep("email_form")}
+                          className="w-full py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:bg-white/[0.08] active:scale-[0.98] text-white font-medium text-xs flex items-center justify-center gap-2.5 transition-all cursor-pointer"
                         >
-                          Continue with Email
-                        </button>
-                        <button 
-                          onClick={() => setAuthMethod("otp")}
-                          className="w-full py-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium text-[13px] transition-all"
-                        >
-                          Continue with Phone
+                          <Mail className="size-3.5 text-zinc-400" />
+                          <span>Continue with Email</span>
                         </button>
                       </div>
                     </motion.div>
                   )}
 
-                  {/* STAGE 2: Email or OTP Details */}
-                  {(authMethod === "email" || authMethod === "otp") && (
+                  {/* ── STAGE 2: Email & Password Form ── */}
+                  {step === "email_form" && (
                     <motion.div
-                      key="details"
+                      key="email_form"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.2 }}
                       className="w-full flex flex-col flex-1"
                     >
                       <button 
-                        onClick={() => setAuthMethod("select")}
-                        className="flex items-center gap-2 text-[12px] text-zinc-400 hover:text-white mb-6 transition-colors w-fit"
+                        type="button"
+                        onClick={() => setStep("select")}
+                        className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white mb-3 transition-colors w-fit cursor-pointer"
                       >
                         <ArrowLeft className="w-3.5 h-3.5" />
-                        Back to options
+                        <span>Back</span>
                       </button>
 
-                      <form onSubmit={handleSubmit} className="space-y-4 flex-1 flex flex-col">
-                        {authMethod === "email" && (
-                          <>
-                            {mode === "signup" && (
-                              <input 
-                                type="text" 
-                                placeholder="Full Name" 
-                                required
-                                className="w-full bg-zinc-900 border border-white/10 focus:border-white/30 focus:bg-zinc-800 rounded-xl px-4 py-3 text-[13px] text-white placeholder-zinc-500 outline-none transition-all"
-                              />
-                            )}
-                            <input 
-                              type="email" 
-                              placeholder="Email address" 
-                              required
-                              className="w-full bg-zinc-900 border border-white/10 focus:border-white/30 focus:bg-zinc-800 rounded-xl px-4 py-3 text-[13px] text-white placeholder-zinc-500 outline-none transition-all"
-                            />
-                            <div className="relative">
-                              <input 
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Password" 
-                                required
-                                className="w-full bg-zinc-900 border border-white/10 focus:border-white/30 focus:bg-zinc-800 rounded-xl px-4 py-3 text-[13px] text-white placeholder-zinc-500 outline-none transition-all pr-12"
-                              />
-                              <button 
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors p-1"
-                              >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                              </button>
-                            </div>
-                          </>
-                        )}
+                      <form onSubmit={handleEmailPasswordSubmit} className="space-y-3 flex-1 flex flex-col">
+                        <div>
+                          <label className="text-[11px] font-medium text-zinc-400 block mb-1">Email address</label>
+                          <input 
+                            type="email" 
+                            value={emailOrPhone}
+                            onChange={(e) => setEmailOrPhone(e.target.value)}
+                            placeholder="you@domain.com" 
+                            required
+                            autoFocus
+                            className="w-full bg-black/60 border border-white/15 focus:border-white/40 focus:bg-black rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none transition-all"
+                          />
+                        </div>
 
-                        {authMethod === "otp" && (
-                          <>
+                        <div>
+                          <label className="text-[11px] font-medium text-zinc-400 block mb-1">Password</label>
+                          <div className="relative">
                             <input 
-                              type="text" 
-                              placeholder="Mobile number" 
+                              type={showPassword ? "text" : "password"}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              placeholder="••••••••••••" 
                               required
-                              className="w-full bg-zinc-900 border border-white/10 focus:border-white/30 focus:bg-zinc-800 rounded-xl px-4 py-3 text-[13px] text-white placeholder-zinc-500 outline-none transition-all"
+                              className="w-full bg-black/60 border border-white/15 focus:border-white/40 focus:bg-black rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none transition-all pr-10"
                             />
-                            <div className="flex justify-between gap-2 mt-4">
-                              {[1, 2, 3, 4, 5, 6].map((i) => (
-                                <input 
-                                  key={i} 
-                                  type="text" 
-                                  maxLength={1} 
-                                  placeholder="-"
-                                  className="w-full h-12 text-center bg-zinc-900 border border-white/10 focus:border-white/30 focus:bg-zinc-800 rounded-xl text-sm font-mono text-white placeholder-zinc-500 outline-none transition-all" 
-                                />
-                              ))}
-                            </div>
-                          </>
-                        )}
+                            <button 
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors p-1"
+                            >
+                              {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </div>
 
-                        <div className="mt-auto pt-6">
+                        <div className="pt-2 mt-auto">
                           <button 
                             type="submit"
-                            disabled={isSubmitting}
-                            className="w-full py-3.5 rounded-full bg-white text-black font-semibold text-[13px] hover:bg-zinc-200 transition-colors shadow-lg cursor-pointer flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+                            disabled={isSubmitting || !emailOrPhone.trim() || !password.trim()}
+                            className="w-full py-3 rounded-full bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            {isSubmitting ? "Verifying..." : "Continue"}
-                            {!isSubmitting && <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />}
+                            {isSubmitting ? "Authenticating..." : mode === "signup" ? "Continue to Verification" : "Sign In"}
+                            {!isSubmitting && <ArrowRight className="w-3.5 h-3.5" />}
                           </button>
                         </div>
                       </form>
                     </motion.div>
                   )}
+
+                  {/* ── STAGE 3: 6-Digit OTP Verification Screen ── */}
+                  {step === "otp_verify" && (
+                    <motion.div
+                      key="otp_verify"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.2 }}
+                      className="w-full flex flex-col flex-1"
+                    >
+                      <button 
+                        type="button"
+                        onClick={() => setStep("email_form")}
+                        className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white mb-2 transition-colors w-fit cursor-pointer"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Change Email</span>
+                      </button>
+
+                      <form onSubmit={handleOtpSubmit} className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between gap-1.5 my-3">
+                            {otpDigits.map((digit, idx) => (
+                              <input
+                                key={idx}
+                                ref={(el) => { otpInputRefs.current[idx] = el; }}
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={digit}
+                                onChange={(e) => handleOtpChange(idx, e.target.value)}
+                                onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                                autoFocus={idx === 0}
+                                className="w-10 sm:w-11 h-12 text-center text-lg font-mono font-bold bg-black/80 border border-white/20 focus:border-white focus:shadow-[0_0_12px_rgba(255,255,255,0.3)] rounded-xl text-white outline-none transition-all"
+                              />
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between text-[11px] text-zinc-400 px-1 mt-1.5">
+                            <span>Didn't receive code?</span>
+                            {resendTimer > 0 ? (
+                              <span className="font-mono text-zinc-500">Resend in {resendTimer}s</span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setResendTimer(45)}
+                                className="text-white underline hover:text-zinc-200 cursor-pointer"
+                              >
+                                Resend OTP
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="pt-3">
+                          <button 
+                            type="submit"
+                            disabled={isSubmitting || otpDigits.join("").length < 6}
+                            className="w-full py-3 rounded-full bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSubmitting ? "Verifying..." : "Verify & Continue"}
+                            {!isSubmitting && <ArrowRight className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </form>
+                    </motion.div>
+                  )}
+
+                  {/* ── STAGE 4: Name Onboarding (New Signups) ── */}
+                  {step === "name_onboarding" && (
+                    <motion.div
+                      key="name_onboarding"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.2 }}
+                      className="w-full flex flex-col flex-1"
+                    >
+                      <form onSubmit={handleNameSubmit} className="space-y-4 flex-1 flex flex-col justify-between">
+                        <div>
+                          <label className="text-[11px] font-medium text-zinc-400 block mb-1">Your Full Name</label>
+                          <input 
+                            type="text" 
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            placeholder="e.g. Ujjwal Sharma" 
+                            required
+                            autoFocus
+                            className="w-full bg-black/60 border border-white/15 focus:border-white/40 focus:bg-black rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none transition-all"
+                          />
+                          <p className="text-[10px] text-zinc-500 mt-2">
+                            This will appear in your deliberation reports and project session logs.
+                          </p>
+                        </div>
+
+                        <div className="pt-3">
+                          <button 
+                            type="submit"
+                            disabled={isSubmitting || !fullName.trim()}
+                            className="w-full py-3 rounded-full bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSubmitting ? "Creating profile..." : "Complete Setup"}
+                            {!isSubmitting && <ArrowRight className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </form>
+                    </motion.div>
+                  )}
+
                 </AnimatePresence>
               </div>
 
-              {/* Bottom Switch */}
-              <div className="mt-6 text-center text-[12.5px] text-zinc-500 pt-4 border-t border-white/5">
-                {mode === "signup" ? "Already have an account? " : "Don't have an account? "}
-                <button onClick={toggleMode} className="text-white font-medium hover:underline underline-offset-4">
-                  {mode === "signup" ? "Log In" : "Sign Up"}
-                </button>
-              </div>
+              {/* Bottom Mode Switch */}
+              {step === "select" && (
+                <div className="mt-5 text-center text-xs text-zinc-500 pt-3 border-t border-white/10">
+                  {mode === "signup" ? "Already have an account? " : "Don't have an account? "}
+                  <button 
+                    type="button"
+                    onClick={toggleMode} 
+                    className="text-white font-medium hover:underline underline-offset-4 cursor-pointer ml-1"
+                  >
+                    {mode === "signup" ? "Log In" : "Sign Up"}
+                  </button>
+                </div>
+              )}
 
             </motion.div>
           </div>

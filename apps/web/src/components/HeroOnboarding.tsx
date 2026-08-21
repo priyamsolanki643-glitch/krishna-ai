@@ -53,7 +53,7 @@ export const HeroOnboarding: React.FC = () => {
         style={reveal(phase >= 2)}
       >
         AI that actually{" "}
-        <span className="relative inline-block ml-1">
+        <span className="relative inline-flex flex-col items-center justify-center ml-1">
           <AnimatePresence mode="wait">
             <motion.span
               key={currentWord}
@@ -61,11 +61,20 @@ export const HeroOnboarding: React.FC = () => {
               animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
               exit={{ y: -14, opacity: 0, filter: "blur(4px)" }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="inline-block italic underline decoration-white/20 underline-offset-8"
+              className="inline-block italic"
             >
               {currentWord}.
             </motion.span>
           </AnimatePresence>
+
+          {/* Refined Static Shimmer Underline (Doesn't jump or fade on word change) */}
+          <div className="absolute -bottom-1 left-0 right-0 h-[1.5px] rounded-full overflow-hidden bg-white/20">
+            <motion.div
+              className="w-full h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-80"
+              animate={{ x: ["-100%", "100%"] }}
+              transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+            />
+          </div>
         </span>
       </h1>
 
@@ -76,26 +85,29 @@ export const HeroOnboarding: React.FC = () => {
         Built for thinkers, not just prompts.
       </p>
 
-      {/* Compact Interactive Pill CTA */}
+      {/* Apple-Grade Glassmorphism Action Buttons */}
       <div 
-        className="mt-6 w-full flex flex-col items-center gap-3"
+        className="mt-8 w-full flex flex-col sm:flex-row items-center justify-center gap-3.5"
         style={{ ...reveal(phase >= 3), transitionDelay: "0.1s" }}
       >
+        {/* Get Started - Apple Glassmorphism Primary Pill */}
         <Link 
           href="/app"
-          className="group flex items-center justify-between gap-3 px-4 py-2 rounded-full bg-zinc-950/80 hover:bg-zinc-900 border border-white/20 hover:border-white/40 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-all cursor-pointer w-full max-w-[180px]"
+          className="group relative flex items-center justify-between gap-3 px-5 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:scale-[0.98] border border-white/20 hover:border-white/40 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.3)] transition-all cursor-pointer w-full sm:w-auto min-w-[170px]"
         >
-          <span className="text-xs font-medium text-white tracking-wide ml-2">
+          <span className="text-[13px] font-medium text-white tracking-wide ml-1">
             Get Started
           </span>
-          <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
-            <ArrowRight className="w-3 h-3 text-black" />
+          <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center group-hover:translate-x-0.5 transition-transform shadow-sm">
+            <ArrowRight className="w-3.5 h-3.5 text-black" />
           </div>
         </Link>
         
+        {/* Sign Up - Apple Glassmorphism Secondary Pill */}
         <button 
+          type="button"
           onClick={() => setIsAuthOpen(true)}
-          className="w-full max-w-[180px] py-2.5 rounded-full bg-white text-black font-semibold text-[13px] hover:bg-zinc-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+          className="w-full sm:w-auto min-w-[170px] px-5 py-2.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] active:scale-[0.98] border border-white/15 hover:border-white/30 backdrop-blur-2xl text-white font-medium text-[13px] tracking-wide transition-all cursor-pointer shadow-[0_8px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] flex items-center justify-center"
         >
           Sign Up
         </button>

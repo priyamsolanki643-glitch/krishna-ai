@@ -40,13 +40,16 @@ interface SidebarProps {
   setIsOpen: (open: boolean) => void;
   isAnonymous?: boolean;
   theme?: "dark" | "light";
+  onThemeChange?: (theme: "dark" | "light") => void;
 }
 
 export function Sidebar({ 
   isOpen, 
   setIsOpen, 
   isAnonymous, 
-  theme = "dark" 
+  theme = "dark",
+  onThemeChange,
+  onSignOut
 }: SidebarProps) {
   const isLight = theme === "light";
   const router = useRouter();
@@ -251,72 +254,19 @@ export function Sidebar({
             <span>New chat</span>
           </button>
 
-          {/* ── Seamless Pitch Black Action Links (No Borders) ── */}
-          <div className="flex flex-col gap-1 mt-1 bg-[#000000]">
-            
-            {/* Action 1: Save to workspace */}
-            <button 
-              type="button"
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent("open-add-file"));
-                if (window.innerWidth < 1024) setIsOpen(false);
-              }}
-              className="w-full text-left py-2 px-3 bg-transparent border-0 outline-none text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group"
-            >
-              <FilePlus className="size-3.5 shrink-0" />
-              <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
-                Save to workspace
-              </span>
-            </button>
-
-            {/* Action 2: Search chats */}
+          {/* ── Seamless Pitch Black Action Links (Only New Chat & Search Chats) ── */}
+          <div className="flex flex-col gap-1 mt-1.5 bg-[#000000]">
+            {/* Action: Search chats */}
             <button 
               type="button"
               onClick={() => {
                 setIsSearchOpen(true);
               }}
-              className="w-full text-left py-2 px-3 bg-transparent border-0 outline-none text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group"
+              className="w-full text-left py-2 px-3 bg-transparent border-0 outline-none text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group rounded-lg hover:bg-white/[0.04]"
             >
               <Search className="size-3.5 shrink-0" />
               <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
                 Search chats
-              </span>
-            </button>
-
-            {/* Action 3: Workspace */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button 
-                  type="button"
-                  className="flex items-center gap-2.5 px-3.5 py-1.5 w-full text-left bg-transparent border-0 outline-none cursor-pointer transition-colors group"
-                >
-                  <FolderTree className="size-3.5 shrink-0" />
-                  <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
-                    Workspace
-                  </span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent 
-                side="right" 
-                align="start" 
-                sideOffset={15}
-                className="w-64 p-0 bg-transparent border-0 shadow-none overflow-visible"
-              >
-                <TreeViewDemo />
-              </PopoverContent>
-            </Popover>
-
-            {/* Action 4: Settings Drawer Trigger */}
-            <button 
-              type="button"
-              onClick={() => {
-                window.dispatchEvent(new Event("open-settings"));
-              }}
-              className="flex items-center gap-2.5 px-3.5 py-1.5 w-full text-left bg-transparent border-0 outline-none cursor-pointer transition-colors group"
-            >
-              <svg className="size-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-              <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
-                Settings
               </span>
             </button>
           </div>
@@ -412,40 +362,134 @@ export function Sidebar({
           )}
         </div>
 
-        {/* ── Non-Clickable Sleek Operator Profile Row (Zero Dropdown / Seamless Pitch Black) ── */}
+        {/* ── Interactive Operator Profile Row with Upward Popover Menu ── */}
         <div className={cn(
-          "p-3.5 shrink-0 select-none pointer-events-none border-0 border-none",
-          isLight ? "bg-zinc-50" : "bg-[#000000]"
+          "p-2.5 shrink-0 border-t border-white/5",
+          isLight ? "bg-zinc-50 border-zinc-200" : "bg-[#000000]"
         )}>
-          <div className="flex items-center gap-2.5 px-1">
-            <div className={cn(
-              "size-7 rounded-full flex items-center justify-center shrink-0",
-              isLight 
-                ? "bg-zinc-200 text-zinc-900" 
-                : "bg-white/10 text-white"
-            )}>
-              <span className="text-[11px] font-bold uppercase">
-                {isAnonymous ? "A" : userName.charAt(0)}
-              </span>
-            </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-all cursor-pointer group hover:bg-white/[0.06]",
+                  isLight ? "hover:bg-zinc-100" : "hover:bg-white/[0.06]"
+                )}
+              >
+                <div className={cn(
+                  "size-7 rounded-full flex items-center justify-center shrink-0 font-bold text-[11px] uppercase transition-transform group-hover:scale-105",
+                  isLight 
+                    ? "bg-zinc-200 text-zinc-900" 
+                    : "bg-white/10 text-white"
+                )}>
+                  {isAnonymous ? "G" : userName.charAt(0)}
+                </div>
 
-            {isOpen && (
-              <div className="flex flex-col min-w-0 text-left">
-                <span className={cn(
-                  "text-xs font-medium truncate leading-tight",
-                  isLight ? "text-zinc-900" : "text-zinc-200"
-                )}>
-                  {isAnonymous ? "Guest Session" : userName}
-                </span>
-                <span className={cn(
-                  "text-[10px] truncate leading-none mt-0.5",
-                  isLight ? "text-zinc-500" : "text-zinc-500"
-                )}>
-                  {userEmail || (isAnonymous ? "Read-only" : "The Council Active")}
-                </span>
+                {isOpen && (
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className={cn(
+                      "text-xs font-medium truncate leading-tight group-hover:text-white transition-colors",
+                      isLight ? "text-zinc-900 group-hover:text-black" : "text-zinc-200"
+                    )}>
+                      {isAnonymous ? "Guest Operator" : userName}
+                    </span>
+                    <span className={cn(
+                      "text-[10px] truncate leading-none mt-0.5",
+                      isLight ? "text-zinc-500" : "text-zinc-500"
+                    )}>
+                      {userEmail || (isAnonymous ? "3 free trials" : "The Council Quorum")}
+                    </span>
+                  </div>
+                )}
+              </button>
+            </PopoverTrigger>
+
+            <PopoverContent
+              side="top"
+              align="start"
+              sideOffset={10}
+              className={cn(
+                "w-64 p-2 rounded-2xl border shadow-2xl backdrop-blur-2xl z-50",
+                isLight 
+                  ? "bg-white border-zinc-200 text-zinc-950 shadow-xl" 
+                  : "bg-[#09090b] border-white/15 text-white shadow-[0_20px_60px_rgba(0,0,0,0.9)]"
+              )}
+            >
+              {/* Profile Card Header */}
+              <div className="p-2.5 pb-3 border-b border-white/10 flex items-center gap-2.5">
+                <div className="size-8 rounded-full bg-white/10 text-white flex items-center justify-center font-bold text-xs">
+                  {isAnonymous ? "G" : userName.charAt(0)}
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-xs font-semibold truncate text-white">{userName}</span>
+                  <span className="text-[10px] text-zinc-400 truncate">{userEmail || "guest@omni-nexus.ai"}</span>
+                </div>
               </div>
-            )}
-          </div>
+
+              {/* Menu Options List */}
+              <div className="py-1 space-y-0.5">
+                
+                {/* Theme Toggle */}
+                <div className="flex items-center justify-between px-3 py-2 text-xs rounded-xl hover:bg-white/5 transition-colors">
+                  <span className="text-zinc-300 font-medium">Appearance</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onThemeChange) {
+                        onThemeChange(isLight ? "dark" : "light");
+                      }
+                    }}
+                    className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-zinc-200 hover:text-white transition-colors cursor-pointer"
+                  >
+                    {isLight ? "Light Mode" : "Dark Mode"}
+                  </button>
+                </div>
+
+                {/* Add your API Key Option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.dispatchEvent(new Event("open-api-keys"));
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs text-left rounded-xl hover:bg-white/5 transition-colors text-zinc-300 hover:text-white cursor-pointer"
+                >
+                  <span>Add your API Key</span>
+                  <span className="text-[10px] font-mono text-zinc-500 uppercase">BYOK</span>
+                </button>
+
+                <div className="h-px bg-white/10 my-1" />
+
+                {/* Delete Account */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to delete your account? This action is irreversible.")) {
+                      localStorage.clear();
+                      router.push("/");
+                    }
+                  }}
+                  className="w-full flex items-center px-3 py-2 text-xs text-left rounded-xl hover:bg-red-500/10 transition-colors text-red-400 cursor-pointer"
+                >
+                  <span>Delete my account</span>
+                </button>
+
+                {/* Log Out */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onSignOut) onSignOut();
+                    else {
+                      localStorage.removeItem("userAuth");
+                      router.push("/");
+                    }
+                  }}
+                  className="w-full flex items-center px-3 py-2 text-xs text-left rounded-xl hover:bg-white/5 transition-colors text-zinc-400 hover:text-white cursor-pointer"
+                >
+                  <span>Log out</span>
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </aside>
 
