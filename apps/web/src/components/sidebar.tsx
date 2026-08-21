@@ -247,8 +247,8 @@ export function Sidebar({
             <span>New chat</span>
           </button>
 
-          {/* ── Seamless Pitch Black Italic Action Links (No Borders / App Typography) ── */}
-          <div className="flex flex-col gap-1 pt-1 bg-[#000000]">
+          {/* ── Seamless Pitch Black Action Links (No Borders) ── */}
+          <div className="flex flex-col gap-1 mt-1 bg-[#000000]">
             
             {/* Action 1: Add new file */}
             <button 
@@ -257,9 +257,10 @@ export function Sidebar({
                 window.dispatchEvent(new CustomEvent("open-add-file"));
                 if (window.innerWidth < 1024) setIsOpen(false);
               }}
-              className="w-full text-left py-1.5 px-2 bg-transparent border-0 outline-none text-zinc-300 hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
+              className="w-full text-left py-2 px-3 bg-transparent border-0 outline-none text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group"
             >
-              <span className="font-['Instrument_Serif',serif] italic text-[17px] tracking-wide text-zinc-300 group-hover:text-white transition-colors">
+              <FilePlus className="size-3.5 shrink-0" />
+              <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
                 Add new file
               </span>
             </button>
@@ -270,9 +271,10 @@ export function Sidebar({
               onClick={() => {
                 setIsSearchOpen(true);
               }}
-              className="w-full text-left py-1.5 px-2 bg-transparent border-0 outline-none text-zinc-300 hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
+              className="w-full text-left py-2 px-3 bg-transparent border-0 outline-none text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group"
             >
-              <span className="font-['Instrument_Serif',serif] italic text-[17px] tracking-wide text-zinc-300 group-hover:text-white transition-colors">
+              <Search className="size-3.5 shrink-0" />
+              <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
                 Search chats
               </span>
             </button>
@@ -284,9 +286,10 @@ export function Sidebar({
                 window.dispatchEvent(new CustomEvent("open-file-tree"));
                 if (window.innerWidth < 1024) setIsOpen(false);
               }}
-              className="w-full text-left py-1.5 px-2 bg-transparent border-0 outline-none text-zinc-300 hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
+              className="w-full text-left py-2 px-3 bg-transparent border-0 outline-none text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group"
             >
-              <span className="font-['Instrument_Serif',serif] italic text-[17px] tracking-wide text-zinc-300 group-hover:text-white transition-colors">
+              <FolderTree className="size-3.5 shrink-0" />
+              <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
                 File tree
               </span>
             </button>
