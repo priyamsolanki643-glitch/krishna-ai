@@ -20,6 +20,7 @@ import { supabase } from "@/utils/supabase/client";
 import { SidebarHistorySkeleton } from "./ui/skeleton";
 import { GyroLogo } from "./gyro-logo";
 import { TreeViewDemo } from "./ui/tree-node-tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 interface ChatThread {
   id: string;
@@ -60,8 +61,6 @@ export function Sidebar({
   // Search Chats State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const [isFileTreeExpanded, setIsFileTreeExpanded] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -285,32 +284,22 @@ export function Sidebar({
             </button>
 
             {/* Action 3: File tree */}
-            <button 
-              type="button"
-              onClick={() => {
-                setIsFileTreeExpanded(!isFileTreeExpanded);
-              }}
-              className="w-full text-left py-2 px-3 bg-transparent border-0 outline-none text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group"
-            >
-              <FolderTree className="size-3.5 shrink-0" />
-              <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
-                File tree
-              </span>
-            </button>
-
-            <AnimatePresence>
-              {isFileTreeExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden px-1"
+            <Popover>
+              <PopoverTrigger asChild>
+                <button 
+                  type="button"
+                  className="w-full text-left py-2 px-3 bg-transparent border-0 outline-none text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group focus:outline-none"
                 >
-                  <TreeViewDemo />
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <FolderTree className="size-3.5 shrink-0" />
+                  <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
+                    File tree
+                  </span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="right" align="start" sideOffset={12} className="w-64 p-0 border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.9)]">
+                <TreeViewDemo />
+              </PopoverContent>
+            </Popover>
 
           </div>
         </div>
