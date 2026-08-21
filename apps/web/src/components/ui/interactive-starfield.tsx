@@ -5,29 +5,34 @@ import { cn } from "@/lib/utils";
 
 export interface InteractiveStarfieldProps {
   active?: boolean;
+  starCount?: number;
   particleCount?: number;
   speed?: number;
   className?: string;
 }
 
-interface Star {
+interface MicroStar {
   x: number;
   y: number;
-  z: number;
+  vx: number;
+  vy: number;
   size: number;
   baseAlpha: number;
   twinkleSpeed: number;
   twinklePhase: number;
-  color: string;
+  parallaxFactor: number;
 }
 
 export function InteractiveStarfield({
   active = true,
-  particleCount = 500,
-  speed = 0.5,
+  starCount = 450,
+  particleCount,
+  speed = 0.12,
   className,
 }: InteractiveStarfieldProps) {
+  const count = particleCount || starCount;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -39,52 +44,52 @@ export function InteractiveStarfield({
     let animationFrameId: number;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
-    let cx = width / 2;
-    let cy = height / 2;
 
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetMouseX = 0;
-    let targetMouseY = 0;
+    // Damped Mouse Parallax Tracking
+    let mouseOffsetX = 0;
+    let mouseOffsetY = 0;
+    let targetMouseOffsetX = 0;
+    let targetMouseOffsetY = 0;
 
-    const maxDepth = 1200;
-    const stars: Star[] = [];
+    const stars: MicroStar[] = [];
 
     const initStars = (w: number, h: number) => {
       stars.length = 0;
-      for (let i = 0; i < particleCount; i++) {
-        const isBright = Math.random() < 0.25;
-        const isMedium = Math.random() < 0.5;
+      for (let i = 0; i < count; i++) {
+
+        const size = Math.random() < 0.8 ? 1.0 : 1.5; // Strictly 1.0px to 1.5px micro-dots
         stars.push({
-          x: (Math.random() - 0.5) * w * 2.5,
-          y: (Math.random() - 0.5) * h * 2.5,
-          z: Math.random() * maxDepth + 1,
-          size: isBright ? Math.random() * 2.2 + 1.2 : isMedium ? Math.random() * 1.6 + 0.8 : Math.random() * 1.0 + 0.4,
-          baseAlpha: isBright ? Math.random() * 0.4 + 0.6 : Math.random() * 0.5 + 0.3,
-          twinkleSpeed: Math.random() * 0.04 + 0.015,
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.12, // Organic 2D micro-drift
+          vy: (Math.random() - 0.5) * 0.12,
+          size,
+          baseAlpha: Math.random() * 0.45 + 0.2, // Authentic soft glimmer
+          twinkleSpeed: Math.random() * 0.02 + 0.008,
           twinklePhase: Math.random() * Math.PI * 2,
-          color: isBright ? "#ffffff" : isMedium ? "#e4e4e7" : "#d4d4d8",
+          parallaxFactor: Math.random() * 0.5 + 0.2, // Subtle depth layer shift
         });
       }
     };
+
+    initStars(width, height);
 
     const handleResize = () => {
       if (!canvas) return;
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
-      cx = width / 2;
-      cy = height / 2;
       initStars(width, height);
     };
 
-    handleResize();
     window.addEventListener("resize", handleResize);
 
     const handleMouseMove = (e: MouseEvent) => {
-      const rawX = (e.clientX - cx) / cx;
-      const rawY = (e.clientY - cy) / cy;
-      targetMouseX = Math.max(-1, Math.min(1, rawX)) * 60;
-      targetMouseY = Math.max(-1, Math.min(1, rawY)) * 60;
+      const cx = width / 2;
+      const cy = height / 2;
+      const normX = (e.clientX - cx) / cx;
+      const normY = (e.clientY - cy) / cy;
+      targetMouseOffsetX = normX * 25; // Gentle 25px max parallax shift
+      targetMouseOffsetY = normY * 25;
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
@@ -92,51 +97,40 @@ export function InteractiveStarfield({
     let time = 0;
 
     const render = () => {
-      // Smooth lerp for mouse parallax
-      mouseX += (targetMouseX - mouseX) * 0.05;
-      mouseY += (targetMouseY - mouseY) * 0.05;
+      // Smooth Damped Parallax Lerp
+      mouseOffsetX += (targetMouseOffsetX - mouseOffsetX) * 0.04;
+      mouseOffsetY += (targetMouseOffsetY - mouseOffsetY) * 0.04;
 
-      // Draw rich pure pitch black canvas background
+      // Pure Obsidian Pitch Black Canvas
       ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, width, height);
 
-      time += 0.025;
+      time += 0.02;
 
       for (let i = 0; i < stars.length; i++) {
         const star = stars[i];
 
-        // Move star forward
-        star.z -= speed * 1.2;
+        // 2D gentle micro-drift
+        star.x += star.vx;
+        star.y += star.vy;
 
-        if (star.z <= 0) {
-          star.z = maxDepth;
-          star.x = (Math.random() - 0.5) * width * 2.5;
-          star.y = (Math.random() - 0.5) * height * 2.5;
-        }
+        // Smooth wrap-around edges
+        if (star.x < 0) star.x = width;
+        if (star.x > width) star.x = 0;
+        if (star.y < 0) star.y = height;
+        if (star.y > height) star.y = 0;
 
-        const k = 320 / star.z;
-        const px = (star.x + mouseX * (1 - star.z / maxDepth)) * k + cx;
-        const py = (star.y + mouseY * (1 - star.z / maxDepth)) * k + cy;
+        // Calculate parallax position
+        const px = star.x + mouseOffsetX * star.parallaxFactor;
+        const py = star.y + mouseOffsetY * star.parallaxFactor;
 
-        if (px >= 0 && px <= width && py >= 0 && py <= height) {
-          const depthRatio = Math.max(0.15, Math.min(1, (1 - star.z / maxDepth) * 1.3));
-          const twinkle = Math.sin(time * star.twinkleSpeed * 10 + star.twinklePhase) * 0.3 + 0.7;
-          const alpha = star.baseAlpha * depthRatio * twinkle;
-          const renderedSize = Math.max(0.6, star.size * k * 0.9);
+        // Grok-grade sine-wave alpha twinkle
+        const twinkle = Math.sin(time * star.twinkleSpeed * 10 + star.twinklePhase) * 0.35 + 0.65;
+        const alpha = Math.min(0.85, Math.max(0.12, star.baseAlpha * twinkle));
 
-          ctx.beginPath();
-          ctx.arc(px, py, renderedSize, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-
-          if (renderedSize > 1.4) {
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = "rgba(255, 255, 255, 0.9)";
-          } else {
-            ctx.shadowBlur = 0;
-          }
-
-          ctx.fill();
-        }
+        // Razor-sharp 1px - 1.5px micro-dot rendering (no fuzzy circles)
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.fillRect(Math.round(px), Math.round(py), star.size, star.size);
       }
 
       animationFrameId = requestAnimationFrame(render);
@@ -149,7 +143,8 @@ export function InteractiveStarfield({
       window.removeEventListener("mousemove", handleMouseMove);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [particleCount, speed]);
+  }, [count, speed]);
+
 
   return (
     <div
