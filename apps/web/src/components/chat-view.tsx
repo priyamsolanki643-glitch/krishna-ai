@@ -18,6 +18,7 @@ import { FileTreeSlidePanel, DEFAULT_PROJECT_FILES, ProjectFile } from "./FileTr
 import { ShowYourWorkView, ShowYourWorkMode, AgentStageData } from "./ShowYourWorkView";
 import { AIChatInput } from "./ui/ai-chat-input";
 import { InteractiveStarfield } from "./ui/interactive-starfield";
+import { SettingsDrawer } from "./ui/settings-drawer";
 
 
 interface Message {
@@ -57,7 +58,14 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
   // Section 5: Team / Model Selector
   const [isTeamSelectorOpen, setIsTeamSelectorOpen] = useState(false);
   const [isAutoTeam, setIsAutoTeam] = useState(true);
-  const [selectedModelIds, setSelectedModelIds] = useState<string[]>(["reasoning-agent", "coding-agent"]);
+  const [selectedModelIds, setSelectedModelIds] = useState<string[]>(["reasoning", "coding"]);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenSettings = () => setIsSettingsOpen(true);
+    window.addEventListener("open-settings", handleOpenSettings);
+    return () => window.removeEventListener("open-settings", handleOpenSettings);
+  }, []);
 
   // Section 6: File Tree Slide Panel
   const [isFileTreeOpen, setIsFileTreeOpen] = useState(false);
@@ -653,13 +661,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
       {/* Dynamic Twitter/X Interactive Starfield with 600ms Fade-to-Pitch-Black when chat starts */}
       <InteractiveStarfield active={isInitial} particleCount={650} speed={0.35} />
 
-      
-
-
-
       <TeamSelectorModal
-
-
         isOpen={isTeamSelectorOpen}
         onClose={() => setIsTeamSelectorOpen(false)}
         isAutoMode={isAutoTeam}
@@ -673,6 +675,12 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
           setSelectedModelIds(ids);
           showToast(`Manual Council active: ${ids.length} models selected`);
         }}
+      />
+
+      <SettingsDrawer
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        theme={theme}
       />
 
       {/* Section 6: File Tree Top-Down Shade & Code Viewer */}

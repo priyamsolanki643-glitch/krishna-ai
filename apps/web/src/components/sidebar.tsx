@@ -288,7 +288,7 @@ export function Sidebar({
               <PopoverTrigger asChild>
                 <button 
                   type="button"
-                  className="w-full text-left py-2 px-3 bg-transparent border-0 outline-none text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group focus:outline-none"
+                  className="flex items-center gap-2.5 px-3.5 py-1.5 w-full text-left bg-transparent border-0 outline-none cursor-pointer transition-colors group"
                 >
                   <FolderTree className="size-3.5 shrink-0" />
                   <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
@@ -296,11 +296,29 @@ export function Sidebar({
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent side="right" align="start" sideOffset={12} className="w-64 p-0 border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.9)]">
+              <PopoverContent 
+                side="right" 
+                align="start" 
+                sideOffset={15}
+                className="w-64 p-0 bg-transparent border-0 shadow-none overflow-visible"
+              >
                 <TreeViewDemo />
               </PopoverContent>
             </Popover>
 
+            {/* Action 4: Settings Drawer Trigger */}
+            <button 
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(new Event("open-settings"));
+              }}
+              className="flex items-center gap-2.5 px-3.5 py-1.5 w-full text-left bg-transparent border-0 outline-none cursor-pointer transition-colors group"
+            >
+              <svg className="size-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
+                Settings
+              </span>
+            </button>
           </div>
         </div>
 
