@@ -10,7 +10,9 @@ import {
   Menu, 
   Clock,
   Search,
-  X
+  X,
+  FilePlus,
+  FolderTree
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
