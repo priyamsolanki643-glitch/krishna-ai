@@ -139,6 +139,24 @@ app.get("/", (c) => {
   });
 });
 
+app.get("/api/test-groq", async (c) => {
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/models", {
+      headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }
+    });
+    const text = await res.text();
+    return c.json({ status: res.status, ok: res.ok, data: text });
+  } catch (err: any) {
+    return c.json({ 
+      error: err.message, 
+      cause: err.cause ? String(err.cause) : null,
+      code: err.code || null,
+      name: err.name,
+      stack: err.stack
+    }, 500);
+  }
+});
+
 // Streaming Multi-Agent Deliberation Endpoint
 app.post("/api/chat/stream", async (c) => {
   try {

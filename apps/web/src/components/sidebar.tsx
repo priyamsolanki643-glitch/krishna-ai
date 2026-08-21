@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/utils/supabase/client";
 import { SidebarHistorySkeleton } from "./ui/skeleton";
 import { GyroLogo } from "./gyro-logo";
+import { TreeViewDemo } from "./ui/tree-node-tooltip";
 
 interface ChatThread {
   id: string;
@@ -59,6 +60,8 @@ export function Sidebar({
   // Search Chats State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [isFileTreeExpanded, setIsFileTreeExpanded] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -285,8 +288,7 @@ export function Sidebar({
             <button 
               type="button"
               onClick={() => {
-                window.dispatchEvent(new CustomEvent("open-file-tree"));
-                if (window.innerWidth < 1024) setIsOpen(false);
+                setIsFileTreeExpanded(!isFileTreeExpanded);
               }}
               className="w-full text-left py-2 px-3 bg-transparent border-0 outline-none text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group"
             >
@@ -295,6 +297,20 @@ export function Sidebar({
                 File tree
               </span>
             </button>
+
+            <AnimatePresence>
+              {isFileTreeExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden px-1"
+                >
+                  <TreeViewDemo />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
           </div>
         </div>

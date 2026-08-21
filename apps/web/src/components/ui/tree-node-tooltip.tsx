@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Folder, FolderOpen, File, FileCode2, FileText, ChevronRight } from "lucide-react";
+import { Folder, File } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -23,126 +23,82 @@ export const demoData: TreeNode[] = [
   {
     id: "1",
     name: "src",
-    tooltip: "Source root directory for The Council engine",
+    tooltip: "src",
     type: "folder",
     children: [
       {
         id: "2",
         name: "components",
-        tooltip: "Reusable React UI primitives & widgets",
+        tooltip: "components",
         type: "folder",
         children: [
-          { id: "3", name: "Button.tsx", tooltip: "Accessible multi-state button component", type: "file" },
-          { id: "4", name: "Card.tsx", tooltip: "Obsidian glass container card", type: "file" },
+          { id: "3", name: "Button.tsx", tooltip: "Button's tooltip", type: "file" },
+          { id: "4", name: "Card.tsx", tooltip: "Card's tooltip", type: "file" },
         ],
       },
       {
         id: "5",
         name: "lib",
-        tooltip: "Core utilities & runtime helpers",
+        tooltip: "lib",
         type: "folder",
-        children: [{ id: "6", name: "utils.ts", tooltip: "Tailwind merge & className utilities", type: "file" }],
+        children: [{ id: "6", name: "utils.ts", tooltip: "utils's tooltip", type: "file" }],
       },
     ],
   },
 ];
 
-interface TreeNodeTooltipProps {
-  node: TreeNode;
-  onSelect?: (node: TreeNode) => void;
-  isLight?: boolean;
-}
-
-export default function TreeNodeTooltip({ 
-  node, 
-  onSelect,
-  isLight = false 
-}: TreeNodeTooltipProps) {
-  const [expanded, setExpanded] = useState(true);
+export default function TreeNodeTooltip({ node }: { node: TreeNode }) {
+  const [expanded, setExpanded] = useState(false);
 
   const isFolder = node.type === "folder";
 
-  const toggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isFolder) {
-      setExpanded((prev) => !prev);
-    } else if (onSelect) {
-      onSelect(node);
-    }
+  const toggle = () => {
+    if (isFolder) setExpanded((prev) => !prev);
   };
 
   return (
-    <div className="select-none text-xs">
-      <TooltipProvider delayDuration={150}>
+    <div className="w-full">
+      <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={toggle}
               className={cn(
-                "flex items-center gap-2 px-2.5 py-1.5 rounded-lg w-full text-left transition-colors cursor-pointer group",
-                isLight 
-                  ? "hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950" 
-                  : "hover:bg-white/10 text-zinc-300 hover:text-white"
+                "flex items-center gap-2 px-2 py-1.5 rounded-md w-full text-left",
+                "hover:bg-white/10 hover:text-white text-zinc-400 transition-colors cursor-pointer"
               )}
             >
               {isFolder ? (
-                <>
-                  <ChevronRight 
-                    className={cn(
-                      "size-3 text-zinc-500 transition-transform duration-200 shrink-0",
-                      expanded && "rotate-90"
-                    )} 
-                  />
-                  {expanded ? (
-                    <FolderOpen size={15} className={isLight ? "text-amber-600" : "text-amber-400"} />
-                  ) : (
-                    <Folder size={15} className={isLight ? "text-amber-600/80" : "text-amber-400/80"} />
+                <Folder
+                  size={16}
+                  className={cn(
+                    "text-zinc-500",
+                    expanded && "text-zinc-300"
                   )}
-                </>
+                />
               ) : (
-                <>
-                  <span className="w-3" />
-                  <FileCode2 size={15} className={isLight ? "text-blue-600" : "text-blue-400"} />
-                </>
+                <File size={16} className="text-zinc-500" />
               )}
-              <span className="truncate font-mono text-[12px]">{node.name}</span>
+              <span className="truncate text-xs font-mono">{node.name}</span>
             </button>
           </TooltipTrigger>
-          {node.tooltip && (
-            <TooltipContent 
-              side="right" 
-              className={cn(
-                "font-sans text-xs px-2.5 py-1 shadow-lg",
-                isLight ? "bg-zinc-950 text-white border-zinc-800" : "bg-zinc-900 text-zinc-100 border-white/15"
-              )}
-            >
-              {node.tooltip}
-            </TooltipContent>
-          )}
+          <TooltipContent side="right">{node.tooltip}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
       {/* Animate children */}
       {isFolder && (
-        <AnimatePresence initial={false}>
+        <AnimatePresence>
           {expanded && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className={cn(
-                "ml-3.5 border-l pl-2 my-0.5 space-y-0.5",
-                isLight ? "border-zinc-200" : "border-white/10"
-              )}
+              transition={{ duration: 0.2 }}
+              className="ml-4 border-l border-white/10 pl-2 space-y-1 overflow-hidden"
             >
               {node.children?.map((child) => (
-                <TreeNodeTooltip 
-                  key={child.id} 
-                  node={child} 
-                  onSelect={onSelect}
-                  isLight={isLight}
-                />
+                <TreeNodeTooltip key={child.id} node={child} />
               ))}
             </motion.div>
           )}
@@ -152,11 +108,11 @@ export default function TreeNodeTooltip({
   );
 }
 
-export function TreeViewDemo({ onSelect, isLight = false }: { onSelect?: (node: TreeNode) => void; isLight?: boolean }) {
+export function TreeViewDemo() {
   return (
-    <div className="p-2 space-y-1">
+    <div className="p-2 bg-transparent rounded-xl w-full">
       {demoData.map((node) => (
-        <TreeNodeTooltip key={node.id} node={node} onSelect={onSelect} isLight={isLight} />
+        <TreeNodeTooltip key={node.id} node={node} />
       ))}
     </div>
   );
