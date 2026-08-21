@@ -56,13 +56,13 @@ export function InteractiveStarfield({
     const initStars = (w: number, h: number) => {
       stars.length = 0;
       for (let i = 0; i < count; i++) {
-
         const size = Math.random() < 0.8 ? 1.0 : 1.5; // Strictly 1.0px to 1.5px micro-dots
+        const layerSpeed = Math.random() * 0.2 + 0.15; // Gentle smooth velocity
         stars.push({
           x: Math.random() * w,
           y: Math.random() * h,
-          vx: (Math.random() - 0.5) * 0.12, // Organic 2D micro-drift
-          vy: (Math.random() - 0.5) * 0.12,
+          vx: layerSpeed * 0.9, // Continuous rightward drift
+          vy: -layerSpeed * 0.9, // Continuous upward drift (Bottom-Left to Top-Right)
           size,
           baseAlpha: Math.random() * 0.45 + 0.2, // Authentic soft glimmer
           twinkleSpeed: Math.random() * 0.02 + 0.008,
@@ -110,15 +110,22 @@ export function InteractiveStarfield({
       for (let i = 0; i < stars.length; i++) {
         const star = stars[i];
 
-        // 2D gentle micro-drift
+        // 2D gentle diagonal drift: Bottom-Left -> Top-Right
         star.x += star.vx;
         star.y += star.vy;
 
-        // Smooth wrap-around edges
-        if (star.x < 0) star.x = width;
-        if (star.x > width) star.x = 0;
-        if (star.y < 0) star.y = height;
-        if (star.y > height) star.y = 0;
+        // Smooth infinite diagonal wrap-around
+        if (star.x > width + 10 || star.y < -10) {
+          if (Math.random() < 0.5) {
+            // Spawn from bottom edge
+            star.x = Math.random() * width;
+            star.y = height + 5;
+          } else {
+            // Spawn from left edge
+            star.x = -5;
+            star.y = Math.random() * height;
+          }
+        }
 
         // Calculate parallax position
         const px = star.x + mouseOffsetX * star.parallaxFactor;
@@ -128,10 +135,11 @@ export function InteractiveStarfield({
         const twinkle = Math.sin(time * star.twinkleSpeed * 10 + star.twinklePhase) * 0.35 + 0.65;
         const alpha = Math.min(0.85, Math.max(0.12, star.baseAlpha * twinkle));
 
-        // Razor-sharp 1px - 1.5px micro-dot rendering (no fuzzy circles)
+        // Razor-sharp 1px - 1.5px micro-dot rendering
         ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
         ctx.fillRect(Math.round(px), Math.round(py), star.size, star.size);
       }
+
 
       animationFrameId = requestAnimationFrame(render);
     };
