@@ -949,8 +949,22 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <GyroLogo size={18} />
-                                <span className="text-xs font-semibold text-white tracking-wider uppercase">
-                                  The Council
+                                <span className={`text-xs font-semibold tracking-wider uppercase transition-colors ${
+                                  isThinking && idx === messages.length - 1 ? "text-white animate-pulse" : "text-white"
+                                }`}>
+                                  {(() => {
+                                    if (!isThinking || idx !== messages.length - 1) return "The Council";
+                                    const activeStep = m.pipelineSteps?.find((s) => s.status === "active");
+                                    if (!activeStep) return "Analysing...";
+                                    if (activeStep.id === "hearing") return "Hearing you out...";
+                                    if (activeStep.id === "supervisor") return "Analysing...";
+                                    if (activeStep.id === "domain") return `${(activeStep.domain || "Specialist").toUpperCase()} DELIBERATION...`;
+                                    if (activeStep.id === "lead") return "Drafting...";
+                                    if (activeStep.id === "reviewer") return "Reviewing...";
+                                    if (activeStep.id === "critic") return "Stress-Testing...";
+                                    if (activeStep.id === "architect") return "Synthesizing...";
+                                    return "Deliberating...";
+                                  })()}
                                 </span>
                               </div>
 
