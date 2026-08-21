@@ -13,6 +13,7 @@ import { supabase } from "@/utils/supabase/client";
 import { MarkdownRenderer } from "./markdown-renderer";
 import { CouncilNavbar } from "./CouncilNavbar";
 import { TeamSelectorModal, AVAILABLE_MODELS } from "./TeamSelectorModal";
+import { GlobalStore } from "@/lib/store";
 import { FileTreeSlidePanel, DEFAULT_PROJECT_FILES, ProjectFile } from "./FileTreeSlidePanel";
 import { ShowYourWorkView, ShowYourWorkMode, AgentStageData } from "./ShowYourWorkView";
 import { AIChatInput } from "./ui/ai-chat-input";
@@ -362,19 +363,14 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
       let userOpenaiKey = "";
       let userAnthropicKey = "";
       let debateMode = sendOptions?.debateMode || (isSkipDebateMode ? "fast" : "deep");
-      let maxRounds = sendOptions?.maxRounds || (isSkipDebateMode ? 1 : 2);
+      let maxRounds = sendOptions?.maxRounds || (isSkipDebateMode ? 1 : GlobalStore.maxRounds);
 
       if (typeof window !== "undefined") {
-        userGroqKey = localStorage.getItem("council_key_groq") || "";
-        userOpenaiKey = localStorage.getItem("council_key_openai") || "";
-        userAnthropicKey = localStorage.getItem("council_key_anthropic") || "";
+        userGroqKey = GlobalStore.groqKey;
+        userOpenaiKey = GlobalStore.openaiKey;
+        userAnthropicKey = GlobalStore.anthropicKey;
         if (!sendOptions?.debateMode) {
-          const storedMode = localStorage.getItem("council_debate_mode");
-          if (storedMode === "fast" || storedMode === "deep") debateMode = storedMode;
-        }
-        if (!sendOptions?.maxRounds) {
-          const storedRounds = localStorage.getItem("council_max_rounds");
-          if (storedRounds) maxRounds = Number(storedRounds);
+          debateMode = GlobalStore.debateMode;
         }
       }
 

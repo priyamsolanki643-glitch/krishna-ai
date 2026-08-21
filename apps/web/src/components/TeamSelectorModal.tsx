@@ -16,43 +16,51 @@ export interface ModelOption {
 export const AVAILABLE_MODELS: ModelOption[] = [
   {
     id: "reasoning",
-    name: "openai/gpt-oss-120b",
-    provider: "OpenAI on Groq",
+    name: "Reasoning",
+    provider: "System Agent",
     role: "Lead Reasoning & Logic",
     color: "#6366f1",
-    tag: "120B Reasoning"
+    tag: "Reasoning Engine"
   },
   {
     id: "coding",
-    name: "qwen/qwen3.6-27b",
-    provider: "Qwen on Groq",
+    name: "Coding",
+    provider: "System Agent",
     role: "Full-Stack & AST Synthesis",
     color: "#10b981",
     tag: "Coding Specialist"
   },
   {
     id: "math",
-    name: "openai/gpt-oss-120b",
-    provider: "OpenAI on Groq",
+    name: "Math",
+    provider: "System Agent",
     role: "Mathematical Derivations",
     color: "#ec4899",
     tag: "Math Engine"
   },
   {
     id: "research",
-    name: "meta-llama/llama-3.3-70b-versatile",
-    provider: "Meta on Groq",
+    name: "Research",
+    provider: "System Agent",
     role: "Grounded Web Research",
     color: "#3b82f6",
-    tag: "70B Live Retrieval"
+    tag: "Live Retrieval"
   },
   {
-    id: "critic",
-    name: "meta-llama/llama-3.3-70b-versatile",
-    provider: "Meta on Groq",
-    role: "Adversarial Critic & Logic Auditor",
+    id: "creative",
+    name: "Creative",
+    provider: "System Agent",
+    role: "Creative Ideation & Synthesis",
     color: "#f59e0b",
-    tag: "Adversarial Clash"
+    tag: "Creative Spark"
+  },
+  {
+    id: "planning",
+    name: "Planning",
+    provider: "System Agent",
+    role: "Strategic Planning & Decomposition",
+    color: "#8b5cf6",
+    tag: "Master Planner"
   }
 ];
 
@@ -99,7 +107,7 @@ export function TeamSelectorModal({
 
   const handleResetToAuto = () => {
     setTempIsAuto(true);
-    setTempSelected(["claude-3-7-sonnet", "deepseek-r1"]);
+    setTempSelected(["reasoning", "coding"]);
   };
 
   return (

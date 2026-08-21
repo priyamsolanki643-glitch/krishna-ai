@@ -211,7 +211,7 @@ export const ChatInputBar: React.FC = () => {
               onChange={handleInput}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="What shall we build today?"
+              placeholder="What's on your mind today?"
               className="w-full max-h-[200px] min-h-[24px] bg-transparent resize-none outline-none py-2.5 text-sm font-normal text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 leading-relaxed scrollbar-hide"
               rows={1}
             />

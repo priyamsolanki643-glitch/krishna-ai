@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
+import { GlobalStore } from "@/lib/store";
 
 export type SettingsTab = "general" | "credentials" | "workspace" | "profile";
 
@@ -82,22 +83,16 @@ export function CouncilSettingsDrawer({
   const userEmail = "ujjwal@omni-nexus.ai";
   const userPlan = "Pro Enterprise (Full Quorum)";
 
-  // Load localStorage on mount
+  // Load from GlobalStore on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const g = localStorage.getItem("council_key_groq");
-      const a = localStorage.getItem("council_key_anthropic");
-      const o = localStorage.getItem("council_key_openai");
-      if (g) { setGroqKey(g); setGroqStatus("saved"); }
-      if (a) { setAnthropicKey(a); setAnthropicStatus("saved"); }
-      if (o) { setOpenaiKey(o); setOpenaiStatus("saved"); }
+      if (GlobalStore.groqKey) { setGroqKey(GlobalStore.groqKey); setGroqStatus("saved"); }
+      if (GlobalStore.anthropicKey) { setAnthropicKey(GlobalStore.anthropicKey); setAnthropicStatus("saved"); }
+      if (GlobalStore.openaiKey) { setOpenaiKey(GlobalStore.openaiKey); setOpenaiStatus("saved"); }
 
-      const mode = localStorage.getItem("council_debate_mode");
-      if (mode === "fast" || mode === "deep") setDebateMode(mode);
-
-      const rounds = localStorage.getItem("council_max_rounds");
-      if (rounds) setMaxRounds(Number(rounds));
-
+      setDebateMode(GlobalStore.debateMode);
+      setMaxRounds(GlobalStore.maxRounds);
+      
       const autoSave = localStorage.getItem("council_autosave_code");
       if (autoSave !== null) setAutoSaveCode(autoSave === "true");
     }
@@ -106,15 +101,13 @@ export function CouncilSettingsDrawer({
   const handleSaveKey = (provider: "groq" | "anthropic" | "openai", val: string) => {
     if (typeof window !== "undefined") {
       if (val.trim()) {
-        localStorage.setItem(`council_key_${provider}`, val.trim());
-        if (provider === "groq") setGroqStatus("saved");
-        if (provider === "anthropic") setAnthropicStatus("saved");
-        if (provider === "openai") setOpenaiStatus("saved");
+        if (provider === "groq") { GlobalStore.groqKey = val.trim(); setGroqStatus("saved"); }
+        if (provider === "anthropic") { GlobalStore.anthropicKey = val.trim(); setAnthropicStatus("saved"); }
+        if (provider === "openai") { GlobalStore.openaiKey = val.trim(); setOpenaiStatus("saved"); }
       } else {
-        localStorage.removeItem(`council_key_${provider}`);
-        if (provider === "groq") setGroqStatus("not_set");
-        if (provider === "anthropic") setAnthropicStatus("not_set");
-        if (provider === "openai") setOpenaiStatus("not_set");
+        if (provider === "groq") { GlobalStore.groqKey = ""; setGroqStatus("not_set"); }
+        if (provider === "anthropic") { GlobalStore.anthropicKey = ""; setAnthropicStatus("not_set"); }
+        if (provider === "openai") { GlobalStore.openaiKey = ""; setOpenaiStatus("not_set"); }
       }
       setSavedBadge(provider);
       setTimeout(() => setSavedBadge(null), 2000);
@@ -123,16 +116,12 @@ export function CouncilSettingsDrawer({
 
   const handleDebateModeChange = (mode: "fast" | "deep") => {
     setDebateMode(mode);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("council_debate_mode", mode);
-    }
+    GlobalStore.debateMode = mode;
   };
 
   const handleRoundsChange = (val: number) => {
     setMaxRounds(val);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("council_max_rounds", String(val));
-    }
+    GlobalStore.maxRounds = val;
   };
 
   const handleAutoSaveToggle = (val: boolean) => {

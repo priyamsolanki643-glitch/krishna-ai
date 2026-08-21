@@ -254,7 +254,7 @@ export function Sidebar({
           {/* ── Seamless Pitch Black Action Links (No Borders) ── */}
           <div className="flex flex-col gap-1 mt-1 bg-[#000000]">
             
-            {/* Action 1: Add new file */}
+            {/* Action 1: Save to workspace */}
             <button 
               type="button"
               onClick={() => {
@@ -265,7 +265,7 @@ export function Sidebar({
             >
               <FilePlus className="size-3.5 shrink-0" />
               <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
-                Add new file
+                Save to workspace
               </span>
             </button>
 
@@ -283,7 +283,7 @@ export function Sidebar({
               </span>
             </button>
 
-            {/* Action 3: File tree */}
+            {/* Action 3: Workspace */}
             <Popover>
               <PopoverTrigger asChild>
                 <button 
@@ -292,7 +292,7 @@ export function Sidebar({
                 >
                   <FolderTree className="size-3.5 shrink-0" />
                   <span className="text-xs font-medium tracking-wide text-zinc-400 group-hover:text-white transition-colors">
-                    File tree
+                    Workspace
                   </span>
                 </button>
               </PopoverTrigger>
