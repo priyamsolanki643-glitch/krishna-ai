@@ -982,26 +982,20 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                               </div>
                             </div>
 
-                            {/* Real-time SSE Driven Collapsible Process-Step Box */}
+                            {/* Claude-Style Collapsible Process & Citations Box */}
                             {m.pipelineSteps && m.pipelineSteps.length > 0 && (
                               <ProcessPipelineBox
                                 steps={m.pipelineSteps}
+                                stageData={m.stageData}
                                 isStreaming={isThinking && idx === messages.length - 1}
+                                onArgueWithAgent={(agent, context) => {
+                                  setArguingWith({ agent, context });
+                                  inputRef.current?.focus();
+                                  showToast(`Arguing with ${agent}`);
+                                }}
                                 theme={theme}
                               />
                             )}
-
-                            {/* Show Your Work View & Replay */}
-                            <ShowYourWorkView
-                              mode={showYourWorkMode}
-                              stageData={m.stageData}
-                              isStreaming={isThinking && idx === messages.length - 1}
-                              onArgueWithAgent={(agent, context) => {
-                                setArguingWith({ agent, context });
-                                inputRef.current?.focus();
-                                showToast(`Arguing with ${agent}`);
-                              }}
-                            />
 
                             {(m.text || (!isThinking || idx !== messages.length - 1)) && (
                               <div className="text-zinc-100 text-[14.5px] leading-relaxed bg-[#0a0a0c]/60 p-4 rounded-2xl border border-white/5">

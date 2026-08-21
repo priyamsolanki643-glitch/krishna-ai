@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Check, 
@@ -17,9 +17,13 @@ import {
   Pencil, 
   Layers, 
   Shield,
-  Bot
+  Globe,
+  Bot,
+  ExternalLink,
+  MessageSquareQuote
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AgentStageData } from "../ShowYourWorkView";
 
 export interface ProcessStepItem {
   id: string;
@@ -32,21 +36,55 @@ export interface ProcessStepItem {
 interface ProcessPipelineBoxProps {
   steps: ProcessStepItem[];
   isStreaming: boolean;
+  stageData?: AgentStageData;
+  onArgueWithAgent?: (agent: string, context: string) => void;
   theme?: "dark" | "light";
 }
+
+const ClaudePonderingIcon = ({ isPondering }: { isPondering?: boolean }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="#d97757" 
+    strokeWidth="2.5" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={cn("size-4 shrink-0", isPondering && "animate-spin")}
+    style={{ animationDuration: "4s" }}
+  >
+    <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14" />
+  </svg>
+);
 
 export const ProcessPipelineBox: React.FC<ProcessPipelineBoxProps> = ({
   steps,
   isStreaming,
+  stageData,
+  onArgueWithAgent,
   theme = "dark"
 }) => {
   const isLight = theme === "light";
-  // Collapsed by default when complete, expanded by default while streaming
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(isStreaming);
+  const [seconds, setSeconds] = useState(0);
+
+  // Timer tracking while streaming
+  useEffect(() => {
+    let interval: any;
+    if (isStreaming) {
+      setIsOpen(true);
+      interval = setInterval(() => {
+        setSeconds((s) => s + 1);
+      }, 1000);
+    } else {
+      // Auto-collapse when finished to match Claude clean layout
+      setIsOpen(false);
+    }
+    return () => clearInterval(interval);
+  }, [isStreaming]);
 
   if (!steps || steps.length === 0) return null;
 
-  const renderIcon = (iconName: string, domain?: string) => {
+  const renderStepIcon = (iconName: string, domain?: string) => {
     switch (iconName) {
       case "hearing":
         return <Radio className="size-3.5" />;
@@ -75,125 +113,170 @@ export const ProcessPipelineBox: React.FC<ProcessPipelineBoxProps> = ({
     }
   };
 
-  // If streaming is finished, render the collapsed "View process" toggle
-  if (!isStreaming) {
-    return (
-      <div className="mb-2">
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className={cn(
-            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer border",
-            isLight
-              ? "bg-zinc-100 hover:bg-zinc-200 border-zinc-300 text-zinc-700"
-              : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-400 hover:text-white"
-          )}
-        >
-          <div className="size-1.5 rounded-full bg-emerald-400" />
-          <span>View process ({steps.length} steps)</span>
-          {isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-        </button>
+  const sources = stageData?.sources || [];
 
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="overflow-hidden mt-2"
-            >
-              <div className={cn(
-                "p-3 rounded-2xl border flex flex-col gap-2 max-w-md",
-                isLight ? "bg-zinc-50 border-zinc-200" : "bg-[#09090b]/80 border-white/10"
-              )}>
-                {steps.map((step) => (
-                  <div key={step.id} className="flex items-center gap-2.5 text-xs text-zinc-400">
-                    <div className="size-4 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
-                      <Check className="size-2.5 stroke-[2.5]" />
-                    </div>
-                    <div className="text-zinc-500 shrink-0">
-                      {renderIcon(step.iconName, step.domain)}
-                    </div>
-                    <span className="text-zinc-300 font-medium">{step.label}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  }
-
-  // Active Live Streaming State: Expanded list showing real step progression
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn(
-        "mb-3 p-3.5 rounded-2xl border flex flex-col gap-2.5 max-w-md transition-all shadow-lg backdrop-blur-md",
-        isLight
-          ? "bg-white/90 border-zinc-200 shadow-sm"
-          : "bg-[#09090b]/90 border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
-      )}
-    >
-      <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-semibold px-0.5 flex items-center gap-1.5">
-        <span className="relative flex size-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex rounded-full size-2 bg-emerald-500" />
+    <div className="mb-3.5 flex flex-col font-sans select-none">
+      
+      {/* ── Claude-Style Header Trigger Row ── */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "flex items-center gap-2 py-1 px-1.5 rounded-lg text-[13.5px] transition-colors cursor-pointer w-fit group text-left",
+          isLight ? "hover:bg-zinc-100 text-zinc-700" : "hover:bg-white/[0.05] text-zinc-300"
+        )}
+      >
+        <ClaudePonderingIcon isPondering={isStreaming} />
+        
+        <span className={cn(
+          "font-normal tracking-tight",
+          isStreaming ? "text-[#d97757] font-medium" : (isLight ? "text-zinc-700" : "text-zinc-300")
+        )}>
+          {isStreaming 
+            ? "Pondering..." 
+            : `Thought for ${Math.max(1, seconds || steps.length)} seconds`}
         </span>
-        <span>Deliberation Pipeline</span>
-      </div>
 
-      <div className="flex flex-col gap-2">
-        <AnimatePresence>
-          {steps.map((step) => {
-            const isActive = step.status === "active";
-            const isCompleted = step.status === "completed";
+        <div className="text-zinc-500 opacity-60 group-hover:opacity-100 transition-opacity ml-0.5">
+          {isOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+        </div>
+      </button>
 
-            return (
-              <motion.div
-                key={step.id}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className={cn(
-                  "flex items-center gap-2.5 text-xs transition-colors py-0.5",
-                  isActive ? "text-white font-semibold" : "text-zinc-500"
-                )}
-              >
-                {/* Status Indicator */}
-                <div className="size-4 flex items-center justify-center shrink-0">
-                  {isCompleted ? (
-                    <div className="size-3.5 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
-                      <Check className="size-2.5 stroke-[2.5]" />
+      {/* ── Collapsible Body (Claude-Grade Obsidian Layout) ── */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="overflow-hidden mt-1.5"
+          >
+            <div className={cn(
+              "p-3.5 rounded-2xl border flex flex-col gap-3 max-w-xl shadow-lg backdrop-blur-xl",
+              isLight 
+                ? "bg-zinc-50 border-zinc-200 shadow-sm text-zinc-800" 
+                : "bg-[#0e0e11]/90 border-white/10 text-white shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
+            )}>
+              
+              {/* 1. Real-time Pipeline Step Progression */}
+              <div className="flex flex-col gap-2">
+                {steps.map((step) => {
+                  const isActive = step.status === "active" && isStreaming;
+                  const isCompleted = step.status === "completed" || !isStreaming;
+
+                  return (
+                    <motion.div
+                      key={step.id}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.18 }}
+                      className={cn(
+                        "flex items-center gap-2.5 text-xs transition-colors py-0.5",
+                        isActive ? (isLight ? "text-zinc-950 font-semibold" : "text-white font-medium") : "text-zinc-400"
+                      )}
+                    >
+                      {/* Step Indicator */}
+                      <div className="size-4 flex items-center justify-center shrink-0">
+                        {isCompleted ? (
+                          <div className="size-3.5 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                            <Check className="size-2.5 stroke-[2.5]" />
+                          </div>
+                        ) : (
+                          <div className="relative flex size-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d97757] opacity-75" />
+                            <span className="relative inline-flex rounded-full size-2 bg-[#d97757]" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Step Icon */}
+                      <div className={cn("shrink-0", isActive ? "text-[#d97757]" : "text-zinc-500")}>
+                        {renderStepIcon(step.iconName, step.domain)}
+                      </div>
+
+                      {/* Step Title */}
+                      <span className={cn(
+                        "truncate",
+                        isActive ? (isLight ? "text-zinc-950" : "text-white") : "text-zinc-400"
+                      )}>
+                        {step.label}
+                      </span>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* 2. Claude-Style Web Search Citations Card (if any) */}
+              {sources.length > 0 && (
+                <div className="pt-2 border-t border-white/5 flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-xs text-zinc-400">
+                    <div className="flex items-center gap-2">
+                      <Globe className="size-3.5 text-zinc-400" />
+                      <span className="font-medium text-zinc-300">Web Research Results</span>
                     </div>
-                  ) : (
-                    <div className="relative flex size-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                      <span className="relative inline-flex rounded-full size-2 bg-white" />
-                    </div>
+                    <span className="text-[11px] font-mono text-zinc-500">{sources.length} sources</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 rounded-xl bg-black/50 border border-white/10 p-2.5">
+                    {sources.map((src, i) => {
+                      let hostname = "";
+                      try {
+                        hostname = new URL(src.url).hostname;
+                      } catch {
+                        hostname = src.url;
+                      }
+
+                      return (
+                        <a
+                          key={i}
+                          href={src.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer text-xs"
+                        >
+                          <span className="text-zinc-300 group-hover:text-white truncate max-w-[75%] font-normal">
+                            {src.title || src.url}
+                          </span>
+                          <span className="text-[10px] font-mono text-zinc-500 group-hover:text-zinc-400 shrink-0 ml-2">
+                            {hostname}
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Critic Audit & Argue Action (Nested Cleanly Inside) */}
+              {stageData?.critique && stageData.critique.critiqueContent && (
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Shield className="size-3.5 text-emerald-400 shrink-0" />
+                    <span className="text-zinc-400 truncate text-[11.5px]">
+                      {stageData.critique.agent}: {stageData.critique.rating}
+                    </span>
+                  </div>
+
+                  {onArgueWithAgent && (
+                    <button
+                      type="button"
+                      onClick={() => onArgueWithAgent(stageData.critique!.agent, stageData.critique!.critiqueContent)}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white transition-colors cursor-pointer shrink-0 ml-2"
+                    >
+                      <MessageSquareQuote className="size-3 text-amber-400" />
+                      <span>Argue</span>
+                    </button>
                   )}
                 </div>
+              )}
 
-                {/* Step Icon */}
-                <div className={cn("shrink-0", isActive ? "text-white" : "text-zinc-500")}>
-                  {renderIcon(step.iconName, step.domain)}
-                </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-                {/* Step Label */}
-                <span className={cn(
-                  "truncate",
-                  isActive ? (isLight ? "text-zinc-900 font-semibold" : "text-white font-medium") : "text-zinc-500"
-                )}>
-                  {step.label}
-                </span>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      </div>
-    </motion.div>
+    </div>
   );
 };
