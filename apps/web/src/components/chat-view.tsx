@@ -535,12 +535,19 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
 
           if (!dataStr) continue;
 
+          let data: any = null;
           try {
-            const data = JSON.parse(dataStr);
+            data = JSON.parse(dataStr);
+          } catch (parseErr: any) {
+            console.warn("SSE Event parse error:", parseErr);
+            continue;
+          }
 
-            if (eventName === "error") {
-              throw new Error(data.message || data.error || "Deliberation error occurred.");
-            }
+          if (eventName === "error") {
+            throw new Error(data.message || data.error || "Deliberation error occurred.");
+          }
+
+          try {
 
             if (eventName === "thinking") {
               setIsRoutingPulse(false);
@@ -681,8 +688,8 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                 )
               );
             }
-          } catch (parseErr: any) {
-            console.warn("SSE Event parse error:", parseErr);
+          } catch (processErr: any) {
+            console.error("Error processing SSE event:", processErr);
           }
         }
       }

@@ -25,6 +25,26 @@ export interface ResponseArchitectOutput {
   hasLiveSource: boolean;
 }
 
+function extractContentRobust(raw: string): string {
+  try {
+    const p = JSON.parse(raw);
+    if (p.content) return p.content;
+    if (p.answer) return p.answer;
+  } catch(e) {}
+
+  let m = raw.match(/"content"\s*:\s*"([\s\S]*?)",\s*"disagreement"\s*:/);
+  if (m) return m[1].replace(/\\n/g, "\n").replace(/\\"/g, "\"").replace(/\\\\/g, "\\");
+
+  m = raw.match(/"disagreement"\s*:[\s\S]*?,\s*"content"\s*:\s*"([\s\S]*?)"\s*}/);
+  if (m) return m[1].replace(/\\n/g, "\n").replace(/\\"/g, "\"").replace(/\\\\/g, "\\");
+
+  let stripped = raw.replace(/^[\s\S]*?"content"\s*:\s*"?/, "");
+  stripped = stripped.replace(/"?\s*,\s*"disagreement"\s*:[\s\S]*$/, "");
+  stripped = stripped.replace(/"?\s*}\s*$/, "");
+  
+  return stripped.replace(/\\n/g, "\n").replace(/\\"/g, "\"").replace(/\\\\/g, "\\");
+}
+
 export async function runResponseArchitect(
   input: ResponseArchitectInput
 ): Promise<ResponseArchitectOutput> {
@@ -91,7 +111,8 @@ ${input.finalDraft}`;
 
     try {
       const parsed = extractJSON(rawResponse);
-      let content = typeof parsed.content === "string" ? parsed.content : rawResponse;
+      
+      let content = extractContentRobust(rawResponse);
       content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
       const occurred = Boolean(parsed.disagreement?.occurred ?? isContested);
@@ -112,8 +133,10 @@ ${input.finalDraft}`;
         hasLiveSource,
       };
     } catch (err) {
-      console.warn("Response Architect JSON parse error. Falling back to clean sanitized markdown:", err);
-      const cleanContent = rawResponse.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+      console.warn("Response Architect JSON parse error. Extracting fallback content:", err);
+      let cleanContent = extractContentRobust(rawResponse);
+      cleanContent = cleanContent.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+      
       return {
         formattedContent: cleanContent,
         disagreement: {
