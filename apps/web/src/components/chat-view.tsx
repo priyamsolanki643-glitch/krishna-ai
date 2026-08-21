@@ -784,7 +784,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                 transition={{ duration: 0.1, ease: [0.16, 1, 0.3, 1] }}
                 className="py-4 space-y-6"
               >
-                {messages.map((m) => {
+                {messages.map((m, idx) => {
                   const isUser = m.role === "user";
                   return (
                     <div key={m.id} className="animate-message-reveal flex flex-col space-y-2">
@@ -897,6 +897,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
                             <ShowYourWorkView
                               mode={showYourWorkMode}
                               stageData={m.stageData}
+                              isStreaming={isThinking && idx === messages.length - 1}
                               onArgueWithAgent={(agent, context) => {
                                 setArguingWith({ agent, context });
                                 inputRef.current?.focus();
@@ -917,38 +918,6 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
             )}
 
           </AnimatePresence>
-
-          {/* Section 7: Routing Visualization Pulse */}
-          {isRoutingPulse && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="my-4 p-3 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2.5">
-                <Brain className="size-4 text-purple-400 animate-spin" />
-                <span className="text-xs text-purple-300 font-medium">
-                  Supervisor Routing Pulse: <span className="text-white font-bold">{routingDomain}</span>
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="size-1.5 rounded-full bg-purple-400 animate-ping" />
-                <span className="text-[10px] uppercase font-bold text-purple-400">Classifying</span>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Thinking Indicator */}
-          {isThinking && (
-            <div className="py-4 flex items-center gap-3 animate-message-reveal">
-              <GyroLogo size={20} />
-              <span className="text-xs font-mono text-zinc-400 tracking-wider uppercase animate-pulse">
-                Council Deliberating & Auditing...
-              </span>
-            </div>
-          )}
-
         </div>
       </div>
 

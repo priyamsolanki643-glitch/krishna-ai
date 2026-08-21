@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ChevronDown, ChevronRight, ShieldAlert, Cpu, Sparkles, Brain, CheckCircle2, 
-  MessageSquareQuote, Layers, AlertCircle, ArrowRight, Zap, Target
+  ChevronDown, ChevronRight, ShieldAlert, Brain, 
+  MessageSquareQuote, AlertCircle, Globe, Check, Loader2, Code, Lightbulb, Search
 } from "lucide-react";
 
 export interface AgentStageData {
@@ -48,71 +48,77 @@ interface ShowYourWorkViewProps {
   onArgueWithAgent?: (agentName: string, context: string) => void;
 }
 
+// A generic Claude-style dropdown row
+function ProcessStep({ 
+  icon: Icon, 
+  title, 
+  isWorking = false, 
+  children, 
+  rightText 
+}: { 
+  icon: React.ElementType, 
+  title: string, 
+  isWorking?: boolean, 
+  children?: React.ReactNode,
+  rightText?: string
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const hasChildren = Boolean(children);
+
+  return (
+    <div className="flex flex-col text-[14px]">
+      <div 
+        onClick={() => hasChildren && setIsOpen(!isOpen)}
+        className={`flex items-center gap-3 py-2 px-1 rounded-md transition-colors ${hasChildren ? 'cursor-pointer hover:bg-white/[0.03]' : ''} text-zinc-300`}
+      >
+        <div className="flex items-center justify-center size-5 text-zinc-400">
+          <Icon className={`size-4 ${isWorking ? 'animate-spin text-[#d97757]' : ''}`} />
+        </div>
+        <span className="font-medium">{title}</span>
+        
+        {rightText && (
+          <span className="ml-auto text-xs text-zinc-500">{rightText}</span>
+        )}
+        
+        {hasChildren && (
+          <div className="text-zinc-500 ml-2">
+            {isOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+          </div>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {isOpen && hasChildren && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="ml-9 pr-4 pb-3 pt-1 text-[13px] text-zinc-400">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function ShowYourWorkView({
   mode,
   isStreaming,
   stageData,
   onArgueWithAgent
 }: ShowYourWorkViewProps) {
-  const [isCouncilExpanded, setIsCouncilExpanded] = useState<boolean>(true);
-  const [isDissentModalOpen, setIsDissentModalOpen] = useState<boolean>(false);
-  const [expandedSection, setExpandedSection] = useState<string | null>("lead");
+  if (mode === "off" || (!stageData && !isStreaming)) return null;
 
-  if ((mode === "off" && !stageData?.convergence?.overruledDissent) || !stageData) {
-    return null;
-  }
-
-  const data = stageData;
+  const data = stageData || {};
+  const isFinished = !!data.convergence || !isStreaming;
 
   return (
-    <div className="w-full my-3 space-y-2 select-none">
+    <div className="w-full my-4 select-none font-sans">
       
-      {/* ── Disagreement Trust Signal (Always visible if dissent exists) ── */}
-      {data.convergence?.overruledDissent && (
-        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="size-3.5 text-amber-400 shrink-0" />
-            <span className="font-medium">1 agent disagreed during debate</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsDissentModalOpen(!isDissentModalOpen)}
-            className="text-[11px] underline text-amber-400 hover:text-amber-200 transition-colors cursor-pointer"
-          >
-            {isDissentModalOpen ? "Hide Argument" : "Inspect Overruled Argument"}
-          </button>
-        </div>
-      )}
-
-      {/* Dissent Breakdown Modal / Drawer */}
-      <AnimatePresence>
-        {isDissentModalOpen && data.convergence?.overruledDissent && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="p-3.5 rounded-2xl bg-[#13120f] border border-amber-500/30 text-xs space-y-2 overflow-hidden shadow-lg"
-          >
-            <div className="flex items-center justify-between text-amber-300 font-semibold">
-              <span className="flex items-center gap-1.5">
-                <AlertCircle className="size-3.5" />
-                Dissenting Agent: {data.convergence.overruledDissent.agent}
-              </span>
-              <button
-                onClick={() => onArgueWithAgent?.(data.convergence!.overruledDissent!.agent, data.convergence!.overruledDissent!.dissentPoint)}
-                className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[11px] font-medium transition-colors cursor-pointer"
-              >
-                Argue this point
-              </button>
-            </div>
-            <div className="text-zinc-300 space-y-1 pl-2 border-l border-amber-500/30">
-              <p><strong className="text-zinc-400">Position Argued:</strong> {data.convergence.overruledDissent.dissentPoint}</p>
-              <p><strong className="text-zinc-400">Council Resolution:</strong> {data.convergence.overruledDissent.reasonOverruled}</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ── Mode 1: Lightweight Status View ── */}
       {mode === "status" && (
         <motion.div
@@ -122,168 +128,86 @@ export function ShowYourWorkView({
         >
           <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
           <span className="font-mono text-[11.5px]">
-            Council Pipeline Active: <span className="text-white font-medium">{data.supervisor?.domain || "Multi-Agent Consensus"}</span> (Round {data.convergence?.rounds || 1})
+            Working...
           </span>
         </motion.div>
       )}
 
-      {/* ── Mode 2: Full Council Chain-of-Thought (Show Your Work) ── */}
+      {/* ── Mode 2: Claude-style Chain-of-Thought ── */}
       {mode === "council" && (
-        <div className="rounded-2xl bg-[#09090b]/90 border border-white/10 overflow-hidden transition-all shadow-xl">
-          {/* Header Bar */}
-          <div 
-            onClick={() => setIsCouncilExpanded(!isCouncilExpanded)}
-            className="flex items-center justify-between px-4 py-2.5 bg-white/[0.03] hover:bg-white/[0.06] transition-colors cursor-pointer"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="size-6 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
-                <Sparkles className="size-3 text-purple-400" />
+        <div className="space-y-1">
+          {/* 1. Supervisor / Intent Analysis */}
+          {data.supervisor && (
+            <ProcessStep 
+              icon={Lightbulb} 
+              title="Understanding the request" 
+            />
+          )}
+
+          {/* 2. Web Research (if any) */}
+          {data.sources && data.sources.length > 0 && (
+            <ProcessStep 
+              icon={Globe} 
+              title="Searched the web" 
+              rightText={`${data.sources.length} results`}
+            >
+              <div className="flex flex-col gap-2 rounded-md bg-[#18181b] border border-white/5 p-2">
+                {data.sources.map((src, i) => (
+                  <a
+                    key={i}
+                    href={src.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 hover:bg-white/5 p-1.5 rounded transition-colors text-zinc-300 hover:text-white"
+                  >
+                    <Search className="size-3 text-zinc-500 shrink-0" />
+                    <span className="truncate">{src.title}</span>
+                  </a>
+                ))}
               </div>
-              <span className="text-xs font-semibold text-white tracking-tight">
-                The Council Debate & Pipeline Audit
-              </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-400 font-mono">
-                {data.convergence?.rounds || 2} Rounds • {Math.round((data.convergence?.consensusScore || 0.96) * 100)}% Consensus
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2 text-zinc-400">
-              <span className="text-[11px] text-zinc-500">
-                {isCouncilExpanded ? "Collapse" : "Expand"}
-              </span>
-              {isCouncilExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-            </div>
-          </div>
+            </ProcessStep>
+          )}
 
-          {/* Expanded Pipeline Stages */}
-          <AnimatePresence>
-            {isCouncilExpanded && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="p-4 space-y-3 border-t border-white/5 text-xs text-zinc-300"
+          {/* 3. Logic & Draft Generation */}
+          {data.leadDraft && (
+            <ProcessStep 
+              icon={Code} 
+              title={data.supervisor?.domain === 'coding' ? "Writing the code" : "Synthesizing logic"}
+            >
+              <p className="whitespace-pre-wrap">{data.leadDraft.content.slice(0, 150)}...</p>
+              <button 
+                onClick={() => onArgueWithAgent?.(data.leadDraft!.agent, data.leadDraft!.content)}
+                className="mt-2 text-xs text-blue-400 hover:underline cursor-pointer"
               >
-                {/* 1. Supervisor Classification Stage */}
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
-                  <div className="flex items-center justify-between text-zinc-400 font-semibold text-[11px]">
-                    <span className="flex items-center gap-1.5 text-purple-300">
-                      <Brain className="size-3.5" />
-                      STAGE 1: SUPERVISOR ROUTING
-                    </span>
-                    <span className="text-[10px] font-mono text-zinc-500">
-                      Confidence {Math.round((data.supervisor?.confidence || 0.98) * 100)}%
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-[11.5px]">
-                    <div>
-                      <span className="text-zinc-500">Domain:</span> <span className="text-white font-medium">{data.supervisor?.domain}</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500">Lead Model:</span> <span className="text-emerald-400 font-medium">{data.supervisor?.assignedLead}</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500">Adversarial Critic:</span> <span className="text-indigo-400 font-medium">{data.supervisor?.assignedCritic}</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500">Classified Intent:</span> <span className="text-zinc-300 truncate">{data.supervisor?.intent}</span>
-                    </div>
-                  </div>
-                </div>
+                Argue this logic
+              </button>
+            </ProcessStep>
+          )}
 
-                {/* 2. Lead Agent Draft Stage */}
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="flex items-center gap-1.5 text-emerald-300 font-semibold">
-                      <Cpu className="size-3.5" />
-                      STAGE 2: LEAD AGENT PROPOSAL ({data.leadDraft?.agent})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onArgueWithAgent?.(data.leadDraft?.agent || "Lead Agent", data.leadDraft?.content || "")}
-                      className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white transition-colors cursor-pointer"
-                    >
-                      Argue with Lead
-                    </button>
-                  </div>
-                  <p className="text-[12px] text-zinc-200 leading-relaxed font-sans bg-black/40 p-2.5 rounded-lg border border-white/5">
-                    {data.leadDraft?.content}
-                  </p>
-                </div>
+          {/* 4. Peer Review / Critique */}
+          {data.critique && (
+            <ProcessStep 
+              icon={ShieldAlert} 
+              title="Evaluating and refining"
+            >
+              <p className="whitespace-pre-wrap">{data.critique.critiqueContent}</p>
+              {data.critique.identifiedFlaws && data.critique.identifiedFlaws.length > 0 && (
+                <ul className="list-disc pl-4 mt-2 space-y-1 text-zinc-500">
+                  {data.critique.identifiedFlaws.map((f, idx) => <li key={idx}>{f}</li>)}
+                </ul>
+              )}
+            </ProcessStep>
+          )}
 
-                {/* 3. Adversarial Reviewer Critique Stage */}
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="flex items-center gap-1.5 text-indigo-300 font-semibold">
-                      <ShieldAlert className="size-3.5" />
-                      STAGE 3: ADVERSARIAL CRITIC AUDIT ({data.critique?.agent})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onArgueWithAgent?.(data.critique?.agent || "Adversarial Critic", data.critique?.critiqueContent || "")}
-                      className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white transition-colors cursor-pointer"
-                    >
-                      Argue with Critic
-                    </button>
-                  </div>
-
-                  <p className="text-[12px] text-zinc-300 leading-relaxed bg-black/40 p-2.5 rounded-lg border border-white/5">
-                    {data.critique?.critiqueContent}
-                  </p>
-
-                  {data.critique?.identifiedFlaws && data.critique.identifiedFlaws.length > 0 && (
-                    <div className="space-y-1 pt-1">
-                      <span className="text-[10.5px] uppercase font-bold text-zinc-500">Identified Vulnerabilities:</span>
-                      <ul className="list-disc pl-4 space-y-0.5 text-[11.5px] text-zinc-400">
-                        {data.critique.identifiedFlaws.map((flaw, idx) => (
-                          <li key={idx}>{flaw}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                {/* 4. Convergence & Verification */}
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <CheckCircle2 className="size-3.5 text-emerald-400" />
-                    Consensus Reached & Verified in Round {data.convergence?.rounds || 2}
-                  </span>
-                  <span className="font-mono text-[11px] bg-emerald-500/20 px-2 py-0.5 rounded-full">
-                    Score: {Math.round((data.convergence?.consensusScore || 0.96) * 100)}%
-                  </span>
-                </div>
-
-                {/* 5. Cited Live Web Research Sources */}
-                {data.sources && data.sources.length > 0 && (
-                  <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 space-y-2">
-                    <span className="text-[11px] font-semibold text-blue-300 flex items-center gap-1.5">
-                      <Target className="size-3.5" />
-                      GROUNDED WEB CITATIONS ({data.sources.length})
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
-                      {data.sources.map((src, i) => (
-                        <a
-                          key={i}
-                          href={src.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center justify-between p-2 rounded-lg bg-black/40 hover:bg-black/60 border border-white/5 text-[11px] text-zinc-300 hover:text-white transition-colors cursor-pointer group"
-                        >
-                          <span className="truncate pr-2">{src.title}</span>
-                          <ArrowRight className="size-3 text-zinc-500 group-hover:text-blue-400 shrink-0" />
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* 5. Working Indicator (Claude Style Star/Loader) */}
+          {isStreaming && !isFinished && (
+            <div className="flex items-center gap-3 py-2 px-1 text-zinc-300">
+               <Loader2 className="size-4 animate-spin text-[#d97757]" />
+               <span className="text-[14px] font-medium">Working</span>
+            </div>
+          )}
         </div>
       )}
-
     </div>
   );
 }
