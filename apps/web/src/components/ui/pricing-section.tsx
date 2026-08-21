@@ -1,16 +1,39 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export const PricingSection = () => {
   const [isAnnual, setIsAnnual] = useState(true);
+  const router = useRouter();
+
+  const handleSelectPlan = (planName: string) => {
+    localStorage.setItem("userPlan", planName);
+    router.push("/app");
+  };
 
   return (
-    <section className="relative w-full bg-black py-20 font-sans text-white sm:py-28 selection:bg-white selection:text-black">
+    <section className="relative w-full bg-black py-12 sm:py-20 font-sans text-white selection:bg-white selection:text-black min-h-screen flex flex-col justify-center">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 md:px-8">
         
+        {/* Direct Navigation to App */}
+        <div className="flex items-center justify-between mb-8">
+          <button
+            type="button"
+            onClick={() => router.push("/app")}
+            className="inline-flex items-center gap-2 text-xs font-medium text-neutral-400 hover:text-white transition-colors cursor-pointer px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:border-white/20"
+          >
+            <ArrowLeft className="size-3.5" />
+            <span>Continue to Chat</span>
+          </button>
+          
+          <span className="text-[11px] font-mono text-neutral-500 uppercase tracking-wider">
+            Select Compute
+          </span>
+        </div>
+
         {/* Header */}
         <div className="mb-12 sm:mb-16 flex flex-col items-center text-center">
           <h2 className="mb-4 max-w-2xl text-balance text-3xl font-medium tracking-tighter text-white sm:text-5xl md:text-6xl">
@@ -48,7 +71,7 @@ export const PricingSection = () => {
         {/* Pricing Cards */}
         <div className="grid w-full grid-cols-1 gap-5 lg:grid-cols-3">
           
-          {/* Developer Tier */}
+          {/* Developer Tier (Free Plan) */}
           <div className="flex flex-col rounded-2xl border border-white/[0.08] bg-[#050505] p-6 sm:p-8 transition-colors hover:border-white/[0.15]">
             <div className="mb-6">
               <h3 className="text-lg font-medium text-white">Developer</h3>
@@ -60,7 +83,11 @@ export const PricingSection = () => {
               <span className="text-sm font-medium text-neutral-500">/ forever</span>
             </div>
             
-            <button className="mb-8 flex h-10 w-full items-center justify-center rounded-lg border border-white/[0.12] bg-transparent text-sm font-medium transition-all hover:bg-white/[0.05] active:scale-[0.98] cursor-pointer">
+            <button 
+              type="button"
+              onClick={() => handleSelectPlan("Free")}
+              className="mb-8 flex h-10 w-full items-center justify-center rounded-lg border border-white/[0.12] bg-transparent text-sm font-medium transition-all hover:bg-white/[0.08] hover:text-white active:scale-[0.98] cursor-pointer"
+            >
               Start for free
             </button>
             
@@ -76,7 +103,7 @@ export const PricingSection = () => {
             </ul>
           </div>
 
-          {/* Pro Tier (Highlighted) */}
+          {/* Pro Tier (Highlighted Production Plan) */}
           <div className="relative flex flex-col rounded-2xl border border-white/[0.25] bg-black p-6 sm:p-8 shadow-2xl">
             {/* Top Highlight Accent */}
             <div className="absolute inset-x-0 top-0 h-[1px] w-full bg-white" />
@@ -100,7 +127,11 @@ export const PricingSection = () => {
               </span>
             </div>
             
-            <button className="mb-8 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-white text-sm font-medium text-black transition-all hover:bg-neutral-200 active:scale-[0.98] cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+            <button 
+              type="button"
+              onClick={() => handleSelectPlan("Production Pro")}
+              className="mb-8 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-white text-sm font-medium text-black transition-all hover:bg-neutral-200 active:scale-[0.98] cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.25)]"
+            >
               Upgrade to Pro
               <ArrowRight className="h-4 w-4" />
             </button>
@@ -128,7 +159,11 @@ export const PricingSection = () => {
               <span className="text-4xl font-medium tracking-tighter">Custom</span>
             </div>
             
-            <button className="mb-8 flex h-10 w-full items-center justify-center rounded-lg border border-white/[0.12] bg-transparent text-sm font-medium transition-all hover:bg-white/[0.05] active:scale-[0.98] cursor-pointer">
+            <button 
+              type="button"
+              onClick={() => handleSelectPlan("Enterprise")}
+              className="mb-8 flex h-10 w-full items-center justify-center rounded-lg border border-white/[0.12] bg-transparent text-sm font-medium transition-all hover:bg-white/[0.08] hover:text-white active:scale-[0.98] cursor-pointer"
+            >
               Contact Sales
             </button>
             

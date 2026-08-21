@@ -41,14 +41,14 @@ export const AuthComponent: React.FC<AuthProps> = ({ defaultMode = "signup" }) =
     e.preventDefault();
     setIsSubmitting(true);
     setTimeout(() => {
-      router.push("/app");
+      router.push(mode === "signup" ? "/pricing" : "/app");
     }, 800);
   };
 
   const handleDirectAuth = () => {
     setIsSubmitting(true);
     setTimeout(() => {
-      router.push("/app");
+      router.push(mode === "signup" ? "/pricing" : "/app");
     }, 800);
   };
 

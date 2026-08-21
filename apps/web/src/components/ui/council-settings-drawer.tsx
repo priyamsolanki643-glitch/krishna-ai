@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { 
   Cpu, 
@@ -53,6 +54,7 @@ export function CouncilSettingsDrawer({
 }: CouncilSettingsDrawerProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(defaultTab);
   const isLight = theme === "light";
+  const router = useRouter();
 
   // Tab 1: Deliberation Protocol State
   const [debateMode, setDebateMode] = useState<"fast" | "deep">("deep");
@@ -680,7 +682,7 @@ export function CouncilSettingsDrawer({
 
                       <button
                         type="button"
-                        onClick={() => alert("Billing & Subscription portal")}
+                        onClick={() => { onClose(); router.push("/pricing"); }}
                         className="w-full flex items-center justify-between py-2 px-3 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 text-zinc-200 border border-white/10 transition-colors cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
