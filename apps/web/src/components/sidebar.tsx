@@ -1,16 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Plus, 
-  FilePlus, 
   MessageSquare, 
   Trash2, 
   MoreVertical, 
   Menu, 
-  Clock
+  Clock,
+  Search,
+  X
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/utils/supabase/client";
 import { SidebarHistorySkeleton } from "./ui/skeleton";
@@ -51,6 +53,10 @@ export function Sidebar({
   const [activeChatMenu, setActiveChatMenu] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("Operator");
   const [userEmail, setUserEmail] = useState<string>("");
+
+  // Search Chats State
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -156,6 +162,17 @@ export function Sidebar({
     if (touchStart - e.changedTouches[0].clientX > 50) setIsOpen(false);
   };
 
+  // Flattened chat threads for Search modal
+  const allChats = useMemo(() => {
+    return historyData.flatMap(g => g.chats);
+  }, [historyData]);
+
+  const filteredChats = useMemo(() => {
+    if (!searchQuery.trim()) return allChats;
+    const q = searchQuery.toLowerCase();
+    return allChats.filter(c => c.title?.toLowerCase().includes(q));
+  }, [allChats, searchQuery]);
+
   return (
     <>
       {/* Mobile Backdrop Overlay */}
@@ -175,7 +192,7 @@ export function Sidebar({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         className={cn(
-          "fixed lg:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-screen transition-all duration-150 overflow-hidden font-sans border-0 border-none",
+          "fixed lg:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-screen transition-all duration-150 overflow-hidden font-sans border-0 border-none select-none",
           isLight 
             ? "bg-white text-zinc-900" 
             : "bg-[#000000] text-white",
@@ -212,7 +229,7 @@ export function Sidebar({
             )}
           </div>
 
-          {/* 1. New Chat Button */}
+          {/* 1. New Chat Pill Button */}
           <button 
             type="button"
             onClick={() => {
@@ -230,27 +247,55 @@ export function Sidebar({
             <span>New chat</span>
           </button>
 
-          {/* 2. Apple-Style Pill "Add new file" Button (Pitch Black with Glowing White Light Border) */}
-          <button 
-            type="button"
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent("open-add-file"));
-              if (window.innerWidth < 1024) setIsOpen(false);
-            }}
-            className={cn(
-              "flex items-center justify-center gap-2 w-full font-medium py-2.5 px-4 rounded-full transition-all cursor-pointer text-xs shrink-0 active:scale-[0.98]",
-              isLight
-                ? "bg-white text-zinc-900 border border-zinc-950 shadow-sm hover:bg-zinc-50"
-                : "bg-[#000000] text-white border border-white shadow-[0_0_14px_rgba(255,255,255,0.45)] hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]"
-            )}
-          >
-            <FilePlus className="size-4 text-white shrink-0" />
-            <span className="font-semibold tracking-tight">Add new file</span>
-          </button>
+          {/* ── Seamless Pitch Black Italic Action Links (No Borders / App Typography) ── */}
+          <div className="flex flex-col gap-1 pt-1 bg-[#000000]">
+            
+            {/* Action 1: Add new file */}
+            <button 
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent("open-add-file"));
+                if (window.innerWidth < 1024) setIsOpen(false);
+              }}
+              className="w-full text-left py-1.5 px-2 bg-transparent border-0 outline-none text-zinc-300 hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
+            >
+              <span className="font-['Instrument_Serif',serif] italic text-[17px] tracking-wide text-zinc-300 group-hover:text-white transition-colors">
+                Add new file
+              </span>
+            </button>
+
+            {/* Action 2: Search chats */}
+            <button 
+              type="button"
+              onClick={() => {
+                setIsSearchOpen(true);
+              }}
+              className="w-full text-left py-1.5 px-2 bg-transparent border-0 outline-none text-zinc-300 hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
+            >
+              <span className="font-['Instrument_Serif',serif] italic text-[17px] tracking-wide text-zinc-300 group-hover:text-white transition-colors">
+                Search chats
+              </span>
+            </button>
+
+            {/* Action 3: File tree */}
+            <button 
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent("open-file-tree"));
+                if (window.innerWidth < 1024) setIsOpen(false);
+              }}
+              className="w-full text-left py-1.5 px-2 bg-transparent border-0 outline-none text-zinc-300 hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
+            >
+              <span className="font-['Instrument_Serif',serif] italic text-[17px] tracking-wide text-zinc-300 group-hover:text-white transition-colors">
+                File tree
+              </span>
+            </button>
+
+          </div>
         </div>
 
-        {/* ── Scrollable Recent Projects & Chats List (Directly below Add new file) ── */}
-        <div className="flex-1 px-3 py-3 flex flex-col gap-3 overflow-y-auto no-scrollbar">
+        {/* ── Scrollable Recent Projects & Chats List ── */}
+        <div className="flex-1 px-3 py-2 flex flex-col gap-3 overflow-y-auto no-scrollbar">
           {isOpen && (
             <>
               {isLoadingHistory ? (
@@ -375,6 +420,88 @@ export function Sidebar({
           </div>
         </div>
       </aside>
+
+      {/* ── Search Chats Side / Dropdown Shade Panel ── */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <div className="fixed inset-0 z-[100] flex flex-col justify-start">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSearchOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+
+            {/* Top-Down Search Panel */}
+            <motion.div
+              initial={{ y: "-100%", opacity: 0.8 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "-100%", opacity: 0.8 }}
+              transition={{ type: "spring", damping: 28, stiffness: 280 }}
+              className="relative w-full bg-[#09090b]/95 border-b border-white/15 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] max-h-[85vh] flex flex-col z-10"
+            >
+              {/* Header with Search Input */}
+              <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-4 flex items-center gap-3">
+                <Search className="size-5 text-zinc-400 shrink-0" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search chats and project sessions..."
+                  autoFocus
+                  className="flex-1 bg-transparent text-white text-base sm:text-lg outline-none placeholder:text-zinc-500 font-sans"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsSearchOpen(false)}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Close search"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
+
+              {/* Results List */}
+              <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pb-6 overflow-y-auto no-scrollbar flex flex-col gap-1.5">
+                <div className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2">
+                  {searchQuery ? `Found ${filteredChats.length} results` : "All Recent Chats"}
+                </div>
+
+                {filteredChats.length === 0 ? (
+                  <div className="py-12 text-center text-zinc-500 text-sm">
+                    No matching conversations found
+                  </div>
+                ) : (
+                  filteredChats.map((chat) => (
+                    <button
+                      key={chat.id}
+                      type="button"
+                      onClick={() => {
+                        window.dispatchEvent(new CustomEvent("load-thread", { detail: { threadId: chat.id } }));
+                        setIsSearchOpen(false);
+                        if (window.innerWidth < 1024) setIsOpen(false);
+                      }}
+                      className="w-full text-left p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition-all flex items-center justify-between group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <MessageSquare className="size-4 text-zinc-400 group-hover:text-white shrink-0" />
+                        <span className="text-sm text-zinc-200 group-hover:text-white truncate font-medium">
+                          {chat.title?.replace(/^\[Sent:.*?\]\s*/i, "") || "Untitled Chat"}
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-mono text-zinc-500 shrink-0 ml-4">
+                        {new Date(chat.updated_at).toLocaleDateString()}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

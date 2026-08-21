@@ -15,7 +15,6 @@ import { CouncilNavbar } from "./CouncilNavbar";
 import { TeamSelectorModal, AVAILABLE_MODELS } from "./TeamSelectorModal";
 import { FileTreeSlidePanel, DEFAULT_PROJECT_FILES, ProjectFile } from "./FileTreeSlidePanel";
 import { ShowYourWorkView, ShowYourWorkMode, AgentStageData } from "./ShowYourWorkView";
-import BottomMenu from "./ui/bottom-menu";
 import { AIChatInput } from "./ui/ai-chat-input";
 import { InteractiveStarfield } from "./ui/interactive-starfield";
 
@@ -232,10 +231,15 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
     window.addEventListener("new-thread", handleNewThread);
     window.addEventListener("load-thread", handleLoadThread);
     window.addEventListener("open-add-file", handleOpenAddFile);
+    const handleOpenFileTree = () => {
+      setIsFileTreeOpen(true);
+    };
+    window.addEventListener("open-file-tree", handleOpenFileTree);
     return () => {
       window.removeEventListener("new-thread", handleNewThread);
       window.removeEventListener("load-thread", handleLoadThread);
       window.removeEventListener("open-add-file", handleOpenAddFile);
+      window.removeEventListener("open-file-tree", handleOpenFileTree);
     };
 
   }, []);
@@ -653,30 +657,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
       {/* Dynamic Twitter/X Interactive Starfield with 600ms Fade-to-Pitch-Black when chat starts */}
       <InteractiveStarfield active={isInitial} particleCount={650} speed={0.35} />
 
-      {/* ── Top Floating Minimal Menu Dock with Downward Expanding Submenus ── */}
-
-      <div className="fixed top-4 inset-x-0 z-40 flex justify-center pointer-events-none px-4">
-        <div className="pointer-events-auto">
-          <BottomMenu
-            theme={theme}
-            onThemeChange={onThemeChange}
-            isInitialGreeting={isInitial}
-            onNewChat={handleNewThread}
-            onAddFolder={() => setIsFileTreeOpen(true)}
-            onArgueModel={() => {
-              setShowYourWorkMode("council");
-              setInput("I disagree with the consensus on: ");
-              inputRef.current?.focus();
-              showToast("Council Debate / Argue Mode Active");
-            }}
-            onOpenSidebar={onOpenSidebar}
-            onOpenFiles={() => setIsFileTreeOpen(true)}
-            onOpenTeam={() => setIsTeamSelectorOpen(true)}
-          />
-
-
-        </div>
-      </div>
+      
 
 
 
