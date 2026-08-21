@@ -449,7 +449,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
         },
         body: JSON.stringify({
           query: userMessageText,
-          manualAgents: activeAgents.map((a: string) => a.replace("-agent", "")),
+          manualAgents: activeAgents,
           debateMode,
           maxRounds
         })

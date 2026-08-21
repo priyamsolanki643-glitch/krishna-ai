@@ -38,43 +38,43 @@ export interface AgentModelOption {
 
 export const COUNCIL_AGENTS: AgentModelOption[] = [
   {
-    id: "reasoning-agent",
-    name: "Reasoning agent",
+    id: "reasoning",
+    name: "reasoning",
     category: "Deep logical deduction & chain-of-thought",
     icon: Brain,
     color: "text-zinc-300",
   },
   {
-    id: "coding-agent",
-    name: "Coding agent",
+    id: "coding",
+    name: "coding",
     category: "AST synthesis & full-stack architecture",
     icon: Code2,
     color: "text-zinc-300",
   },
   {
-    id: "math-agent",
-    name: "Mathematics agent",
+    id: "math",
+    name: "math",
     category: "Formal theorems, discrete math & proofs",
     icon: Calculator,
     color: "text-zinc-300",
   },
   {
-    id: "research-agent",
-    name: "Research & Knowledge agent",
+    id: "research",
+    name: "research",
     category: "Real-time citations & academic papers",
     icon: Search,
     color: "text-zinc-300",
   },
   {
-    id: "creative-agent",
-    name: "Creative & Language agent",
+    id: "creative",
+    name: "creative",
     category: "Rhetoric, high-impact prose & translation",
     icon: Sparkles,
     color: "text-zinc-300",
   },
   {
-    id: "planning-agent",
-    name: "Planning & Strategy agent",
+    id: "planning",
+    name: "planning",
     category: "Roadmap planning & risk decomposition",
     icon: Compass,
     color: "text-zinc-300",
@@ -135,8 +135,8 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
 
   // Selected Agents State (defaults to Reasoning & Coding if none provided)
   const [internalSelectedAgents, setInternalSelectedAgents] = useState<string[]>([
-    "reasoning-agent",
-    "coding-agent",
+    "reasoning",
+    "coding",
   ]);
 
   const activeAgents = externalSelectedAgents !== undefined ? externalSelectedAgents : internalSelectedAgents;
@@ -580,8 +580,8 @@ export const AIChatInput: React.FC<AIChatInputProps> = ({
                           type="button"
                           onClick={() => {
                             if (activeAgents.length === COUNCIL_AGENTS.length) {
-                              if (onSelectedAgentsChange) onSelectedAgentsChange(["reasoning-agent", "coding-agent"]);
-                              else setInternalSelectedAgents(["reasoning-agent", "coding-agent"]);
+                              if (onSelectedAgentsChange) onSelectedAgentsChange(["reasoning", "coding"]);
+                              else setInternalSelectedAgents(["reasoning", "coding"]);
                             } else {
                               const all = COUNCIL_AGENTS.map((a) => a.id);
                               if (onSelectedAgentsChange) onSelectedAgentsChange(all);
