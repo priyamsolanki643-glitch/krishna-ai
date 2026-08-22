@@ -1,14 +1,14 @@
 export const GROQ_MODELS = {
-  supervisor: "llama-3.1-8b-instant",           // Ultra-fast sub-100ms structured classification
-  leadReasoning: "llama-3.3-70b-versatile",    // Deep reasoning & Lead draft generation
-  lead: "llama-3.3-70b-versatile",            // Default Lead draft generation alias
-  reviewer: "llama-3.1-8b-instant",           // Fast structured evaluation
-  helper: "llama-3.1-8b-instant",             // Ephemeral worker for research/narrow tasks
-  coding: "llama-3.3-70b-versatile",          // High-throughput code synthesis
-  math: "llama-3.3-70b-versatile",            // Complex mathematical derivations
-  research: "llama-3.3-70b-versatile",        // Knowledge extraction & fact retrieval
-  critic: "llama-3.3-70b-versatile",          // Independent adversarial pushback
-  compiler: "llama-3.3-70b-versatile",        // Multi-domain synthesis & merge engine
-  responseArchitect: "llama-3.3-70b-versatile",// Final editorial rewrite & markdown structure
-  safety: "llama-3.1-8b-instant"              // Lightweight guardrail pass-through
+  supervisor: "openai/gpt-oss-20b",           // Ultra-fast sub-100ms structured classification
+  leadReasoning: "openai/gpt-oss-120b",        // Deep reasoning & Lead draft generation
+  lead: "openai/gpt-oss-120b",                // Default Lead draft generation alias
+  reviewer: "openai/gpt-oss-20b",             // Fast structured evaluation
+  helper: "openai/gpt-oss-20b",               // Ephemeral worker for research/narrow tasks
+  coding: "qwen/qwen3.6-27b",                  // High-throughput code synthesis & AST
+  math: "openai/gpt-oss-120b",                 // Complex mathematical derivations
+  research: "openai/gpt-oss-120b",             // Knowledge extraction & fact retrieval
+  critic: "qwen/qwen3.6-27b",                  // Independent adversarial pushback (Zero-bias clash with 120B)
+  compiler: "openai/gpt-oss-120b",             // Multi-domain synthesis & merge engine
+  responseArchitect: "qwen/qwen3.6-27b",       // Final editorial rewrite & markdown structure
+  safety: "openai/gpt-oss-safeguard-20b"       // Lightweight guardrail pass-through
 };

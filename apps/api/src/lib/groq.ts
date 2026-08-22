@@ -48,7 +48,7 @@ export function setMockScenario(scenario: MockScenario) {
 export async function callGroq(
   systemPrompt: string,
   userPrompt: string,
-  model: string = "llama-3.1-8b-instant",
+  model: string = "openai/gpt-oss-20b",
   userGroqKey?: string
 ): Promise<string> {
   const client = getGroqClient(userGroqKey);
@@ -60,7 +60,7 @@ export async function callGroq(
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        model: model || "llama-3.1-8b-instant",
+        model: model || "openai/gpt-oss-20b",
       });
       return response.choices[0]?.message?.content || "";
     } catch (err: any) {
@@ -68,15 +68,15 @@ export async function callGroq(
         // If a custom key was provided and failed, do not silently fallback to server key
         throw new Error(`Invalid Groq API key provided: ${err.message}`);
       }
-      // If higher tier model hits rate limit or error, fallback to fast 8b model
-      if (model !== "llama-3.1-8b-instant") {
-        console.warn(`⚠️ Groq model ${model} failed, falling back to llama-3.1-8b-instant: ${err.message}`);
+      // If higher tier model hits rate limit or error, fallback to fast 20b model
+      if (model !== "openai/gpt-oss-20b") {
+        console.warn(`⚠️ Groq model ${model} failed, falling back to openai/gpt-oss-20b: ${err.message}`);
         const fallbackRes = await client.chat.completions.create({
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
-          model: "llama-3.1-8b-instant",
+          model: "openai/gpt-oss-20b",
         });
         return fallbackRes.choices[0]?.message?.content || "";
       }
