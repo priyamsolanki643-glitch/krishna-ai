@@ -70,22 +70,17 @@ export async function callGroq(
       }
       // If higher tier model hits rate limit or error, fallback to fast 8b model
       if (model !== "llama-3.1-8b-instant") {
-        try {
-          console.warn(`⚠️ Groq model ${model} failed, falling back to llama-3.1-8b-instant: ${err.message}`);
-          const fallbackRes = await client.chat.completions.create({
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-            ],
-            model: "llama-3.1-8b-instant",
-          });
-          return fallbackRes.choices[0]?.message?.content || "";
-        } catch (fbErr: any) {
-          console.warn(`⚠️ Fallback to llama-3.1-8b-instant failed: ${fbErr.message}. Serving resilient fallback.`);
-        }
-      } else {
-        console.warn(`⚠️ Groq API request failed (${err.message}). Serving resilient fallback.`);
+        console.warn(`⚠️ Groq model ${model} failed, falling back to llama-3.1-8b-instant: ${err.message}`);
+        const fallbackRes = await client.chat.completions.create({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          model: "llama-3.1-8b-instant",
+        });
+        return fallbackRes.choices[0]?.message?.content || "";
       }
+      throw err;
     }
   }
 

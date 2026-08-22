@@ -308,7 +308,7 @@ app.post("/api/chat/stream", async (c) => {
             }),
           });
 
-          const multiDomains = (supervisor.domains || []).filter((d) => d.score >= 0.6);
+          const multiDomains = (supervisor.domains || []).filter((d) => d.score >= 0.75 && d.domain !== "general");
           qualifyingDomains = multiDomains.length >= 2 ? multiDomains : [{ domain: supervisor.domain, score: 1.0 }];
         }
 
