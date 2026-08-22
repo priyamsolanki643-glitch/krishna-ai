@@ -112,11 +112,23 @@ ${input.finalDraft}`;
     try {
       const parsed = extractJSON(rawResponse);
       
-      let content = extractContentRobust(rawResponse);
+      let content = "";
+      if (parsed && typeof parsed.content === "string") {
+        content = parsed.content;
+      } else if (parsed && typeof parsed.answer === "string") {
+        content = parsed.answer;
+      } else if (parsed && typeof parsed.response === "string") {
+        content = parsed.response;
+      } else if (typeof parsed === "string") {
+        content = parsed;
+      } else {
+        content = extractContentRobust(rawResponse);
+      }
+
       content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
-      const occurred = Boolean(parsed.disagreement?.occurred ?? isContested);
-      let summary = parsed.disagreement?.summary ?? null;
+      const occurred = Boolean(parsed?.disagreement?.occurred ?? isContested);
+      let summary = parsed?.disagreement?.summary ?? null;
 
       if (!occurred) {
         summary = null;
@@ -125,7 +137,7 @@ ${input.finalDraft}`;
       }
 
       return {
-        formattedContent: content,
+        formattedContent: content || input.finalDraft,
         disagreement: {
           occurred,
           summary,
@@ -138,7 +150,7 @@ ${input.finalDraft}`;
       cleanContent = cleanContent.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
       
       return {
-        formattedContent: cleanContent,
+        formattedContent: cleanContent || input.finalDraft,
         disagreement: {
           occurred: isContested,
           summary: isContested ? (input.criticObjection || "The Council debated edge cases before finalizing this position.") : null,
