@@ -33,7 +33,11 @@ function verifyEnvironment() {
   }
 
   if (missingVars.length > 0) {
-    console.warn(`⚠️ Startup Notice: Environment variables not set on server: ${missingVars.join(", ")}. Client-provided API keys or resilient fallback will be utilized.`);
+    console.error(`🚨 FATAL STARTUP ERROR: Missing required environment variables: ${missingVars.join(", ")}`);
+    console.error("Please configure your .env file according to .env.example before launching.");
+    if (process.env.NODE_ENV === "production") {
+      process.exit(1);
+    }
   }
 }
 
