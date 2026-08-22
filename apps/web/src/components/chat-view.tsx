@@ -650,9 +650,14 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
 
               currentPipelineSteps = currentPipelineSteps.map((s) => ({ ...s, status: "completed" as const }));
 
-              // Sanitize final text: Strip any raw <think> tags or JSON artefacts
-              let cleanText = data.content || "";
-              cleanText = cleanText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+              // Sanitize final text: Strip any raw <think>, <thinking>, or <thought> tags
+              let cleanText = (data.content || "")
+                .replace(/<think[\s\S]*?<\/think>/gi, "")
+                .replace(/<thinking[\s\S]*?<\/thinking>/gi, "")
+                .replace(/<thought[\s\S]*?<\/thought>/gi, "")
+                .replace(/<think[\s\S]*?$/gi, "")
+                .replace(/<thinking[\s\S]*?$/gi, "")
+                .trim();
 
               setMessages((prev) =>
                 prev.map((msg) =>

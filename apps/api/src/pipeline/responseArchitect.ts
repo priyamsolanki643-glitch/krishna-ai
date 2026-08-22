@@ -125,7 +125,13 @@ ${input.finalDraft}`;
         content = extractContentRobust(rawResponse);
       }
 
-      content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+      content = content
+        .replace(/<think[\s\S]*?<\/think>/gi, "")
+        .replace(/<thinking[\s\S]*?<\/thinking>/gi, "")
+        .replace(/<thought[\s\S]*?<\/thought>/gi, "")
+        .replace(/<think[\s\S]*?$/gi, "")
+        .replace(/<thinking[\s\S]*?$/gi, "")
+        .trim();
 
       const occurred = Boolean(parsed?.disagreement?.occurred ?? isContested);
       let summary = parsed?.disagreement?.summary ?? null;
@@ -147,7 +153,13 @@ ${input.finalDraft}`;
     } catch (err) {
       console.warn("Response Architect JSON parse error. Extracting fallback content:", err);
       let cleanContent = extractContentRobust(rawResponse);
-      cleanContent = cleanContent.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+      cleanContent = cleanContent
+        .replace(/<think[\s\S]*?<\/think>/gi, "")
+        .replace(/<thinking[\s\S]*?<\/thinking>/gi, "")
+        .replace(/<thought[\s\S]*?<\/thought>/gi, "")
+        .replace(/<think[\s\S]*?$/gi, "")
+        .replace(/<thinking[\s\S]*?$/gi, "")
+        .trim();
       
       return {
         formattedContent: cleanContent || input.finalDraft,

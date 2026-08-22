@@ -7,6 +7,14 @@ interface MarkdownRendererProps {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  const sanitizedContent = (content || "")
+    .replace(/<think[\s\S]*?<\/think>/gi, "")
+    .replace(/<thinking[\s\S]*?<\/thinking>/gi, "")
+    .replace(/<thought[\s\S]*?<\/thought>/gi, "")
+    .replace(/<think[\s\S]*?$/gi, "")
+    .replace(/<thinking[\s\S]*?$/gi, "")
+    .trim();
+
   return (
     <div className="markdown-body font-sans text-[14.5px] leading-relaxed text-[#d4d4d8] overflow-hidden break-words max-w-full">
       <ReactMarkdown
@@ -35,12 +43,12 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
               <code className="bg-white/10 px-1.5 py-0.5 rounded text-sm text-[#e4e4e7]" {...props} />
             ) : (
               <pre className="bg-black/40 border border-white/10 p-3 rounded-lg overflow-x-auto my-4 text-sm text-[#e4e4e7]">
-                <code {...props} />
+                 <code {...props} />
               </pre>
             ),
         }}
       >
-        {content}
+        {sanitizedContent}
       </ReactMarkdown>
     </div>
   );
