@@ -8,16 +8,17 @@ export function isMockMode(): boolean {
 }
 
 function getGroqClient(apiKeyOverride?: string): Groq | null {
-  if (apiKeyOverride) {
+  const key = (apiKeyOverride || process.env.GROQ_API_KEY || "").trim();
+  if (apiKeyOverride && key) {
     return new Groq({ 
-      apiKey: apiKeyOverride,
+      apiKey: key,
       maxRetries: 3,
       timeout: 30000 
     });
   }
-  if (!groqClient && process.env.GROQ_API_KEY) {
+  if (!groqClient && key) {
     groqClient = new Groq({
-      apiKey: process.env.GROQ_API_KEY,
+      apiKey: key,
       maxRetries: 3,
       timeout: 30000
     });
