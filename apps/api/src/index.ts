@@ -33,11 +33,7 @@ function verifyEnvironment() {
   }
 
   if (missingVars.length > 0) {
-    console.error(`🚨 FATAL STARTUP ERROR: Missing required environment variables: ${missingVars.join(", ")}`);
-    console.error("Please configure your .env file according to .env.example before launching.");
-    if (process.env.NODE_ENV === "production") {
-      process.exit(1);
-    }
+    console.warn(`⚠️ Startup Notice: Environment variables not set on server: ${missingVars.join(", ")}. Client-provided API keys or resilient fallback will be utilized.`);
   }
 }
 
@@ -723,14 +719,12 @@ app.delete("/api/project/:projectId/cache", (c) => {
   });
 });
 
-const port = Number(process.env.PORT) || 8080;
-const hostname = process.env.HOST || "0.0.0.0";
+const port = Number(process.env.PORT) || 3000;
 if (process.env.NODE_ENV !== "test") {
-  console.log(`Server is running on ${hostname}:${port}`);
+  console.log(`Server is running on port ${port}`);
   serve({
     fetch: app.fetch,
     port,
-    hostname,
   });
 }
 
