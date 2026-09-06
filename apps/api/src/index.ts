@@ -27,7 +27,7 @@ import { Readable, PassThrough } from "node:stream";
 // -------------------------------------------------------------
 function verifyEnvironment() {
   const missingVars: string[] = [];
-  if (!process.env.GROQ_API_KEY) missingVars.push("GROQ_API_KEY");
+  if (!process.env.GEMINI_API_KEY) missingVars.push("GEMINI_API_KEY");
 
   if (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL) {
     console.warn("⚠️ Production WARNING: DATABASE_URL is not set. Postgres persistence will fallback to in-memory mode.");
