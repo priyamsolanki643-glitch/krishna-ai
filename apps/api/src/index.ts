@@ -16,6 +16,7 @@ import { performResearch } from "./lib/research.js";
 import { initDb } from "./db/index.js";
 import { logQueryTelemetry, getPersistedQuery } from "./db/telemetryRepo.js";
 import { randomUUID } from "node:crypto";
+import { v2Router } from "./routes/v2.js";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const archiver = require("archiver");
@@ -45,6 +46,8 @@ verifyEnvironment();
 initDb().catch((err) => console.error("Database connection initialization failed:", err.message));
 
 const app = new Hono();
+
+app.route("/api/v2", v2Router);
 
 app.use(
   "*",
