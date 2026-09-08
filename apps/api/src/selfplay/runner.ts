@@ -109,7 +109,7 @@ Score 0.0 = completely wrong, 1.0 = perfect.`,
 }
 
 // ── Load/Save Learned Strategies ─────────────────────────────────
-async function loadStrategies(): Promise<LearnedStrategy[]> {
+export async function loadStrategies(): Promise<LearnedStrategy[]> {
   try {
     if (!existsSync(LEARNED_STRATEGIES_FILE)) return [];
     return JSON.parse(await readFile(LEARNED_STRATEGIES_FILE, "utf-8"));
