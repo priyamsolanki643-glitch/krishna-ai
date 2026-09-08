@@ -18,23 +18,22 @@ export type QueryType =
 
 export interface PipelineNode {
   agent: AgentName;
-  required: boolean;          // false = skip gracefully if fails
-  weight: number;             // 0.0-1.0 influence on synthesis
+  required: boolean;
+  weight: number;
   temperature: number;
 }
 
 export interface PipelineDAG {
   queryType: QueryType;
   rationale: string;
-  parallelAgents: AgentName[];    // run these in parallel
-  sequentialAgents: AgentName[];  // run these after parallel
+  parallelAgents: AgentName[];
+  sequentialAgents: AgentName[];
   debateEnabled: boolean;
   debateRounds: number;
   nodes: Record<AgentName, PipelineNode>;
   estimatedComplexity: "low" | "medium" | "high";
 }
 
-// Fallback DAG for when architect itself fails
 const FALLBACK_DAG: PipelineDAG = {
   queryType: "analytical",
   rationale: "Fallback: full ensemble activated",
@@ -51,7 +50,8 @@ const FALLBACK_DAG: PipelineDAG = {
   },
 };
 
-const QUERY_TYPE_PRESETS: Record<QueryType, Partial<PipelineDAG>> = {
+// NOTE: All presets MUST include sequentialAgents to avoid runtime crash
+const QUERY_TYPE_PRESETS: Record<QueryType, Omit<PipelineDAG, "queryType" | "rationale">> = {
   factual: {
     parallelAgents: ["engineer"],
     sequentialAgents: [],
@@ -135,10 +135,7 @@ const QUERY_TYPE_PRESETS: Record<QueryType, Partial<PipelineDAG>> = {
 export async function runArchitect(query: string): Promise<PipelineDAG> {
   const systemPrompt = `You are The Architect — a meta-agent that designs optimal AI pipelines.
 Analyze the query type and output ONLY valid JSON matching this schema:
-{
-  "queryType": "factual|technical|philosophical|analytical|creative|adversarial",
-  "rationale": "one sentence explaining why"
-}
+{"queryType":"factual|technical|philosophical|analytical|creative|adversarial","rationale":"one sentence explaining why"}
 
 Query types:
 - factual: simple facts, definitions, what is X
