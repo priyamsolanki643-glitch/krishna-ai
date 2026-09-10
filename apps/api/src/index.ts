@@ -66,9 +66,16 @@ function checkRateLimit(ip: string): boolean {
 app.get("/health", (c) =>
   c.json({
     status: "ok",
-    version: "2.1",
+    version: "2.2",
     engine: "The Council — Multi-Agent AI Orchestration",
-    innovations: ["ADAS", "Self-Play", "Epistemic State Sharing"],
+    innovations: [
+      "ADAS (Automated Design of Agentic Systems)",
+      "Self-Play (Proposer→Solver→Critic Loop)",
+      "Epistemic State Sharing (Claim-Level Uncertainty)",
+      "Counterfactual Consensus Protocol (Pearl Do-Calculus)",
+      "Epistemic Debt Compounding (Bayesian Propagation)",
+      "Attractor State Collapse Prevention (Cognitive Entropy)",
+    ],
     is_mock: isMockMode(),
   })
 );
@@ -76,7 +83,7 @@ app.get("/health", (c) =>
 app.get("/", (c) =>
   c.json({
     service: "The Council API",
-    version: "2.1",
+    version: "2.2",
     status: "online",
     endpoints: {
       health: "GET /health",
@@ -95,7 +102,6 @@ app.post("/api/chat/stream", async (c) => {
   }
   const body = await c.req.json().catch(() => ({}));
   if (!body.query) return c.json({ error: "Missing 'query' field" }, 400);
-  // Redirect to v2 for all new queries
   return c.json({
     message: "V1 endpoint deprecated. Please migrate to POST /api/v2/chat/stream",
     v2_endpoint: "/api/v2/chat/stream",
@@ -105,8 +111,14 @@ app.post("/api/chat/stream", async (c) => {
 // ─── Server Boot ─────────────────────────────────────────────────
 const PORT = parseInt(process.env.PORT || "8080");
 serve({ fetch: app.fetch, port: PORT }, () => {
-  console.log(`🚀 The Council API v2.1 running on port ${PORT}`);
+  console.log(`🚀 The Council API v2.2 running on port ${PORT}`);
   console.log(`   Engine: Gemini 2.0 Flash Ensemble`);
-  console.log(`   Innovations: ADAS + Self-Play + Epistemic State`);
+  console.log(`   6 Research Innovations:`);
+  console.log(`     1. ADAS — Self-Designing Agent Pipelines`);
+  console.log(`     2. Self-Play — Proposer→Solver→Critic Loop`);
+  console.log(`     3. Epistemic State — Claim-Level Uncertainty`);
+  console.log(`     4. Counterfactual Protocol — Pearl Do-Calculus`);
+  console.log(`     5. Epistemic Debt — Bayesian Confidence Propagation`);
+  console.log(`     6. Attractor Prevention — Cognitive Entropy Maintenance`);
   console.log(`   V2 Endpoint: http://localhost:${PORT}/api/v2/health`);
 });
