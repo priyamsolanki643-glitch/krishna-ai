@@ -23,60 +23,71 @@ import { startSelfPlayScheduler, getLearnedStrategiesForDomain } from "../selfpl
 // Concept 3: Epistemic State
 import { parseEpistemicMarkers, buildEpistemicContext } from "../epistemic/state.js";
 
+// Concept 4: Counterfactual Consensus Protocol (Pearl's Do-Calculus)
+import { extractCausalClaims, testCounterfactual } from "../pipeline/counterfactual.js";
+
+// Concept 5: Epistemic Debt Compounding (Bayesian Uncertainty Propagation)
+import { initializeDebtLedger, addClaimToLedger } from "../epistemic/debt-ledger.js";
+
+// Concept 6: Attractor State Collapse Prevention (Cognitive Entropy)
+import { measureAgentDiversity, ENTROPY_INJECTION_PROMPT } from "../pipeline/diversity.js";
+
 // Telemetry + Memory
 import { TelemetryEmitter } from "../telemetry/stream.js";
 import { createSession, getSession, addMessage, getSessionContext } from "../memory/session.js";
 import { saveEpisode, searchEpisodes } from "../memory/episodic.js";
 import { getMemoryContext, runSleepPhaseCompression } from "../memory/compression.js";
+
+// Schemas
 import { isGeminiConfigured } from "../lib/gemini.js";
 import { randomUUID } from "node:crypto";
 
+// ─────────────────────────────────────────────────────────────────
+// The Council v2.2 — 6 Novel Research Concepts, Production-Wired
+// ─────────────────────────────────────────────────────────────────
+
 export const v2Router = new Hono();
 
-// Start self-play scheduler on boot
+// Boot self-play scheduler
 startSelfPlayScheduler();
 
-// ── Agent execution map ──────────────────────────────────────────
+// ── Agent Execution Helper ────────────────────────────────────────
 async function executeAgent(name: AgentName, query: string): Promise<AgentResult | null> {
   try {
     switch (name) {
-      case "skeptic":     return await runSkeptic(query);
-      case "engineer":    return await runEngineer(query);
-      case "visionary":   return await runVisionary(query);
-      case "synthesizer": return null; // Synthesizer runs separately
-      default:            return null;
+      case "skeptic": return await runSkeptic(query, "");
+      case "engineer": return await runEngineer(query);
+      case "visionary": return await runVisionary(query);
+      default: return null;
     }
   } catch (err) {
-    console.error(`[Agent] ${name} failed:`, err);
+    console.error(`Agent ${name} failed:`, err);
     return null;
   }
 }
 
-// ── Health Check ──────────────────────────────────────────────────
-v2Router.get("/health", (c) => c.json({
-  version: "2.1",
-  engine: "Google Gemini Flash — Heterogeneous Ensemble",
-  geminiConfigured: isGeminiConfigured(),
-  innovations: [
-    "ADAS: Automated Design of Agentic Systems (NeurIPS 2026)",
-    "Self-Play: Synthetic self-improvement without human data (Meta Research)",
-    "Epistemic State Sharing: Claim-level uncertainty mapping (ICLR 2026)",
-  ],
-  productionSystems: [
-    "Structured Agent Protocol (SAP)",
-    "Cascade Hallucination Prevention",
-    "Circuit Breaker + Loop Watchdog",
-    "Live Observability Telemetry",
-    "Graceful Degradation Mode",
-    "3-Layer Memory (Session + Episodic + Sleep-Phase)",
-  ],
-}));
+// ── V2 Health ─────────────────────────────────────────────────────
+v2Router.get("/health", (c) =>
+  c.json({
+    status: "ok",
+    version: "2.2",
+    engine: "The Council — Multi-Agent AI Orchestration",
+    innovations: [
+      "ADAS",
+      "Self-Play",
+      "Epistemic State Sharing",
+      "Counterfactual Consensus Protocol",
+      "Epistemic Debt Compounding",
+      "Attractor State Collapse Prevention",
+    ],
+  })
+);
 
 // ── Self-Play Status ──────────────────────────────────────────────
 v2Router.get("/selfplay/status", async (c) => {
-  const { loadStrategies } = await import("../selfplay/runner.js") as any;
   try {
-    const strategies = typeof loadStrategies === "function" ? await loadStrategies() : [];
+    const { loadStrategies } = await import("../selfplay/runner.js");
+    const strategies = await loadStrategies();
     return c.json({ schedulerActive: true, learnedStrategies: strategies.length });
   } catch {
     return c.json({ schedulerActive: true, learnedStrategies: 0 });
@@ -95,7 +106,7 @@ v2Router.post("/selfplay/run", async (c) => {
   });
 });
 
-// ── Main V2 Chat Endpoint ─────────────────────────────────────────
+// ── Main V2.2 Chat Endpoint ───────────────────────────────────────
 v2Router.post("/chat/stream", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const { query, sessionId: reqSessionId, tokenBudget = 25000 } = body;
@@ -174,6 +185,9 @@ v2Router.post("/chat/stream", async (c) => {
         agents: dag.parallelAgents,
       }) });
 
+      // [V2.2] Initialize Epistemic Debt Ledger
+      let debtLedger = initializeDebtLedger();
+
       // Run parallel agents as specified by Architect
       const agentPromises = dag.parallelAgents
         .filter(name => name !== "synthesizer")
@@ -183,13 +197,27 @@ v2Router.post("/chat/stream", async (c) => {
           if (result) {
             await telemetry.agentEnd(name, result.confidence);
             watchdog.recordTokens(Math.ceil(result.output.length / 4));
+            // [V2.2] Track epistemic debt for each agent's claims
+            debtLedger = addClaimToLedger(debtLedger, name, result.output.substring(0, 100), result.confidence);
           }
           return result;
         });
 
       const parallelResults = (await Promise.all(agentPromises)).filter(Boolean) as AgentResult[];
 
-      // Run sequential agents (if any)
+      // ── [V2.2] Attractor State Diversity Check ──────────────
+      await stream.writeSSE({ event: "stage", data: JSON.stringify({ stage: "diversity_check", message: "🧬 Measuring cognitive attractor diversity..." }) });
+      const diversityMetrics = await measureAgentDiversity(parallelResults.map(r => r.output));
+      await stream.writeSSE({ event: "diversity_metrics", data: JSON.stringify(diversityMetrics) });
+
+      // If attractor collapse detected, inject cognitive entropy into sequential agents
+      let currentEnrichedQuery = enrichedQuery;
+      if (diversityMetrics.requiredEntropyInjection) {
+        currentEnrichedQuery += ENTROPY_INJECTION_PROMPT;
+        await stream.writeSSE({ event: "stage", data: JSON.stringify({ stage: "entropy_injection", message: "⚠️ Attractor state detected! Injecting cognitive entropy for sequential agents..." }) });
+      }
+
+      // Run sequential agents (if any) — with entropy-injected query if needed
       let sequentialResults: AgentResult[] = [];
       for (const name of dag.sequentialAgents.filter(n => n !== "synthesizer")) {
         const watchCheck = watchdog.check();
@@ -198,10 +226,12 @@ v2Router.post("/chat/stream", async (c) => {
           break;
         }
         await telemetry.agentStart(name, dag.nodes[name].temperature);
-        const result = await executeAgent(name, enrichedQuery);
+        const result = await executeAgent(name, currentEnrichedQuery);
         if (result) {
           await telemetry.agentEnd(name, result.confidence);
           watchdog.recordTokens(Math.ceil(result.output.length / 4));
+          // [V2.2] Track epistemic debt for sequential agents too
+          debtLedger = addClaimToLedger(debtLedger, name, result.output.substring(0, 100), result.confidence);
           sequentialResults.push(result);
         }
       }
@@ -253,7 +283,7 @@ v2Router.post("/chat/stream", async (c) => {
         }) });
       }
 
-      // ── Stage 4: Concept 3 — Epistemic State Mapping ────────
+      // ── Stage 4: Epistemic State Mapping ────────────────────
       await telemetry.stageBegin("epistemic");
       await stream.writeSSE({ event: "stage", data: JSON.stringify({ stage: "epistemic", message: "🧩 Building epistemic uncertainty maps per agent..." }) });
 
@@ -292,13 +322,44 @@ v2Router.post("/chat/stream", async (c) => {
         }
       }
 
+      // ── [V2.2] Stage 5.5: Counterfactual Consensus Protocol ─
+      await telemetry.stageBegin("counterfactual");
+      await stream.writeSSE({ event: "stage", data: JSON.stringify({ stage: "counterfactual", message: "⚗️ Running Pearl's Do-Calculus Counterfactual Probe..." }) });
+
+      const combinedAgentOutput = finalAgentOutputs.map(a => a.output).join("\n");
+      const causalClaims = await extractCausalClaims(combinedAgentOutput);
+      const counterfactualResults = [];
+
+      if (causalClaims.length > 0) {
+        await stream.writeSSE({ event: "stage", data: JSON.stringify({ stage: "counterfactual", message: `Testing ${causalClaims.length} causal claims for spurious correlation...` }) });
+        // Test up to 3 claims to balance thoroughness vs latency
+        for (const claim of causalClaims.slice(0, 3)) {
+          const result = await testCounterfactual(claim);
+          counterfactualResults.push(result);
+          await stream.writeSSE({ event: "counterfactual_test", data: JSON.stringify(result) });
+        }
+      }
+
+      // Build counterfactual context for Synthesizer
+      let counterfactualContext = "";
+      if (counterfactualResults.length > 0) {
+        counterfactualContext = "\n\n[COUNTERFACTUAL PROBE RESULTS]:\n" + counterfactualResults.map(r =>
+          `Claim: "${r.claim.originalText}"\n  Cause: ${r.claim.cause} → Effect: ${r.claim.effect}\n  Is Genuinely Causal: ${r.isGenuinelyCausal}\n  Counterfactual World: ${r.counterfactualScenario}\n  Reasoning: ${r.reasoning}`
+        ).join("\n\n");
+      }
+
+      await telemetry.stageEnd("counterfactual");
+
+      // ── [V2.2] Epistemic Debt Summary ───────────────────────
+      const debtSummary = `\n\n[EPISTEMIC DEBT LEDGER]:\n  Joint Confidence (Bayesian product): ${debtLedger.jointConfidence.toFixed(4)}\n  Confidence Deficit: ${(1 - debtLedger.jointConfidence).toFixed(4)}\n  Number of Claims Tracked: ${debtLedger.entries.length}\n  Critical Weak Point: ${debtLedger.criticalAssumptionId || "none"}\n  Weakest Agent Claim: ${debtLedger.entries.reduce((max, e) => e.deficit > max.deficit ? e : max, { deficit: 0, agentId: "none", claimContent: "" }).agentId} (deficit: ${debtLedger.entries.reduce((max, e) => e.deficit > max.deficit ? e : max, { deficit: 0 }).deficit.toFixed(3)})`;
+
       // ── Stage 6: Epistemic-Weighted Synthesis ───────────────
       await telemetry.stageBegin("synthesis");
       await stream.writeSSE({ event: "stage", data: JSON.stringify({ stage: "synthesis", message: "🔮 Epistemic-weighted synthesis in progress..." }) });
 
-      // Pass epistemic context to Synthesizer for informed weighting
+      // Pass ALL intelligence layers to Synthesizer
       const synthesis = await runSynthesizer(
-        `${query}\n\n${epistemicContext}`,
+        `${query}\n\n${epistemicContext}${counterfactualContext}${debtSummary}`,
         finalAgentOutputs,
       );
 
@@ -330,6 +391,26 @@ v2Router.post("/chat/stream", async (c) => {
           overallConfidence: s.overallConfidence,
           knownUnknowns: s.knownUnknowns,
         })),
+        // [V2.2] Counterfactual Protocol metadata
+        counterfactualProbe: {
+          causalClaimsFound: causalClaims.length,
+          claimsTested: counterfactualResults.length,
+          genuinelyCausal: counterfactualResults.filter(r => r.isGenuinelyCausal).length,
+          spuriousCorrelations: counterfactualResults.filter(r => !r.isGenuinelyCausal).length,
+        },
+        // [V2.2] Epistemic Debt metadata
+        epistemicDebt: {
+          jointConfidence: debtLedger.jointConfidence,
+          confidenceDeficit: 1 - debtLedger.jointConfidence,
+          claimsTracked: debtLedger.entries.length,
+          criticalWeakPoint: debtLedger.criticalAssumptionId,
+        },
+        // [V2.2] Attractor State metadata
+        attractorState: {
+          diversityScore: diversityMetrics.currentDiversityScore,
+          isInAttractorState: diversityMetrics.isInAttractorState,
+          entropyInjected: diversityMetrics.requiredEntropyInjection,
+        },
         degradedMode: isDegraded,
         memoryUsed: !!memoryContext,
         learnedStrategiesUsed: learnedStrategies.length,
@@ -338,7 +419,7 @@ v2Router.post("/chat/stream", async (c) => {
           totalElapsedMs: finalStats.elapsedMs,
           watchdogTripped: finalStats.isTripped,
         },
-        version: "2.1",
+        version: "2.2",
       }) });
 
       await telemetry.pipelineEnd(true, finalStats.totalTokens, synthesis.overallConfidence);
