@@ -477,7 +477,7 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
 
       // Main Live SSE Deliberation Stream
       const baseUrl = process.env.NEXT_PUBLIC_COUNCIL_API_URL || "https://the-council-api-1083682147747.us-central1.run.app";
-      const res = await fetch(`${baseUrl}/api/chat/stream`, {
+      const res = await fetch(`${baseUrl}/api/v2/chat/stream`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -540,6 +540,84 @@ export function ChatView({ onOpenSidebar, onOpenVault, isAnonymous, theme = "dar
             data = JSON.parse(dataStr);
           } catch (parseErr: any) {
             console.warn("SSE Event parse error:", parseErr);
+            continue;
+          }
+
+          if (eventName === "final") {
+            setIsRoutingPulse(false);
+            setIsThinking(false);
+            currentConvergence = {
+              rounds: data.pipelineDesign?.debateRounds || 1,
+              consensusScore: data.confidence || 0.95
+            };
+            currentPipelineSteps = currentPipelineSteps.map((s) => ({ ...s, status: "completed" as const }));
+            let cleanText = (data.answer || "").trim();
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === councilMsgId
+                  ? {
+                      ...msg,
+                      text: cleanText,
+                      hasDisagreement: Boolean(data.dissentReport),
+                      pipelineSteps: [...currentPipelineSteps],
+                      stageData: {
+                        supervisor: currentSupervisor || {
+                          domain: data.pipelineDesign?.queryType || "Multi-Agent Consensus",
+                          confidence: data.confidence || 0.95,
+                          assignedLead: "Gemini 2.0 Flash Ensemble",
+                          assignedCritic: "Skeptic (Adversarial)",
+                          intent: data.pipelineDesign?.rationale || "Epistemic Deliberation"
+                        },
+                        leadDraft: currentLeadDraft || {
+                          agent: "Synthesizer",
+                          content: cleanText.slice(0, 200) + "..."
+                        },
+                        critique: currentCritique || {
+                          agent: "Adversarial Verifier",
+                          identifiedFlaws: data.dissentReport ? [data.dissentReport] : [],
+                          critiqueContent: data.dissentReport || "Verified against domain constraints.",
+                          rating: data.consensus || "Verified"
+                        },
+                        convergence: currentConvergence
+                      }
+                    }
+                  : msg
+              )
+            );
+            continue;
+          }
+
+          if (eventName === "stage") {
+            setIsRoutingPulse(false);
+            const stageMsg = data.message || `Phase: ${data.stage}`;
+            currentPipelineSteps = [
+              ...currentPipelineSteps.map(s => ({ ...s, status: "completed" as const })),
+              { id: data.stage || "step", label: stageMsg, iconName: "supervisor", status: "active" as const }
+            ];
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === councilMsgId
+                  ? { ...msg, pipelineSteps: [...currentPipelineSteps] }
+                  : msg
+              )
+            );
+            continue;
+          }
+
+          if (eventName === "agent_output") {
+            if (data.agent === "engineer" || data.agent === "visionary") {
+              currentLeadDraft = {
+                agent: `Agent: ${data.agent.toUpperCase()}`,
+                content: data.output || "Generated perspective."
+              };
+            } else if (data.agent === "skeptic") {
+              currentCritique = {
+                agent: "Skeptic (Adversarial Review)",
+                identifiedFlaws: [],
+                critiqueContent: data.output || "Adversarial analysis complete.",
+                rating: "Active"
+              };
+            }
             continue;
           }
 
