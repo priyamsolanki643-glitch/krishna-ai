@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
 
@@ -67,8 +68,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 2. Standard Query: Forward directly to Cloud Run Live Multi-Agent Deliberation Pipeline (POST /api/chat/stream)
-    const backendRes = await fetch(`${BACKEND_URL}/api/chat/stream`, {
+    // 2. Standard Query: Forward directly to Cloud Run Live V2 Multi-Agent Stream
+    const backendRes = await fetch(`${BACKEND_URL}/api/v2/chat/stream`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -76,9 +77,8 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         query,
-        manualAgents: selectedAgents.map((a: string) => a.replace("-agent", "")),
-        debateMode,
-        maxRounds,
+        sessionId: randomUUID(),
+        tokenBudget: 25000,
       }),
     });
 
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       throw new Error(`Live Council Pipeline Error (${backendRes.status}): ${errText}`);
     }
 
-    // Parse SSE stream events from the real backend
+    // Parse SSE stream events from the backend
     const streamText = await backendRes.text();
     const blocks = streamText.split("\n\n");
     const events: { event: string; data: any }[] = [];
@@ -110,49 +110,50 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const messageEvent = events.find((e) => e.event === "message");
     const errorEvent = events.find((e) => e.event === "error");
-
     if (errorEvent) {
       throw new Error(errorEvent.data?.message || errorEvent.data?.error || "Pipeline deliberation failed.");
     }
 
-    const msgData = messageEvent?.data || {};
-    const thinkingEvents = events.filter((e) => e.event === "thinking").map((e) => e.data);
+    const finalEvent = events.find((e) => e.event === "final");
+    const messageEvent = events.find((e) => e.event === "message");
+    const agentOutputs = events.filter((e) => e.event === "agent_output").map((e) => e.data);
+    const pipelineDesign = events.find((e) => e.event === "pipeline_design")?.data;
 
-    // Build real dynamic stage data from live SSE trace
-    const supervisorEvt = thinkingEvents.find((e) => e.stage === "supervisor_complete" || e.stage === "manual_agent_selection");
-    const leadEvt = thinkingEvents.find((e) => e.stage === "lead_drafting");
-    const reviewerEvt = thinkingEvents.find((e) => e.stage === "round_complete");
-    const criticEvt = thinkingEvents.find((e) => e.stage === "critic_revising");
+    const finalText = finalEvent?.data?.answer || messageEvent?.data?.content || "No response generated.";
+    const confidenceScore = finalEvent?.data?.confidence || 0.95;
+    const queryDomain = pipelineDesign?.queryType || "Multi-Agent Deliberation";
+
+    const leadAgent = agentOutputs.find((a) => a.agent === "engineer" || a.agent === "visionary") || agentOutputs[0];
+    const criticAgent = agentOutputs.find((a) => a.agent === "skeptic");
 
     const stageData = {
       supervisor: {
-        domain: msgData.domain || supervisorEvt?.domain || "Multi-Domain Deliberation",
-        confidence: 0.98,
-        assignedLead: "openai/gpt-oss-120b",
-        assignedCritic: "meta-llama/llama-3.3-70b-versatile",
-        intent: `Multi-agent consensus (${msgData.routingMode || "auto"} routing)`,
+        domain: queryDomain,
+        confidence: confidenceScore,
+        assignedLead: leadAgent ? `Agent: ${leadAgent.agent}` : "The Council Lead",
+        assignedCritic: criticAgent ? `Agent: ${criticAgent.agent}` : "The Council Skeptic",
+        intent: pipelineDesign?.rationale || "Dynamic ADAS Deliberation Pipeline",
       },
       leadDraft: {
-        agent: "Lead Agent (openai/gpt-oss-120b)",
-        content: `Draft synthesized across ${msgData.rounds || 1} round(s).`,
+        agent: leadAgent ? `${leadAgent.agent.toUpperCase()} (Confidence: ${(leadAgent.confidence * 100).toFixed(0)}%)` : "Lead Council Agent",
+        content: leadAgent?.output || "Synthesizing deep structured analysis...",
       },
       critique: {
-        agent: "Adversarial Critic (meta-llama/llama-3.3-70b-versatile)",
-        identifiedFlaws: criticEvt?.data?.objection ? [criticEvt.data.objection] : [],
-        critiqueContent: reviewerEvt?.data?.reviewerCertainty ? `Reviewer Certainty: ${(reviewerEvt.data.reviewerCertainty * 100).toFixed(0)}%` : "Verified against core domain constraints.",
-        rating: msgData.critic_flagged ? "Critique Applied" : "Approved",
+        agent: criticAgent ? `${criticAgent.agent.toUpperCase()} (Adversarial Verification)` : "Adversarial Critic",
+        identifiedFlaws: finalEvent?.data?.dissentReport ? [finalEvent.data.dissentReport] : [],
+        critiqueContent: criticAgent?.output || "Verified against domain-specific constraints and edge cases.",
+        rating: finalEvent?.data?.consensus === "full" ? "Consensus Reached" : "Dissent Documented",
       },
       convergence: {
-        rounds: msgData.rounds || 1,
-        consensusScore: 0.98,
+        rounds: pipelineDesign?.debateRounds || 1,
+        consensusScore: confidenceScore,
       },
     };
 
     return NextResponse.json({
-      text: msgData.content || "No response generated.",
-      hasDisagreement: Boolean(msgData.critic_flagged),
+      text: finalText,
+      hasDisagreement: Boolean(finalEvent?.data?.dissentReport),
       stageData,
     });
   } catch (error: any) {
