@@ -36,9 +36,6 @@ app.use(
   })
 );
 
-// ─── Route registration AFTER middleware ─────────────────────────
-app.route("/api/v2", v2Router);
-
 // ─── Token Bucket Rate Limiting ──────────────────────────────────
 interface RateLimitBucket {
   tokens: number;
@@ -62,19 +59,23 @@ function checkRateLimit(ip: string): boolean {
   return false;
 }
 
+// ─── Route registration (V2 primary + V1 backward compatibility) ─
+app.route("/api/v2", v2Router);
+app.route("/api", v2Router); // Seamlessly handles POST /api/chat/stream for older frontend clients
+
 // ─── Health Check ────────────────────────────────────────────────
 app.get("/health", (c) =>
   c.json({
     status: "ok",
     version: "2.2",
-    engine: "The Council — Multi-Agent AI Orchestration",
+    engine: "The Council — Multi-Agent AI Orchestration Engine",
     innovations: [
-      "ADAS (Automated Design of Agentic Systems)",
-      "Self-Play (Proposer→Solver→Critic Loop)",
-      "Epistemic State Sharing (Claim-Level Uncertainty)",
-      "Counterfactual Consensus Protocol (Pearl Do-Calculus)",
-      "Epistemic Debt Compounding (Bayesian Propagation)",
-      "Attractor State Collapse Prevention (Cognitive Entropy)",
+      "ADAS (Automated Design of Agentic Systems — Dynamic DAG Generation)",
+      "Cognitive Self-Play (Proposer→Solver→Critic Autonomous Improvement)",
+      "Epistemic State Sharing (Claim-Level Uncertainty Quantification)",
+      "Counterfactual Probing Protocol (LLM-Based Consistency Checks)",
+      "Epistemic Debt Ledger (Correlation-Adjusted Bayesian Tracking)",
+      "Attractor State Diversity Maintenance (Semantic Variance Monitoring)",
     ],
     is_mock: isMockMode(),
   })
@@ -88,37 +89,24 @@ app.get("/", (c) =>
     endpoints: {
       health: "GET /health",
       v2_health: "GET /api/v2/health",
-      chat: "POST /api/v2/chat/stream",
+      chat_stream_v2: "POST /api/v2/chat/stream",
+      chat_stream_v1_alias: "POST /api/chat/stream",
       selfplay: "POST /api/v2/selfplay/run",
     },
   })
 );
 
-// ─── Legacy V1 Chat (rate-limited) ───────────────────────────────
-app.post("/api/chat/stream", async (c) => {
-  const clientIp = c.req.header("x-forwarded-for") || "local";
-  if (!checkRateLimit(clientIp)) {
-    return c.json({ error: "Rate limit exceeded. Use /api/v2/chat/stream instead." }, 429);
-  }
-  const body = await c.req.json().catch(() => ({}));
-  if (!body.query) return c.json({ error: "Missing 'query' field" }, 400);
-  return c.json({
-    message: "V1 endpoint deprecated. Please migrate to POST /api/v2/chat/stream",
-    v2_endpoint: "/api/v2/chat/stream",
-  }, 301);
-});
-
 // ─── Server Boot ─────────────────────────────────────────────────
 const PORT = parseInt(process.env.PORT || "8080");
 serve({ fetch: app.fetch, port: PORT }, () => {
   console.log(`🚀 The Council API v2.2 running on port ${PORT}`);
-  console.log(`   Engine: Gemini 2.0 Flash Ensemble`);
-  console.log(`   6 Research Innovations:`);
-  console.log(`     1. ADAS — Self-Designing Agent Pipelines`);
-  console.log(`     2. Self-Play — Proposer→Solver→Critic Loop`);
-  console.log(`     3. Epistemic State — Claim-Level Uncertainty`);
-  console.log(`     4. Counterfactual Protocol — Pearl Do-Calculus`);
-  console.log(`     5. Epistemic Debt — Bayesian Confidence Propagation`);
-  console.log(`     6. Attractor Prevention — Cognitive Entropy Maintenance`);
-  console.log(`   V2 Endpoint: http://localhost:${PORT}/api/v2/health`);
+  console.log(`   Engine: Gemini 2.0 Flash Multi-Agent Deliberation`);
+  console.log(`   Research Architectures:`);
+  console.log(`     1. ADAS — Dynamic Agent Topology Generation`);
+  console.log(`     2. Self-Play — Autonomous Proposer→Solver→Critic Triad`);
+  console.log(`     3. Epistemic State — Claim-Level Uncertainty Bounds`);
+  console.log(`     4. Counterfactual Probing — Stress-Testing Causal Assertions`);
+  console.log(`     5. Epistemic Debt Ledger — Correlation-Adjusted Confidence Decay`);
+  console.log(`     6. Attractor Diversity — Semantic Entropy Monitoring`);
+  console.log(`   Endpoint: http://localhost:${PORT}/api/v2/health`);
 });
