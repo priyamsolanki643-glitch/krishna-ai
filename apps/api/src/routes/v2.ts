@@ -23,7 +23,7 @@ import { startSelfPlayScheduler, getLearnedStrategiesForDomain } from "../selfpl
 // Concept 3: Epistemic State
 import { parseEpistemicMarkers, buildEpistemicContext } from "../epistemic/state.js";
 
-// Concept 4: Counterfactual Consensus Protocol (Pearl's Do-Calculus)
+// Concept 4: Counterfactual Consistency Probing Protocol
 import { extractCausalClaims, testCounterfactual } from "../pipeline/counterfactual.js";
 
 // Concept 5: Epistemic Debt Compounding (Bayesian Uncertainty Propagation)
@@ -76,7 +76,8 @@ v2Router.get("/health", (c) =>
       "ADAS",
       "Self-Play",
       "Epistemic State Sharing",
-      "Counterfactual Consensus Protocol",
+      "Counterfactual Probing Protocol",
+      "Epistemic Debt Ledger (Correlation-Adjusted)",
       "Epistemic Debt Compounding",
       "Attractor State Collapse Prevention",
     ],
@@ -207,7 +208,7 @@ v2Router.post("/chat/stream", async (c) => {
 
       // ── [V2.2] Attractor State Diversity Check ──────────────
       await stream.writeSSE({ event: "stage", data: JSON.stringify({ stage: "diversity_check", message: "🧬 Measuring cognitive attractor diversity..." }) });
-      const diversityMetrics = await measureAgentDiversity(parallelResults.map(r => r.output));
+      const diversityMetrics = await measureAgentDiversity(parallelResults.map(r => r.output), { queryType: dag.queryType });
       await stream.writeSSE({ event: "diversity_metrics", data: JSON.stringify(diversityMetrics) });
 
       // If attractor collapse detected, inject cognitive entropy into sequential agents
@@ -324,7 +325,7 @@ v2Router.post("/chat/stream", async (c) => {
 
       // ── [V2.2] Stage 5.5: Counterfactual Consensus Protocol ─
       await telemetry.stageBegin("counterfactual");
-      await stream.writeSSE({ event: "stage", data: JSON.stringify({ stage: "counterfactual", message: "⚗️ Running Pearl's Do-Calculus Counterfactual Probe..." }) });
+      await stream.writeSSE({ event: "stage", data: JSON.stringify({ stage: "counterfactual", message: "⚗️ Running Counterfactual Consistency Probe on causal assertions..." }) });
 
       const combinedAgentOutput = finalAgentOutputs.map(a => a.output).join("\n");
       const causalClaims = await extractCausalClaims(combinedAgentOutput);
@@ -351,7 +352,7 @@ v2Router.post("/chat/stream", async (c) => {
       await telemetry.stageEnd("counterfactual");
 
       // ── [V2.2] Epistemic Debt Summary ───────────────────────
-      const debtSummary = `\n\n[EPISTEMIC DEBT LEDGER]:\n  Joint Confidence (Bayesian product): ${debtLedger.jointConfidence.toFixed(4)}\n  Confidence Deficit: ${(1 - debtLedger.jointConfidence).toFixed(4)}\n  Number of Claims Tracked: ${debtLedger.entries.length}\n  Critical Weak Point: ${debtLedger.criticalAssumptionId || "none"}\n  Weakest Agent Claim: ${debtLedger.entries.reduce((max, e) => e.deficit > max.deficit ? e : max, { deficit: 0, agentId: "none", claimContent: "" }).agentId} (deficit: ${debtLedger.entries.reduce((max, e) => e.deficit > max.deficit ? e : max, { deficit: 0 }).deficit.toFixed(3)})`;
+      const debtSummary = `\n\n[EPISTEMIC DEBT LEDGER]:\n  Correlation-Adjusted Joint Confidence: ${debtLedger.jointConfidence.toFixed(4)}\n  Confidence Deficit: ${(1 - debtLedger.jointConfidence).toFixed(4)}\n  Number of Claims Tracked: ${debtLedger.entries.length}\n  Critical Weak Point: ${debtLedger.criticalAssumptionId || "none"}\n  Weakest Agent Claim: ${debtLedger.entries.reduce((max, e) => e.deficit > max.deficit ? e : max, { deficit: 0, agentId: "none", claimContent: "" }).agentId} (deficit: ${debtLedger.entries.reduce((max, e) => e.deficit > max.deficit ? e : max, { deficit: 0 }).deficit.toFixed(3)})`;
 
       // ── Stage 6: Epistemic-Weighted Synthesis ───────────────
       await telemetry.stageBegin("synthesis");
@@ -368,6 +369,19 @@ v2Router.post("/chat/stream", async (c) => {
 
       // ── Final Response ────────────────────────────────────────
       const finalStats = watchdog.getStats();
+
+      // Backward-compatibility event for frontends expecting 'message' event name
+      await stream.writeSSE({
+        event: "message",
+        data: JSON.stringify({
+          content: synthesis.finalAnswer,
+          confidence: synthesis.overallConfidence,
+          consensus: synthesis.consensus,
+          critic_flagged: isDegraded,
+          rounds: dag.debateRounds || 1,
+          domain: dag.queryType,
+        }),
+      });
 
       await stream.writeSSE({ event: "final", data: JSON.stringify({
         type: "final",
